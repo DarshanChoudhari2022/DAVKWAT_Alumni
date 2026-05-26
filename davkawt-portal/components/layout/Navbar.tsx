@@ -40,13 +40,13 @@ export function Navbar() {
   return (
     <header
       className={cn(
-        'sticky top-0 z-40 border-b backdrop-blur-xl transition-all duration-300',
+        'sticky top-0 z-40 transition-all duration-300',
         isDarkTop
-          ? 'border-white/10 bg-[#0a1130]'
-          : 'border-slate-200/80 bg-white/95 shadow-sm supports-[backdrop-filter]:bg-white/85',
+          ? 'bg-[#0a1130]'
+          : 'bg-white/80 supports-[backdrop-filter]:bg-white/70',
       )}
     >
-      <div className="mx-auto flex h-[58px] max-w-7xl items-center justify-between px-4 sm:px-6 lg:px-8">
+      <div className="mx-auto flex h-[74px] max-w-7xl items-center justify-between px-4 sm:px-6 lg:px-8">
         <Link
           href="/"
           aria-label="DAVKAWT Home"
@@ -58,14 +58,22 @@ export function Navbar() {
           DAVKAWT
         </Link>
 
-        <nav className="hidden items-center gap-8 md:flex" aria-label="Primary">
+        <nav
+          className={cn(
+            'hidden items-center gap-1 rounded-full border px-2 py-1.5 shadow-sm backdrop-blur-xl md:flex',
+            isDarkTop ? 'border-white/10 bg-white/[0.06]' : 'border-slate-200 bg-white/85',
+          )}
+          aria-label="Primary"
+        >
           {NAV_LINKS.map((l) => (
             <Link
               key={l.href}
               href={l.href}
               className={cn(
-                'font-sans text-[15px] font-medium leading-none transition-colors',
-                isDarkTop ? 'text-white/85 hover:text-white' : 'text-[#1f2937] hover:text-[#0F2557]',
+                'rounded-full px-4 py-2 font-sans text-[14px] font-medium leading-none transition-colors',
+                isDarkTop
+                  ? 'text-white/75 hover:bg-white/10 hover:text-white'
+                  : 'text-[#1f2937] hover:bg-slate-100 hover:text-[#0F2557]',
               )}
             >
               {l.label}

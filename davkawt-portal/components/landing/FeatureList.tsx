@@ -74,52 +74,60 @@ const FEATURES = [
 
 export function FeatureList() {
   return (
-    <section className="bg-[#fafbfc] py-24">
+    <section className="relative overflow-hidden bg-[#f6f8fb] py-24">
+      <div aria-hidden className="absolute -left-24 top-24 h-64 w-64 rounded-full bg-sky-200/50 blur-3xl" />
+      <div aria-hidden className="absolute -right-20 bottom-24 h-72 w-72 rounded-full bg-amber-200/40 blur-3xl" />
       <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
         <Reveal>
-          <div className="mx-auto max-w-3xl text-center">
-            <h2 className="font-sans text-3xl font-bold tracking-[-0.025em] text-slate-900 sm:text-4xl lg:text-[44px]">
-              What members can do
-              <br className="hidden sm:inline" />
-              on <span className="text-[#0F2557]">DAVKAWT</span>
-            </h2>
-            <p className="mt-4 text-[17px] leading-relaxed text-slate-600">
-              A refined institutional portal for connection, communication, membership,
-              and long-term alumni welfare.
-            </p>
-            <Link
-              href="/register"
-              className="mt-8 inline-flex items-center rounded-full bg-[#0F2557] px-7 py-3.5 text-sm font-semibold text-white shadow-lg shadow-indigo-500/20 transition hover:bg-indigo-800"
-            >
-              Register as alumnus
-            </Link>
+          <div className="grid items-end gap-8 lg:grid-cols-[0.9fr_1.1fr]">
+            <div>
+              <span className="text-xs font-bold uppercase tracking-[0.22em] text-amber-600">
+                Member experience
+              </span>
+              <h2 className="mt-3 max-w-xl font-sans text-4xl font-black leading-[1] tracking-[-0.055em] text-slate-950 sm:text-5xl lg:text-[60px]">
+                Not just features.
+                <span className="block translate-x-10 text-[#0F2557]">Useful alumni rituals.</span>
+              </h2>
+            </div>
+            <div className="lg:justify-self-end">
+              <p className="max-w-md text-[17px] leading-relaxed text-slate-600">
+                A refined institutional portal for connection, communication, membership,
+                and long-term alumni welfare — designed around how alumni actually engage.
+              </p>
+              <Link
+                href="/register"
+                className="mt-6 inline-flex items-center rounded-full bg-[#0F2557] px-7 py-3.5 text-sm font-semibold text-white shadow-lg shadow-indigo-500/20 transition hover:bg-indigo-800"
+              >
+                Register as alumnus
+              </Link>
+            </div>
           </div>
         </Reveal>
 
-        <div className="mt-20 grid gap-8 sm:grid-cols-2 lg:grid-cols-2">
+        <div className="mt-16 grid gap-5 sm:grid-cols-2 lg:grid-cols-4">
           {FEATURES.map((f, i) => (
-            <Reveal key={f.title} delay={i * 60}>
-              <SpotlightCard className="p-8">
+            <Reveal key={f.title} delay={i * 45}>
+              <SpotlightCard
+                className={`min-h-[255px] p-6 ${i % 2 === 1 ? 'lg:translate-y-10' : ''} ${
+                  i === 2 || i === 5 ? 'lg:translate-y-4' : ''
+                }`}
+              >
                 <div
-                  className={`absolute inset-x-0 top-0 h-1 bg-gradient-to-r ${f.color} opacity-0 transition-opacity group-hover:opacity-100`}
+                  className={`absolute inset-x-5 top-0 h-px bg-gradient-to-r ${f.color} opacity-70`}
                 />
-                <div className="flex items-start gap-4">
-                  <div className={`grid h-12 w-12 flex-none place-items-center rounded-xl bg-gradient-to-br ${f.color} text-white shadow-md`}>
-                    <f.icon className="h-5 w-5" />
-                  </div>
-                  <div className="min-w-0 flex-1">
-                    <h3 className="text-lg font-semibold text-slate-900">{f.title}</h3>
-                    <p className="mt-2 text-sm leading-relaxed text-slate-600">{f.desc}</p>
-                    <ul className="mt-4 grid grid-cols-2 gap-x-4 gap-y-1.5">
-                      {f.bullets.map((b) => (
-                        <li key={b} className="flex items-center gap-2 text-xs text-slate-600">
-                          <CheckCircle2 className="h-3.5 w-3.5 flex-none text-emerald-500" />
-                          {b}
-                        </li>
-                      ))}
-                    </ul>
-                  </div>
+                <div className={`grid h-12 w-12 place-items-center rounded-2xl bg-gradient-to-br ${f.color} text-white shadow-md`}>
+                  <f.icon className="h-5 w-5" />
                 </div>
+                <h3 className="mt-5 text-lg font-bold leading-tight text-slate-950">{f.title}</h3>
+                <p className="mt-2 text-sm leading-relaxed text-slate-600">{f.desc}</p>
+                <ul className="mt-5 space-y-1.5">
+                  {f.bullets.slice(0, 3).map((b) => (
+                    <li key={b} className="flex items-center gap-2 text-xs text-slate-600">
+                      <CheckCircle2 className="h-3.5 w-3.5 flex-none text-emerald-500" />
+                      {b}
+                    </li>
+                  ))}
+                </ul>
               </SpotlightCard>
             </Reveal>
           ))}

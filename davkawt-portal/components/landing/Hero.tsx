@@ -32,9 +32,9 @@ export function Hero({ alumniCount }: HeroProps) {
         className="absolute inset-x-0 bottom-0 h-px bg-gradient-to-r from-transparent via-white/15 to-transparent"
       />
 
-      <div className="relative mx-auto max-w-7xl px-4 pb-24 pt-16 sm:px-6 sm:pt-24 lg:px-8 lg:pb-32 lg:pt-28">
-        <div className="grid items-center gap-12 lg:grid-cols-[1.05fr_1fr] lg:gap-16">
-          <div>
+      <div className="relative mx-auto max-w-7xl px-4 pb-20 pt-12 sm:px-6 sm:pt-20 lg:px-8 lg:pb-28 lg:pt-24">
+        <div className="grid items-center gap-12 lg:grid-cols-[1fr_0.95fr] lg:gap-14">
+          <div className="max-w-2xl">
             <Reveal direction="zoom">
               <div className="inline-flex items-center gap-2 rounded-full border border-white/15 bg-white/[0.06] px-3.5 py-1.5 backdrop-blur">
                 <ShieldCheck className="h-3.5 w-3.5 text-amber-400" />
@@ -45,16 +45,15 @@ export function Hero({ alumniCount }: HeroProps) {
             </Reveal>
 
             <Reveal delay={80}>
-              <h1 className="mt-7 font-sans text-4xl font-bold leading-[1.05] tracking-[-0.03em] sm:text-5xl lg:text-[58px]">
-                Streamline alumni{' '}
-                <span className="text-gradient-blue">engagement</span>
-                <br />
-                at DAV Khagaul
+              <h1 className="mt-7 font-sans text-4xl font-extrabold leading-[1.06] tracking-[-0.04em] sm:text-5xl lg:text-[58px]">
+                Streamline alumni
+                <span className="block text-gradient-blue">engagement</span>
+                <span className="block text-white">at DAV Khagaul</span>
               </h1>
             </Reveal>
 
             <Reveal delay={160}>
-              <p className="mt-6 max-w-xl text-[17px] leading-relaxed text-white/65 sm:text-lg">
+              <p className="mt-6 max-w-xl text-base leading-relaxed text-white/65 sm:text-[17px]">
                 <TextGenerateEffect text="Effortlessly connect and engage with every batch" />
                 <span>
                   {' '}— a verified directory, Trust announcements, reunions, forums, mentorship, and
@@ -107,7 +106,7 @@ export function Hero({ alumniCount }: HeroProps) {
         </div>
 
         <Reveal delay={400}>
-          <div className="mt-16">
+          <div className="mt-14">
             <p className="text-center text-xs uppercase tracking-[0.22em] text-white/40">
               Serving generations of DAV Khagaul alumni
             </p>
