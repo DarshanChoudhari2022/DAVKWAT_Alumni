@@ -1,0 +1,50 @@
+name: CI
+
+on:
+  push:
+    branches:
+      - main
+      - develop
+  pull_request:
+    branches:
+      - main
+      - develop
+
+jobs:
+  validate:
+    name: Validate
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: package-lock.json
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Typecheck
+        run: npm run typecheck
+
+      - name: Build
+        run: npm run build
+        env:
+          NEXT_PUBLIC_SUPABASE_URL: ${{ secrets.NEXT_PUBLIC_SUPABASE_URL }}
+          NEXT_PUBLIC_SUPABASE_ANON_KEY: ${{ secrets.NEXT_PUBLIC_SUPABASE_ANON_KEY }}
+          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+          EASEBUZZ_KEY: ${{ secrets.EASEBUZZ_KEY }}
+          EASEBUZZ_SALT: ${{ secrets.EASEBUZZ_SALT }}
+          EASEBUZZ_ENV: test
+          NEXT_PUBLIC_EASEBUZZ_PAY_URL: https://testpay.easebuzz.in/pay/initiateLink
+          RESEND_API_KEY: ${{ secrets.RESEND_API_KEY }}
+          RESEND_FROM_EMAIL: noreply@davkawt.org
+          NEXT_PUBLIC_APP_URL: http://localhost:3000
+          NEXT_PUBLIC_TRUST_NAME: DAV Khagaul Alumni Welfare Trust
+          ADMIN_NOTIFICATION_EMAIL: admin@davkawt.org
+          SENTRY_DSN: ${{ secrets.SENTRY_DSN }}
