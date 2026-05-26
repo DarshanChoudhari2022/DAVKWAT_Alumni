@@ -58,21 +58,28 @@ export default async function HomePage() {
         <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
           <div className="grid items-center gap-12 lg:grid-cols-2">
             <Reveal direction="left">
-              <div className="relative aspect-video overflow-hidden rounded-2xl bg-gradient-to-br from-indigo-700 via-blue-700 to-sky-600 shadow-2xl shadow-indigo-500/20">
-                <div className="absolute inset-0 flex flex-col justify-end p-8">
-                  <p className="text-2xl font-semibold leading-tight sm:text-3xl">
-                    A trusted digital home<br />for DAV Khagaul<br />alumni
-                  </p>
-                  <p className="mt-3 text-sm text-white/60">
-                    Managed by DAVKAWT
-                  </p>
-                </div>
-                <div className="absolute bottom-6 left-6 inline-flex items-center gap-2 rounded-full bg-white/20 px-4 py-2 backdrop-blur">
-                  <span className="grid h-7 w-7 place-items-center rounded-full bg-white">
-                    <span className="ml-0.5 border-4 border-transparent border-l-[#0a1130] border-l-8" />
-                  </span>
-                  <span className="text-sm font-medium">Portal preview</span>
-                </div>
+              <div className="relative overflow-hidden rounded-2xl border border-white/10 bg-gradient-to-br from-indigo-600/20 via-blue-700/10 to-amber-500/10 p-8 backdrop-blur sm:p-10">
+                <h3 className="font-sans text-xl font-bold text-amber-300">
+                  Why alumni engagement is critical
+                </h3>
+                <ul className="mt-5 space-y-3 text-[15px] leading-relaxed text-white/70">
+                  <li className="flex items-start gap-3">
+                    <span className="mt-1.5 h-2 w-2 flex-none rounded-full bg-amber-400" />
+                    Strengthens institutional legacy and reputation across decades
+                  </li>
+                  <li className="flex items-start gap-3">
+                    <span className="mt-1.5 h-2 w-2 flex-none rounded-full bg-sky-400" />
+                    Creates mentorship pipelines for current students and graduates
+                  </li>
+                  <li className="flex items-start gap-3">
+                    <span className="mt-1.5 h-2 w-2 flex-none rounded-full bg-emerald-400" />
+                    Builds professional networks grounded in shared school culture
+                  </li>
+                  <li className="flex items-start gap-3">
+                    <span className="mt-1.5 h-2 w-2 flex-none rounded-full bg-rose-400" />
+                    Enables welfare initiatives and community-driven impact at scale
+                  </li>
+                </ul>
               </div>
             </Reveal>
             <Reveal direction="right" delay={100}>
@@ -84,6 +91,10 @@ export default async function HomePage() {
                   DAVKAWT is the official digital platform of DAV Khagaul Alumni Welfare Trust.
                   It brings verified alumni profiles, Trust announcements, events, forums,
                   membership payments, and admin governance into one secure, mobile-first portal.
+                </p>
+                <p className="mt-3 text-[15px] leading-relaxed text-white/50">
+                  Effortlessly keep track of all alumni and send targeted communication —
+                  all managed by Trust administrators with transparency and accountability.
                 </p>
                 <a
                   href="/register"
@@ -135,11 +146,11 @@ export default async function HomePage() {
         <div className="mx-auto max-w-4xl px-4 text-center sm:px-6 lg:px-8">
           <Reveal>
             <blockquote className="font-sans text-2xl font-medium leading-relaxed text-slate-900 sm:text-[28px]">
-              &ldquo;When alumni stay connected with purpose, every batch becomes stronger and every
-              future student inherits a wider circle of support.&rdquo;
+              &ldquo;Strategies and stories on building lifelong alumni connections —
+              when every batch stays engaged, the entire DAV Khagaul community grows stronger.&rdquo;
             </blockquote>
             <p className="mt-6 text-sm font-medium uppercase tracking-wider text-slate-500">
-              — DAVKAWT Trust
+              — DAV Khagaul Alumni Welfare Trust
             </p>
           </Reveal>
         </div>
