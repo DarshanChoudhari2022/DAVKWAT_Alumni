@@ -19,7 +19,6 @@ export function Hero({ alumniCount }: HeroProps) {
         aria-hidden
         className="absolute inset-0 bg-[radial-gradient(ellipse_70%_55%_at_15%_-10%,#1e3a8a_0%,#0a1130_55%,#070b22_100%)]"
       />
-      {/* Organic blobs (distinct from Circle's orbital rings) */}
       <div
         aria-hidden
         className="animate-aurora absolute -left-40 top-20 h-[460px] w-[460px] rounded-[42%_58%_64%_36%/48%_38%_62%_52%] bg-[radial-gradient(circle_at_30%_30%,rgba(59,130,246,0.55),transparent_65%)] blur-3xl"
@@ -35,7 +34,6 @@ export function Hero({ alumniCount }: HeroProps) {
 
       <div className="relative mx-auto max-w-7xl px-4 pb-24 pt-16 sm:px-6 sm:pt-24 lg:px-8 lg:pb-32 lg:pt-28">
         <div className="grid items-center gap-12 lg:grid-cols-[1.05fr_1fr] lg:gap-16">
-          {/* LEFT: copy */}
           <div>
             <Reveal direction="zoom">
               <div className="inline-flex items-center gap-2 rounded-full border border-white/15 bg-white/[0.06] px-3.5 py-1.5 backdrop-blur">
@@ -103,7 +101,6 @@ export function Hero({ alumniCount }: HeroProps) {
             </Reveal>
           </div>
 
-          {/* RIGHT: stylized portal preview (replaces Circle-style email pill) */}
           <Reveal direction="right" delay={120}>
             <HeroPreview />
           </Reveal>
@@ -125,13 +122,11 @@ export function Hero({ alumniCount }: HeroProps) {
 function HeroPreview() {
   return (
     <div className="relative mx-auto w-full max-w-[560px]">
-      {/* decorative gradient frame */}
       <div
         aria-hidden
         className="absolute -inset-6 rounded-[36px] bg-gradient-to-br from-indigo-500/30 via-blue-500/20 to-amber-400/20 blur-2xl"
       />
       <div className="relative overflow-hidden rounded-3xl border border-white/15 bg-gradient-to-br from-white/[0.08] to-white/[0.02] p-5 shadow-2xl shadow-indigo-900/40 backdrop-blur-xl">
-        {/* window chrome */}
         <div className="flex items-center gap-1.5 pb-4">
           <span className="h-2.5 w-2.5 rounded-full bg-rose-400/80" />
           <span className="h-2.5 w-2.5 rounded-full bg-amber-400/80" />
@@ -139,7 +134,6 @@ function HeroPreview() {
           <span className="ml-3 text-[11px] font-medium text-white/50">davkawt.org / dashboard</span>
         </div>
 
-        {/* hero card grid */}
         <div className="grid gap-3 sm:grid-cols-5">
           <div className="sm:col-span-3 rounded-2xl bg-white p-4 text-slate-800 shadow-md">
             <div className="flex items-center gap-2 text-[11px] font-semibold uppercase tracking-wider text-indigo-700">

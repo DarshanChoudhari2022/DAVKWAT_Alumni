@@ -10,7 +10,6 @@ export function FinalCTA() {
 
   return (
     <div>
-      {/* Newsletter / Subscribe section — warm gradient (Gradsgate-inspired) */}
       <section className="relative overflow-hidden bg-gradient-to-br from-[#0F2557] via-indigo-800 to-[#0a1130] py-20">
         <div
           aria-hidden
@@ -64,7 +63,6 @@ export function FinalCTA() {
         </div>
       </section>
 
-      {/* Final register CTA */}
       <section className="relative overflow-hidden bg-[#0a1130] py-24 text-white">
         <div
           aria-hidden

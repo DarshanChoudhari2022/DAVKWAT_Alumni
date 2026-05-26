@@ -158,12 +158,48 @@
 @keyframes davkawt-border-spin {
   to { transform: rotate(360deg); }
 }
+@keyframes davkawt-shimmer {
+  0% { background-position: -200% 0; }
+  100% { background-position: 200% 0; }
+}
+@keyframes davkawt-beam {
+  0% { transform: translateY(-120%) translateX(-30%) rotate(18deg); opacity: 0; }
+  18% { opacity: 0.55; }
+  55% { opacity: 0.2; }
+  100% { transform: translateY(120%) translateX(35%) rotate(18deg); opacity: 0; }
+}
 .animate-float       { animation: davkawt-float 7s ease-in-out infinite; }
 .animate-pulse-ring  { animation: davkawt-pulse-ring 4s ease-out infinite; }
 .animate-spin-slow   { animation: davkawt-spin-slow 60s linear infinite; }
 .animate-marquee     { animation: davkawt-marquee 38s linear infinite; }
 .animate-aurora      { animation: davkawt-aurora 18s ease-in-out infinite; }
 .animate-border-spin { animation: davkawt-border-spin 8s linear infinite; }
+.animate-shimmer     { animation: davkawt-shimmer 5s linear infinite; }
+.animate-beam        { animation: davkawt-beam 9s ease-in-out infinite; }
+
+.aceternity-grid {
+  background-image:
+    linear-gradient(rgba(255,255,255,0.055) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(255,255,255,0.055) 1px, transparent 1px);
+  background-size: 54px 54px;
+  mask-image: radial-gradient(ellipse 65% 55% at 50% 35%, black 35%, transparent 78%);
+}
+
+.moving-border-card::before {
+  content: '';
+  position: absolute;
+  inset: -45%;
+  background: conic-gradient(from 180deg, transparent 0deg, rgba(96,165,250,0.05) 70deg, rgba(245,158,11,0.85) 120deg, rgba(99,102,241,0.7) 180deg, transparent 260deg);
+  animation: davkawt-border-spin 10s linear infinite;
+}
+
+.moving-border-card::after {
+  content: '';
+  position: absolute;
+  inset: 1px;
+  border-radius: inherit;
+  background: inherit;
+}
 
 .hero-stars {
   background-image:
