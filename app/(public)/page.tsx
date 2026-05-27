@@ -140,7 +140,30 @@ export default async function HomePage() {
         </div>
       </section>
 
-      <FeatureList />
+      <div className="hidden lg:block">
+        <FeatureList />
+      </div>
+
+      <div className="lg:hidden relative overflow-hidden bg-slate-50 py-16 text-center border-y border-slate-100">
+        <div aria-hidden className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 h-64 w-64 rounded-full bg-indigo-100/40 blur-3xl" />
+        <div className="relative mx-auto max-w-md px-4">
+          <span className="text-xs font-bold uppercase tracking-[0.22em] text-amber-600">
+            Member experience
+          </span>
+          <h3 className="mt-3 font-sans text-2xl font-black text-slate-950 tracking-tight">
+            Explore portal features
+          </h3>
+          <p className="mt-3 text-sm leading-relaxed text-slate-600">
+            Discover how DAVKAWT enables verified directories, protected forums, event tracking, and membership administration.
+          </p>
+          <a
+            href="/features"
+            className="mt-6 inline-flex items-center gap-2 rounded-full bg-[#0F2557] px-6 py-3 text-sm font-semibold text-white shadow-md shadow-indigo-950/10 transition hover:bg-indigo-800"
+          >
+            See member experience
+          </a>
+        </div>
+      </div>
 
       <section className="bg-white py-16 md:py-20">
         <div className="mx-auto max-w-4xl px-4 text-center sm:px-6 lg:px-8">
