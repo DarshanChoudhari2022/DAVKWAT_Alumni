@@ -40,8 +40,9 @@ export default async function DirectoryPage({
     .eq('approval_status', 'approved');
 
   if (sp.q) {
-    // FTS via search_vector column (created in 0001_init.sql)
-    query = query.textSearch('search_vector', sp.q, { type: 'websearch', config: 'english' });
+    // Use ilike for broad search across name, company, occupation
+    const term = `%${sp.q}%`;
+    query = query.or(`full_name.ilike.${term},company.ilike.${term},occupation.ilike.${term}`);
   }
   if (sp.batch) query = query.eq('batch_year', Number(sp.batch));
   if (sp.course) query = query.eq('course', sp.course);

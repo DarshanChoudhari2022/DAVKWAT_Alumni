@@ -10,17 +10,13 @@ import {
   personalSchema,
   professionalSchema,
 } from '@/lib/validations/registration';
-import { getResend, FROM_EMAIL, ADMIN_EMAIL, APP_URL } from '@/lib/resend/client';
-import WelcomeEmail from '@/emails/WelcomeEmail';
-import AdminNotificationEmail from '@/emails/AdminNotificationEmail';
+import { APP_URL } from '@/lib/resend/client';
 
-const fullSchema = z.object({
-  email: accountSchema.innerType().shape.email,
-  password: accountSchema.innerType().shape.password,
-  ...academicSchema.shape,
-  ...personalSchema.shape,
-  ...professionalSchema.shape,
-});
+const fullSchema = accountSchema
+  .innerType()
+  .merge(academicSchema)
+  .merge(personalSchema)
+  .merge(professionalSchema);
 
 export interface RegisterState {
   error?: string;
@@ -37,6 +33,11 @@ export async function registerAction(
   raw.hide_email = formData.get('hide_email') === 'on';
   raw.hide_phone = formData.get('hide_phone') === 'on';
   raw.terms_accepted = formData.get('terms_accepted') === 'on';
+
+  // gender: empty string → undefined so zod .optional() works
+  if (raw.gender === '') delete raw.gender;
+  // date_of_birth: empty string → undefined
+  if (raw.date_of_birth === '') delete raw.date_of_birth;
 
   const parsed = fullSchema.safeParse(raw);
 
@@ -107,8 +108,12 @@ export async function registerAction(
     return { error: 'Failed to create your profile. Please try again.' };
   }
 
-  // 3. Send emails (non-blocking errors)
+  // 3. Send emails (non-blocking — don't crash if Resend fails)
   try {
+    const { getResend, FROM_EMAIL, ADMIN_EMAIL } = await import('@/lib/resend/client');
+    const WelcomeEmail = (await import('@/emails/WelcomeEmail')).default;
+    const AdminNotificationEmail = (await import('@/emails/AdminNotificationEmail')).default;
+
     const resend = getResend();
     await Promise.allSettled([
       resend.emails.send({
@@ -136,6 +141,7 @@ export async function registerAction(
     ]);
   } catch (e) {
     console.error('[register] email send failed', e);
+    // Registration still succeeded — emails are non-critical
   }
 
   redirect('/pending-approval');

@@ -42,7 +42,7 @@ export const personalSchema = z.object({
   current_state: z.string().max(80).optional().or(z.literal('')),
   current_country: z.string().max(80).default('India'),
   date_of_birth: z.string().optional().or(z.literal('')),
-  gender: z.enum(['male', 'female', 'other', 'prefer_not_to_say']).optional(),
+  gender: z.enum(['male', 'female', 'other']).optional(),
 });
 
 export const professionalSchema = z.object({
