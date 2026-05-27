@@ -74,7 +74,7 @@ const FEATURES = [
 
 export function FeatureList() {
   return (
-    <section className="scroll-lift relative overflow-hidden bg-[#f6f8fb] py-24">
+    <section className="scroll-lift relative overflow-hidden bg-[#f6f8fb] py-16 md:py-24">
       <div aria-hidden className="absolute -left-24 top-24 h-64 w-64 rounded-full bg-sky-200/50 blur-3xl" />
       <div aria-hidden className="absolute -right-20 bottom-24 h-72 w-72 rounded-full bg-amber-200/40 blur-3xl" />
       <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
@@ -84,13 +84,13 @@ export function FeatureList() {
               <span className="text-xs font-bold uppercase tracking-[0.22em] text-amber-600">
                 Member experience
               </span>
-              <h2 className="mt-3 max-w-xl font-sans text-4xl font-black leading-[1] tracking-[-0.055em] text-slate-950 sm:text-5xl lg:text-[60px]">
+              <h2 className="mt-3 max-w-xl font-sans text-3xl font-black leading-[1] tracking-[-0.055em] text-slate-950 sm:text-5xl lg:text-[60px]">
                 Not just features.
-                <span className="block translate-x-10 text-[#0F2557]">Useful alumni rituals.</span>
+                <span className="block translate-x-4 md:translate-x-10 text-[#0F2557]">Useful alumni rituals.</span>
               </h2>
             </div>
             <div className="lg:justify-self-end">
-              <p className="max-w-md text-[17px] leading-relaxed text-slate-600">
+              <p className="max-w-md text-base sm:text-[17px] leading-relaxed text-slate-600">
                 A refined institutional portal for connection, communication, membership,
                 and long-term alumni welfare — designed around how alumni actually engage.
               </p>

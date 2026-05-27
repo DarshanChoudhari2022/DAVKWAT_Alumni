@@ -116,7 +116,7 @@ export function FeatureTabs() {
   const data = CONTENT[active];
 
   return (
-    <section className="relative overflow-hidden bg-[#070b22] py-24 text-white">
+    <section className="relative overflow-hidden bg-[#070b22] py-16 md:py-24 text-white">
       <div
         aria-hidden
         className="absolute inset-0 bg-[radial-gradient(ellipse_60%_50%_at_50%_0%,#1e2a6b_0%,transparent_70%)]"
@@ -127,7 +127,7 @@ export function FeatureTabs() {
             <h2 className="font-sans text-3xl font-bold tracking-[-0.025em] sm:text-4xl lg:text-[44px]">
               One verified portal for every alumni need
             </h2>
-            <p className="mx-auto mt-4 max-w-2xl text-[17px] leading-relaxed text-white/60">
+            <p className="mx-auto mt-4 max-w-2xl text-base sm:text-[17px] leading-relaxed text-white/60">
               Built for DAVKAWT members and administrators: verified profiles,
               official communication, events, forums, membership, and governance.
             </p>
@@ -135,7 +135,7 @@ export function FeatureTabs() {
         </Reveal>
 
         <Reveal delay={100}>
-          <div className="mt-12 flex flex-wrap justify-center gap-2">
+          <div className="mt-8 md:mt-12 flex items-center justify-start md:justify-center gap-2 overflow-x-auto pb-4 md:pb-0 [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden -mx-4 px-4 md:mx-0 md:px-0 md:flex-wrap whitespace-nowrap">
             {TABS.map((t) => {
               const Icon = t.icon;
               const isActive = t.key === active;
@@ -144,7 +144,7 @@ export function FeatureTabs() {
                   key={t.key}
                   onClick={() => setActive(t.key)}
                   className={cn(
-                    'inline-flex items-center gap-2 rounded-full px-5 py-2 text-[15px] font-medium transition',
+                    'inline-flex items-center gap-2 rounded-full px-5 py-2 text-[15px] font-medium transition flex-shrink-0',
                     isActive
                       ? 'bg-white text-[#070b22] shadow-sm'
                       : 'text-white/55 hover:bg-white/5 hover:text-white',
@@ -160,10 +160,10 @@ export function FeatureTabs() {
         </Reveal>
 
         <Reveal delay={200} direction="zoom">
-          <div className="mt-12 overflow-hidden rounded-2xl border border-white/10 bg-white shadow-2xl shadow-indigo-500/10 ring-1 ring-white/5">
+          <div className="mt-8 md:mt-12 overflow-hidden rounded-2xl border border-white/10 bg-white shadow-2xl shadow-indigo-500/10 ring-1 ring-white/5">
             <div className="grid lg:grid-cols-[1fr_1.4fr]">
-              <div className="bg-gradient-to-br from-indigo-50 to-sky-50 p-8 sm:p-10">
-                <h3 className="font-sans text-2xl font-bold tracking-[-0.02em] text-slate-900 sm:text-3xl">
+              <div className="bg-gradient-to-br from-indigo-50 to-sky-50 p-6 sm:p-10">
+                <h3 className="font-sans text-xl sm:text-2xl font-bold tracking-[-0.02em] text-slate-900 md:text-3xl">
                   {data.title}
                 </h3>
                 <ul className="mt-6 space-y-3">
@@ -176,7 +176,7 @@ export function FeatureTabs() {
                 </ul>
               </div>
 
-              <div className="border-t border-slate-100 p-6 sm:p-8 lg:border-l lg:border-t-0">
+              <div className="border-t border-slate-100 p-5 sm:p-8 lg:border-l lg:border-t-0">
                 <MockPreview tab={active} />
               </div>
             </div>
@@ -241,7 +241,7 @@ function MockPreview({ tab }: { tab: TabKey }) {
   }
 
   return (
-    <div className="grid grid-cols-3 gap-3">
+    <div className="grid grid-cols-2 gap-2.5 sm:grid-cols-3 sm:gap-3">
       {[
         { name: 'Rohan M.', role: 'Batch 2010 · Software Engineer', g: 'from-indigo-400 to-sky-500' },
         { name: 'Priya S.', role: 'Batch 2014 · Doctor', g: 'from-rose-400 to-pink-500' },

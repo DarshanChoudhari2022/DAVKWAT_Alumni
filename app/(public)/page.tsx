@@ -48,17 +48,13 @@ export default async function HomePage() {
     <>
       <Hero alumniCount={alumniCount} />
 
-      <div className="hidden md:block">
-        <ManageEngage />
-      </div>
+      <ManageEngage />
 
-      <div className="hidden lg:block">
-        <FeatureTabs />
-      </div>
+      <FeatureTabs />
 
       <Showcase events={events} announcements={announcements} />
 
-      <section className="relative hidden bg-[#070b22] py-24 text-white md:block">
+      <section className="relative bg-[#070b22] py-16 text-white md:py-24">
         <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
           <div className="grid items-center gap-12 lg:grid-cols-2">
             <Reveal direction="left">
@@ -112,7 +108,7 @@ export default async function HomePage() {
         </div>
       </section>
 
-      <section className="hidden bg-[#0a1130] py-24 text-white lg:block">
+      <section className="bg-[#0a1130] py-16 text-white md:py-24">
         <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
           <Reveal>
             <h2 className="text-center font-sans text-3xl font-bold tracking-[-0.025em] sm:text-4xl lg:text-[44px]">
@@ -132,7 +128,7 @@ export default async function HomePage() {
               <Reveal key={b.name} delay={i * 60}>
                 <div className="group flex flex-col items-center">
                   <div
-                    className={`h-28 w-28 rounded-2xl bg-gradient-to-br ${b.g} shadow-lg transition group-hover:-translate-y-1 group-hover:shadow-xl sm:h-32 sm:w-32`}
+                    className={`h-24 w-24 rounded-2xl bg-gradient-to-br ${b.g} shadow-lg transition group-hover:-translate-y-1 group-hover:shadow-xl sm:h-28 sm:w-28 md:h-32 md:w-32`}
                   />
                   <p className="mt-3 whitespace-pre-line text-center text-sm font-semibold leading-tight">
                     {b.name}
@@ -144,14 +140,12 @@ export default async function HomePage() {
         </div>
       </section>
 
-      <div className="hidden lg:block">
-        <FeatureList />
-      </div>
+      <FeatureList />
 
-      <section className="hidden bg-white py-20 md:block">
+      <section className="bg-white py-16 md:py-20">
         <div className="mx-auto max-w-4xl px-4 text-center sm:px-6 lg:px-8">
           <Reveal>
-            <blockquote className="font-sans text-2xl font-medium leading-relaxed text-slate-900 sm:text-[28px]">
+            <blockquote className="font-sans text-xl font-medium leading-relaxed text-slate-900 sm:text-2xl md:text-[28px]">
               &ldquo;Strategies and stories on building lifelong alumni connections —
               when every batch stays engaged, the entire DAV Khagaul community grows stronger.&rdquo;
             </blockquote>
