@@ -5,6 +5,7 @@ import { ArrowRight, ShieldCheck, Sparkles, Users, Calendar, MessageCircle } fro
 import { Reveal } from './Reveal';
 import { BatchMarquee } from './StatsStrip';
 import { TextGenerateEffect } from './TextGenerateEffect';
+import { useScrollParallax } from '@/lib/hooks/useScrollParallax';
 
 interface HeroProps {
   alumniCount: number;
@@ -12,6 +13,8 @@ interface HeroProps {
 
 export function Hero({ alumniCount }: HeroProps) {
   const display = alumniCount > 0 ? `${alumniCount.toLocaleString('en-IN')}+` : '10,000+';
+  const slowOffset = useScrollParallax(0.05);
+  const cardOffset = useScrollParallax(0.035);
 
   return (
     <section className="relative overflow-hidden bg-[#0a1130] text-white">
@@ -22,17 +25,19 @@ export function Hero({ alumniCount }: HeroProps) {
       <div
         aria-hidden
         className="animate-aurora absolute -left-40 top-20 h-[460px] w-[460px] rounded-[42%_58%_64%_36%/48%_38%_62%_52%] bg-[radial-gradient(circle_at_30%_30%,rgba(59,130,246,0.55),transparent_65%)] blur-3xl"
+        style={{ transform: `translate3d(0, ${slowOffset}px, 0)` }}
       />
       <div
         aria-hidden
         className="animate-aurora absolute -right-32 top-44 h-[420px] w-[520px] rounded-[58%_42%_36%_64%/52%_60%_40%_48%] bg-[radial-gradient(circle_at_70%_40%,rgba(245,158,11,0.32),transparent_65%)] blur-3xl [animation-delay:-6s]"
+        style={{ transform: `translate3d(0, ${slowOffset * -0.7}px, 0)` }}
       />
       <div
         aria-hidden
         className="absolute inset-x-0 bottom-0 h-px bg-gradient-to-r from-transparent via-white/15 to-transparent"
       />
 
-      <div className="relative mx-auto max-w-7xl px-4 pb-20 pt-12 sm:px-6 sm:pt-20 lg:px-8 lg:pb-28 lg:pt-24">
+      <div className="relative mx-auto max-w-7xl px-4 pb-14 pt-10 sm:px-6 sm:pt-20 md:pb-20 lg:px-8 lg:pb-28 lg:pt-24">
         <div className="grid items-center gap-12 lg:grid-cols-[1fr_0.95fr] lg:gap-14">
           <div className="max-w-2xl">
             <Reveal direction="zoom">
@@ -100,12 +105,14 @@ export function Hero({ alumniCount }: HeroProps) {
             </Reveal>
           </div>
 
-          <Reveal direction="right" delay={120}>
+          <Reveal direction="right" delay={120} className="hidden md:block">
+            <div style={{ transform: `translate3d(0, ${cardOffset}px, 0)` }}>
             <HeroPreview />
+            </div>
           </Reveal>
         </div>
 
-        <Reveal delay={400}>
+        <Reveal delay={400} className="hidden md:block">
           <div className="mt-14">
             <p className="text-center text-xs uppercase tracking-[0.22em] text-white/40">
               Serving generations of DAV Khagaul alumni

@@ -24,7 +24,7 @@ export function Navbar() {
     }
 
     const updateNavbar = () => {
-      setIsScrolled(window.scrollY > 18);
+      setIsScrolled(window.scrollY > 24);
     };
 
     updateNavbar();
@@ -35,15 +35,15 @@ export function Navbar() {
     };
   }, [isLandingPage]);
 
-  const isDarkTop = isLandingPage && !isScrolled;
+  const isTopDark = isLandingPage && !isScrolled;
 
   return (
     <header
       className={cn(
-        'sticky top-0 z-40 transition-all duration-300',
-        isDarkTop
-          ? 'bg-[#0a1130]'
-          : 'bg-white/80 supports-[backdrop-filter]:bg-white/70',
+        'sticky top-0 z-40 border-b shadow-sm transition-colors duration-300',
+        isTopDark
+          ? 'border-white/10 bg-[#0a1130]'
+          : 'border-slate-200 bg-white',
       )}
     >
       <div className="mx-auto flex h-[74px] max-w-7xl items-center justify-between px-4 sm:px-6 lg:px-8">
@@ -52,7 +52,7 @@ export function Navbar() {
           aria-label="DAVKAWT Home"
           className={cn(
             'font-sans text-[25px] font-extrabold leading-none tracking-[-0.075em] transition-colors',
-            isDarkTop ? 'text-white' : 'text-[#111827]',
+            isTopDark ? 'text-white' : 'text-[#111827]',
           )}
         >
           DAVKAWT
@@ -60,8 +60,8 @@ export function Navbar() {
 
         <nav
           className={cn(
-            'hidden items-center gap-1 rounded-full border px-2 py-1.5 shadow-sm backdrop-blur-xl md:flex',
-            isDarkTop ? 'border-white/10 bg-white/[0.06]' : 'border-slate-200 bg-white/85',
+            'hidden items-center gap-1 rounded-full border px-2 py-1.5 shadow-sm md:flex',
+            isTopDark ? 'border-white/10 bg-white/[0.08]' : 'border-slate-200 bg-slate-50',
           )}
           aria-label="Primary"
         >
@@ -71,9 +71,9 @@ export function Navbar() {
               href={l.href}
               className={cn(
                 'rounded-full px-4 py-2 font-sans text-[14px] font-medium leading-none transition-colors',
-                isDarkTop
-                  ? 'text-white/75 hover:bg-white/10 hover:text-white'
-                  : 'text-[#1f2937] hover:bg-slate-100 hover:text-[#0F2557]',
+                isTopDark
+                  ? 'text-white/80 hover:bg-white/10 hover:text-white'
+                  : 'text-[#1f2937] hover:bg-white hover:text-[#0F2557]',
               )}
             >
               {l.label}
@@ -86,7 +86,7 @@ export function Navbar() {
             href="/login"
             className={cn(
               'hidden font-sans text-[15px] font-medium leading-none transition-colors sm:inline-flex',
-              isDarkTop ? 'text-white/85 hover:text-white' : 'text-[#1f2937] hover:text-[#0F2557]',
+              isTopDark ? 'text-white/85 hover:text-white' : 'text-[#1f2937] hover:text-[#0F2557]',
             )}
           >
             Log in
@@ -95,8 +95,8 @@ export function Navbar() {
             href="/register"
             className={cn(
               'inline-flex h-9 items-center rounded-full border px-5 font-sans text-[15px] font-medium leading-none transition-colors',
-              isDarkTop
-                ? 'border-white/35 bg-transparent text-white hover:bg-white/10'
+              isTopDark
+                ? 'border-white/35 bg-white text-[#111827] hover:bg-slate-100'
                 : 'border-[#111827] bg-white text-[#111827] hover:bg-slate-50',
             )}
           >

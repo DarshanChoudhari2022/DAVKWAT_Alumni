@@ -24,7 +24,7 @@ interface ShowcaseProps {
 
 export function Showcase({ events, announcements }: ShowcaseProps) {
   return (
-    <section id="events" className="relative overflow-hidden bg-[#070b22] py-16 text-white">
+    <section id="events" className="scroll-lift relative overflow-hidden bg-[#070b22] py-16 text-white">
       <div aria-hidden className="aceternity-grid absolute inset-0 opacity-60" />
       <div aria-hidden className="animate-beam absolute left-1/4 top-0 h-[140%] w-24 bg-gradient-to-b from-transparent via-sky-400/20 to-transparent blur-xl" />
       <div aria-hidden className="animate-beam absolute right-1/4 top-0 h-[140%] w-24 bg-gradient-to-b from-transparent via-amber-300/15 to-transparent blur-xl [animation-delay:-4s]" />
@@ -44,7 +44,23 @@ export function Showcase({ events, announcements }: ShowcaseProps) {
           </div>
         </Reveal>
 
-        <div className="relative mt-9 grid gap-5 lg:grid-cols-[0.9fr_1.35fr]">
+        <div className="mt-8 grid gap-3 md:hidden">
+          {[
+            { href: '/events', title: 'Events & reunions', desc: 'See upcoming gatherings' },
+            { href: '/announcements', title: 'Trust updates', desc: 'Read official notices' },
+          ].map((item) => (
+            <Link
+              key={item.href}
+              href={item.href}
+              className="rounded-2xl border border-white/10 bg-white/[0.06] p-4 backdrop-blur transition hover:bg-white/[0.09]"
+            >
+              <h3 className="text-sm font-semibold text-white">{item.title}</h3>
+              <p className="mt-1 text-xs text-white/55">{item.desc}</p>
+            </Link>
+          ))}
+        </div>
+
+        <div className="relative mt-9 hidden gap-5 md:grid lg:grid-cols-[0.9fr_1.35fr]">
           <Reveal direction="left">
             <div className="moving-border-card relative overflow-hidden rounded-2xl bg-[#0b1230] shadow-2xl shadow-blue-950/40">
               <div className="relative z-10 overflow-hidden rounded-2xl border border-white/10 bg-white/[0.04] backdrop-blur-xl">

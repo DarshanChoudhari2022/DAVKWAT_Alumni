@@ -48,13 +48,17 @@ export default async function HomePage() {
     <>
       <Hero alumniCount={alumniCount} />
 
-      <ManageEngage />
+      <div className="hidden md:block">
+        <ManageEngage />
+      </div>
 
-      <FeatureTabs />
+      <div className="hidden lg:block">
+        <FeatureTabs />
+      </div>
 
       <Showcase events={events} announcements={announcements} />
 
-      <section className="relative bg-[#070b22] py-24 text-white">
+      <section className="relative hidden bg-[#070b22] py-24 text-white md:block">
         <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
           <div className="grid items-center gap-12 lg:grid-cols-2">
             <Reveal direction="left">
@@ -108,7 +112,7 @@ export default async function HomePage() {
         </div>
       </section>
 
-      <section className="bg-[#0a1130] py-24 text-white">
+      <section className="hidden bg-[#0a1130] py-24 text-white lg:block">
         <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
           <Reveal>
             <h2 className="text-center font-sans text-3xl font-bold tracking-[-0.025em] sm:text-4xl lg:text-[44px]">
@@ -140,9 +144,11 @@ export default async function HomePage() {
         </div>
       </section>
 
-      <FeatureList />
+      <div className="hidden lg:block">
+        <FeatureList />
+      </div>
 
-      <section className="bg-white py-20">
+      <section className="hidden bg-white py-20 md:block">
         <div className="mx-auto max-w-4xl px-4 text-center sm:px-6 lg:px-8">
           <Reveal>
             <blockquote className="font-sans text-2xl font-medium leading-relaxed text-slate-900 sm:text-[28px]">

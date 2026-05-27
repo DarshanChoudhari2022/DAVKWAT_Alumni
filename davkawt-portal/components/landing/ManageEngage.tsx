@@ -11,7 +11,7 @@ const POINTS = [
 
 export function ManageEngage() {
   return (
-    <section className="relative overflow-hidden bg-[#fbfaf7] py-20">
+    <section className="scroll-lift relative overflow-hidden bg-[#fbfaf7] py-20">
       <div aria-hidden className="absolute left-0 top-0 h-full w-[38%] bg-[#f1efe8]" />
       <div aria-hidden className="absolute right-10 top-16 h-28 w-28 rounded-full bg-amber-300/30 blur-2xl" />
       <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">

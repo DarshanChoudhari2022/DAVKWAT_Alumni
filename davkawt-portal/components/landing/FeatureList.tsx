@@ -74,7 +74,7 @@ const FEATURES = [
 
 export function FeatureList() {
   return (
-    <section className="relative overflow-hidden bg-[#f6f8fb] py-24">
+    <section className="scroll-lift relative overflow-hidden bg-[#f6f8fb] py-24">
       <div aria-hidden className="absolute -left-24 top-24 h-64 w-64 rounded-full bg-sky-200/50 blur-3xl" />
       <div aria-hidden className="absolute -right-20 bottom-24 h-72 w-72 rounded-full bg-amber-200/40 blur-3xl" />
       <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
