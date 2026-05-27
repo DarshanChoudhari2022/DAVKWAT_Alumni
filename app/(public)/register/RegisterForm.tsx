@@ -28,6 +28,17 @@ export function RegisterForm() {
   const [step, setStep] = useState(0);
 
   function next() {
+    const currentStepDiv = document.getElementById(`step-${step}`);
+    if (currentStepDiv) {
+      const inputs = currentStepDiv.querySelectorAll('input, select, textarea');
+      for (const el of Array.from(inputs)) {
+        const input = el as HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement;
+        if (!input.checkValidity()) {
+          input.reportValidity();
+          return;
+        }
+      }
+    }
     setStep((s) => Math.min(s + 1, STEPS.length - 1));
   }
   function back() {
@@ -72,14 +83,14 @@ export function RegisterForm() {
       )}
 
       {/* Step 1 — Account */}
-      <div className={cn('space-y-4', step !== 0 && 'hidden')}>
+      <div id="step-0" className={cn('space-y-4', step !== 0 && 'hidden')}>
         <Field label="Email" name="email" type="email" autoComplete="email" required error={state.fieldErrors?.email} />
         <Field label="Password" name="password" type="password" autoComplete="new-password" required error={state.fieldErrors?.password} hint="Min 8 chars · 1 uppercase · 1 number" />
         <Field label="Confirm Password" name="confirmPassword" type="password" autoComplete="new-password" required error={state.fieldErrors?.confirmPassword} />
       </div>
 
       {/* Step 2 — Academic */}
-      <div className={cn('space-y-4', step !== 1 && 'hidden')}>
+      <div id="step-1" className={cn('space-y-4', step !== 1 && 'hidden')}>
         <Field label="Full Name" name="full_name" required error={state.fieldErrors?.full_name} />
         <div>
           <Label htmlFor="batch_year">Batch Year (graduation) <span className="text-rose-600">*</span></Label>
@@ -116,7 +127,7 @@ export function RegisterForm() {
       </div>
 
       {/* Step 3 — Personal */}
-      <div className={cn('space-y-4', step !== 2 && 'hidden')}>
+      <div id="step-2" className={cn('space-y-4', step !== 2 && 'hidden')}>
         <Field label="Phone (10-digit Indian mobile)" name="phone" type="tel" inputMode="tel" placeholder="9876543210" error={state.fieldErrors?.phone} />
         <div className="grid gap-4 sm:grid-cols-2">
           <Field label="City" name="current_city" />
@@ -138,7 +149,7 @@ export function RegisterForm() {
       </div>
 
       {/* Step 4 — Professional */}
-      <div className={cn('space-y-4', step !== 3 && 'hidden')}>
+      <div id="step-3" className={cn('space-y-4', step !== 3 && 'hidden')}>
         <Field label="Occupation" name="occupation" />
         <div className="grid gap-4 sm:grid-cols-2">
           <Field label="Company / Organisation" name="company" />
