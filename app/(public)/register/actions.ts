@@ -63,10 +63,10 @@ export async function registerAction(
   });
 
   if (signUpError) {
-    if (signUpError.message.toLowerCase().includes('already')) {
+    if (signUpError.message?.toLowerCase().includes('already')) {
       return { error: 'An account with this email already exists. Please log in instead.' };
     }
-    return { error: signUpError.message };
+    return { error: signUpError.message || 'An error occurred during registration.' };
   }
 
   const userId = signUpData.user?.id;
