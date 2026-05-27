@@ -3,10 +3,10 @@ import { CheckCircle2, ArrowRight } from 'lucide-react';
 import { Reveal } from './Reveal';
 
 const POINTS = [
-  'Searchable, committee-verified directory across every batch',
-  'Targeted Trust announcements and event invitations',
-  'Privacy-aware contact visibility, controlled by each member',
-  'City chapters, mentorship circles, and forum threads',
+  { title: 'Verified Directory', desc: 'Classmate directory filtered by batch, city, and industry.' },
+  { title: 'Privacy First', desc: 'Complete control over your contact card visibility.' },
+  { title: 'Official Bulletins', desc: 'Direct circulars, welfare updates, and event notifications.' },
+  { title: 'Reunion Support', desc: 'Trust assistance for batch silver jubilees and chapter meets.' },
 ];
 
 export function ManageEngage() {
@@ -22,20 +22,21 @@ export function ManageEngage() {
                 For the Trust & members
               </span>
               <h2 className="mt-5 max-w-[520px] font-sans text-3xl font-black leading-[0.98] tracking-[-0.055em] text-slate-950 sm:text-5xl lg:text-[64px]">
-                Alumni engagement,
-                <span className="block translate-x-4 md:translate-x-8 text-[#0F2557]">with a human pulse.</span>
+                Alumni connections,
+                <span className="block translate-x-4 md:translate-x-8 text-[#0F2557]">built on trust.</span>
               </h2>
               <p className="mt-6 max-w-md text-base sm:text-[17px] leading-relaxed text-slate-600">
-                Effortlessly keep track of every alumnus and send targeted communication —
-                from reunion invites and welfare circulars to mentorship calls and Trust
-                updates — without losing the warmth of a Khagaul classroom.
+                A secure home for generations of DAV Khagaul graduates. Managed by the Trust, shaped by your batch. Connect with verified peers safely.
               </p>
 
-              <ul className="mt-7 space-y-3 rounded-3xl border border-slate-200 bg-white/80 p-5 shadow-sm backdrop-blur">
+              <ul className="mt-7 space-y-3.5 rounded-3xl border border-slate-200 bg-white/80 p-5 shadow-sm backdrop-blur">
                 {POINTS.map((p) => (
-                  <li key={p} className="flex items-start gap-3 text-sm text-slate-700">
-                    <CheckCircle2 className="mt-0.5 h-4 w-4 flex-none text-emerald-500" />
-                    <span>{p}</span>
+                  <li key={p.title} className="flex items-start gap-3 text-sm">
+                    <CheckCircle2 className="mt-1 h-4 w-4 flex-none text-emerald-500" />
+                    <div>
+                      <strong className="text-slate-950 font-bold block">{p.title}</strong>
+                      <span className="text-slate-600 text-xs mt-0.5 block">{p.desc}</span>
+                    </div>
                   </li>
                 ))}
               </ul>

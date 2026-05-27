@@ -2,6 +2,7 @@ import { createStaticClient } from '@/lib/supabase/static';
 import { Hero } from '@/components/landing/Hero';
 import { FeatureTabs } from '@/components/landing/FeatureTabs';
 import { Showcase } from '@/components/landing/Showcase';
+import { MemberJourney } from '@/components/landing/MemberJourney';
 import { FeatureList } from '@/components/landing/FeatureList';
 import { FinalCTA } from '@/components/landing/FinalCTA';
 import { ManageEngage } from '@/components/landing/ManageEngage';
@@ -48,65 +49,13 @@ export default async function HomePage() {
     <>
       <Hero alumniCount={alumniCount} />
 
+      <Showcase events={events} announcements={announcements} />
+
+      <MemberJourney />
+
       <ManageEngage />
 
       <FeatureTabs />
-
-      <Showcase events={events} announcements={announcements} />
-
-      <section className="relative bg-[#070b22] py-16 text-white md:py-24">
-        <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-          <div className="grid items-center gap-12 lg:grid-cols-2">
-            <Reveal direction="left">
-              <div className="relative overflow-hidden rounded-2xl border border-white/10 bg-gradient-to-br from-indigo-600/20 via-blue-700/10 to-amber-500/10 p-8 backdrop-blur sm:p-10">
-                <h3 className="font-sans text-xl font-bold text-amber-300">
-                  Why alumni engagement is critical
-                </h3>
-                <ul className="mt-5 space-y-3 text-[15px] leading-relaxed text-white/70">
-                  <li className="flex items-start gap-3">
-                    <span className="mt-1.5 h-2 w-2 flex-none rounded-full bg-amber-400" />
-                    Strengthens institutional legacy and reputation across decades
-                  </li>
-                  <li className="flex items-start gap-3">
-                    <span className="mt-1.5 h-2 w-2 flex-none rounded-full bg-sky-400" />
-                    Creates mentorship pipelines for current students and graduates
-                  </li>
-                  <li className="flex items-start gap-3">
-                    <span className="mt-1.5 h-2 w-2 flex-none rounded-full bg-emerald-400" />
-                    Builds professional networks grounded in shared school culture
-                  </li>
-                  <li className="flex items-start gap-3">
-                    <span className="mt-1.5 h-2 w-2 flex-none rounded-full bg-rose-400" />
-                    Enables welfare initiatives and community-driven impact at scale
-                  </li>
-                </ul>
-              </div>
-            </Reveal>
-            <Reveal direction="right" delay={100}>
-              <div>
-                <h2 className="font-sans text-3xl font-bold tracking-[-0.025em] sm:text-4xl lg:text-[44px]">
-                  What is DAVKAWT?
-                </h2>
-                <p className="mt-4 text-[17px] leading-relaxed text-white/60">
-                  DAVKAWT is the official digital platform of DAV Khagaul Alumni Welfare Trust.
-                  It brings verified alumni profiles, Trust announcements, events, forums,
-                  membership payments, and admin governance into one secure, mobile-first portal.
-                </p>
-                <p className="mt-3 text-[15px] leading-relaxed text-white/50">
-                  Effortlessly keep track of all alumni and send targeted communication —
-                  all managed by Trust administrators with transparency and accountability.
-                </p>
-                <a
-                  href="/register"
-                  className="mt-8 inline-flex items-center rounded-full border border-white/20 bg-white/[0.06] px-6 py-3 text-sm font-semibold text-white transition hover:bg-white/10"
-                >
-                  Register as alumnus
-                </a>
-              </div>
-            </Reveal>
-          </div>
-        </div>
-      </section>
 
       <section className="bg-[#0a1130] py-16 text-white md:py-24">
         <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">

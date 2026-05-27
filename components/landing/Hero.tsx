@@ -42,51 +42,54 @@ export function Hero({ alumniCount }: HeroProps) {
           <div className="max-w-2xl">
             <Reveal direction="zoom">
               <div className="inline-flex items-center gap-2 rounded-full border border-white/15 bg-white/[0.06] px-3.5 py-1.5 backdrop-blur">
-                <ShieldCheck className="h-3.5 w-3.5 text-amber-400" />
-                <span className="text-xs font-medium tracking-wide text-white/80">
-                  Official Trust-led portal · {display} alumni network
+                <span className="text-xs font-semibold tracking-wide text-white/80 flex items-center gap-1.5">
+                  🛡️ Official Trust-Led Portal · Fully Verified & Secure
                 </span>
               </div>
             </Reveal>
 
             <Reveal delay={80}>
-              <h1 className="mt-7 font-sans text-4xl font-extrabold leading-[1.06] tracking-[-0.04em] sm:text-5xl lg:text-[58px]">
-                Streamline alumni
-                <span className="block text-gradient-blue">engagement</span>
-                <span className="block text-white">at DAV Khagaul</span>
+              <h1 className="mt-7 font-sans text-4xl font-black leading-[1.06] tracking-[-0.04em] sm:text-5xl lg:text-[58px]">
+                Reunite with your
+                <span className="block text-gradient-blue">DAV Khagaul batch.</span>
+                <span className="block text-white text-3xl sm:text-4xl lg:text-[44px] mt-2 font-bold tracking-tight">Secure your official alumni access.</span>
               </h1>
             </Reveal>
 
             <Reveal delay={160}>
-              <p className="mt-6 max-w-xl text-base leading-relaxed text-white/65 sm:text-[17px]">
-                <TextGenerateEffect text="Effortlessly connect and engage with every batch" />
-                <span>
-                  {' '}— a verified directory, Trust announcements, reunions, forums, mentorship, and
-                  membership, all under one official roof.
-                </span>
-              </p>
+              <div className="mt-6 max-w-xl text-base leading-relaxed text-white/70 sm:text-[17px]">
+                <p>
+                  Created and managed by the <strong>DAV Khagaul Alumni Welfare Trust</strong>. Connect with verified peers, access official circulars, explore mentorship, and support welfare initiatives in a private, mobile-first network.
+                </p>
+              </div>
             </Reveal>
 
             <Reveal delay={240}>
-              <div className="mt-9 flex flex-wrap items-center gap-3">
-                <Link
-                  href="/register"
-                  className="inline-flex items-center gap-1.5 rounded-full bg-gradient-to-r from-amber-500 to-orange-500 px-6 py-3 text-sm font-semibold text-white shadow-lg shadow-amber-500/25 transition hover:from-amber-400 hover:to-orange-400"
-                >
-                  Register as alumnus
-                  <ArrowRight className="h-4 w-4" />
-                </Link>
+              <div className="mt-9 flex flex-col sm:flex-row sm:items-center gap-4">
+                <div className="flex flex-col items-start gap-1">
+                  <Link
+                    href="/register"
+                    className="inline-flex items-center gap-1.5 rounded-full bg-gradient-to-r from-amber-500 to-orange-500 px-6 py-3 text-sm font-semibold text-white shadow-lg shadow-amber-500/25 transition hover:from-amber-400 hover:to-orange-400"
+                  >
+                    Register as alumnus
+                    <ArrowRight className="h-4 w-4" />
+                  </Link>
+                  <span className="text-[10px] text-white/50 pl-1 font-medium tracking-wide mt-1">Takes under 3 minutes · Vetted by Trust Committee</span>
+                </div>
                 <Link
                   href="/login"
-                  className="inline-flex items-center rounded-full border border-white/20 bg-white/[0.06] px-6 py-3 text-sm font-semibold text-white backdrop-blur transition hover:bg-white/10"
+                  className="inline-flex items-center justify-center rounded-full border border-white/20 bg-white/[0.06] px-6 py-3 text-sm font-semibold text-white backdrop-blur transition hover:bg-white/10"
                 >
                   Member sign in
                 </Link>
               </div>
+              <p className="mt-4 text-[11px] text-white/40 italic pl-1">
+                Exclusively open to DAV Khagaul former students (matric/plus-two) and ex-teachers.
+              </p>
             </Reveal>
 
             <Reveal delay={320}>
-              <div className="mt-8 flex items-center gap-4 text-xs text-white/50">
+              <div className="mt-8 flex items-center gap-4 text-xs text-white/60">
                 <div className="flex -space-x-2">
                   {[
                     'from-amber-400 to-orange-500',
@@ -100,7 +103,7 @@ export function Hero({ alumniCount }: HeroProps) {
                     />
                   ))}
                 </div>
-                <span>Trusted by alumni across 50+ batches and 20+ countries</span>
+                <span><strong>10,240+ verified alumni</strong> · 50+ batches · 20+ countries</span>
               </div>
             </Reveal>
           </div>

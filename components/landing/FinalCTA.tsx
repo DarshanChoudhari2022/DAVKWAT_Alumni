@@ -58,7 +58,13 @@ export function FinalCTA() {
               Subscribe
               <Send className="h-3.5 w-3.5" />
             </button>
+            <p className="mt-2 text-xs text-white/50 lg:hidden">
+              We hate spam. Your email is encrypted and never shared. Unsubscribe anytime in one click.
+            </p>
           </form>
+          <p className="mt-2 text-right text-xs text-white/50 hidden lg:block">
+            We hate spam. Your email is encrypted and never shared. Unsubscribe anytime.
+          </p>
         </Reveal>
 
         <Link href="/register" className="sr-only">
