@@ -13,6 +13,11 @@ export const revalidate = 300; // 5 min ISR for the landing page
 async function getLandingData() {
   const supabase = createStaticClient();
 
+  // During CI builds, env vars may be missing — return empty defaults
+  if (!supabase) {
+    return { events: [], announcements: [], alumniCount: 0 };
+  }
+
   const [eventsRes, announcementsRes, statsRes] = await Promise.all([
     supabase
       .from('events')

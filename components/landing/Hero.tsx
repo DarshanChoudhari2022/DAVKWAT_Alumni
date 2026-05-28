@@ -1,10 +1,10 @@
 'use client';
 
 import Link from 'next/link';
-import { ArrowRight, ShieldCheck, Sparkles, Users, Calendar, MessageCircle } from 'lucide-react';
+import { ArrowRight, Sparkles, Users, Calendar, MessageCircle } from 'lucide-react';
 import { Reveal } from './Reveal';
 import { BatchMarquee } from './StatsStrip';
-import { TextGenerateEffect } from './TextGenerateEffect';
+
 import { useScrollParallax } from '@/lib/hooks/useScrollParallax';
 
 interface HeroProps {
@@ -12,7 +12,7 @@ interface HeroProps {
 }
 
 export function Hero({ alumniCount }: HeroProps) {
-  const display = alumniCount > 0 ? `${alumniCount.toLocaleString('en-IN')}+` : '10,000+';
+  const alumniDisplay = alumniCount > 0 ? `${alumniCount.toLocaleString('en-IN')}+` : '10,000+';
   const slowOffset = useScrollParallax(0.05);
   const cardOffset = useScrollParallax(0.035);
 
@@ -103,7 +103,7 @@ export function Hero({ alumniCount }: HeroProps) {
                     />
                   ))}
                 </div>
-                <span><strong>10,240+ verified alumni</strong> · 50+ batches · 20+ countries</span>
+                <span><strong>{alumniDisplay} verified alumni</strong> · 50+ batches · 20+ countries</span>
               </div>
             </Reveal>
           </div>

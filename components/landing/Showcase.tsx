@@ -1,5 +1,5 @@
 import Link from 'next/link';
-import { Sparkles, ArrowRight, Calendar, Bell } from 'lucide-react';
+import { ArrowRight, Calendar, Bell } from 'lucide-react';
 import { Reveal } from './Reveal';
 import { formatDate } from '@/lib/utils/format';
 
