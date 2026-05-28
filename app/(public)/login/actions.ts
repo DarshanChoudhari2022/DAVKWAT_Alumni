@@ -46,7 +46,12 @@ export async function loginAction(_prev: AuthState, formData: FormData): Promise
 
   revalidatePath('/', 'layout');
 
-  if (!profile || profile.approval_status !== 'approved') {
+  if (!profile) {
+    await supabase.auth.signOut();
+    return { error: 'Your account profile was not found. Please contact admin or try registering again.' };
+  }
+
+  if (profile.approval_status !== 'approved') {
     redirect('/pending-approval');
   }
   if (['admin', 'super_admin'].includes(profile.role)) {

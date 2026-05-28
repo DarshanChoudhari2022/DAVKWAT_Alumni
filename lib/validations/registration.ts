@@ -57,11 +57,9 @@ export const professionalSchema = z.object({
   terms_accepted: z.literal(true, { errorMap: () => ({ message: 'You must accept the terms' }) }),
 });
 
-export const fullRegistrationSchema = accountSchema
-  .innerType()
-  .merge(academicSchema)
-  .merge(personalSchema)
-  .merge(professionalSchema);
+export const fullRegistrationSchema = accountSchema.and(
+  academicSchema.merge(personalSchema).merge(professionalSchema)
+);
 
 export type AccountInput = z.infer<typeof accountSchema>;
 export type AcademicInput = z.infer<typeof academicSchema>;

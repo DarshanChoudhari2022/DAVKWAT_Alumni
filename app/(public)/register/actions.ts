@@ -52,6 +52,34 @@ export async function registerAction(
   const data = parsed.data;
   const supabase = await createClient();
 
+  // Pre-check: clean up orphaned auth user (has auth entry but no profile)
+  try {
+    const admin = createAdminClient();
+    const { data: existingUsers, error: listError } = await admin.auth.admin.listUsers();
+    if (listError) {
+      console.error('[register] failed to list users for orphan check:', listError);
+    } else {
+      const orphan = existingUsers?.users?.find(
+        (u) => u.email === data.email
+      );
+      if (orphan) {
+        const { data: existingProfile } = await admin
+          .from('profiles')
+          .select('id')
+          .eq('id', orphan.id)
+          .single();
+        if (!existingProfile) {
+          // Orphaned user — delete so they can re-register
+          await admin.auth.admin.deleteUser(orphan.id);
+        }
+      }
+    }
+  } catch (adminError: unknown) {
+    console.error('[register] admin client initialization failed:', adminError);
+    const msg = adminError instanceof Error ? adminError.message : 'Server configuration error';
+    return { error: msg };
+  }
+
   // 1. Create auth user
   const { data: signUpData, error: signUpError } = await supabase.auth.signUp({
     email: data.email,
