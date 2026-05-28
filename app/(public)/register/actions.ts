@@ -12,11 +12,11 @@ import {
 } from '@/lib/validations/registration';
 import { APP_URL } from '@/lib/resend/client';
 
-const fullSchema = accountSchema
-  .innerType()
-  .merge(academicSchema)
-  .merge(personalSchema)
-  .merge(professionalSchema);
+// Use .and() instead of .innerType().merge() to preserve the
+// .refine() that checks password === confirmPassword.
+const fullSchema = accountSchema.and(
+  academicSchema.merge(personalSchema).merge(professionalSchema)
+);
 
 export interface RegisterState {
   error?: string;
@@ -76,36 +76,45 @@ export async function registerAction(
   }
 
   // 2. Insert profile via service role (bypass RLS for the initial insert)
-  const admin = createAdminClient();
-  const { error: profileError } = await admin.from('profiles').insert({
-    id: userId,
-    email: data.email,
-    full_name: data.full_name,
-    batch_year: data.batch_year,
-    course: data.course,
-    roll_number: data.roll_number || null,
-    phone: data.phone || null,
-    current_city: data.current_city || null,
-    current_state: data.current_state || null,
-    current_country: data.current_country || 'India',
-    date_of_birth: data.date_of_birth || null,
-    gender: data.gender || null,
-    occupation: data.occupation || null,
-    company: data.company || null,
-    job_title: data.job_title || null,
-    industry: data.industry || null,
-    linkedin_url: data.linkedin_url || null,
-    bio: data.bio || null,
-    hide_email: data.hide_email,
-    hide_phone: data.hide_phone,
-    role: 'pending',
-    approval_status: 'pending',
-  });
+  try {
+    const admin = createAdminClient();
+    const { error: profileError } = await admin.from('profiles').insert({
+      id: userId,
+      email: data.email,
+      full_name: data.full_name,
+      batch_year: data.batch_year,
+      course: data.course,
+      roll_number: data.roll_number || null,
+      phone: data.phone || null,
+      current_city: data.current_city || null,
+      current_state: data.current_state || null,
+      current_country: data.current_country || 'India',
+      date_of_birth: data.date_of_birth || null,
+      gender: data.gender || null,
+      occupation: data.occupation || null,
+      company: data.company || null,
+      job_title: data.job_title || null,
+      industry: data.industry || null,
+      linkedin_url: data.linkedin_url || null,
+      bio: data.bio || null,
+      hide_email: data.hide_email,
+      hide_phone: data.hide_phone,
+      role: 'pending',
+      approval_status: 'pending',
+    });
 
-  if (profileError) {
-    // Roll back the auth user so the email isn't taken
-    await admin.auth.admin.deleteUser(userId);
-    return { error: 'Failed to create your profile. Please try again.' };
+    if (profileError) {
+      console.error('[register] profile insert error:', profileError);
+      // Roll back the auth user so the email isn't taken
+      try { await admin.auth.admin.deleteUser(userId); } catch {}
+      return { error: 'Failed to create your profile. Please try again.' };
+    }
+  } catch (adminError: unknown) {
+    console.error('[register] admin client error:', adminError);
+    // Can't roll back auth user here — admin client itself failed.
+    // The orphaned auth user won't have a profile, so login will fail gracefully.
+    const msg = adminError instanceof Error ? adminError.message : 'Server configuration error';
+    return { error: msg };
   }
 
   // 3. Send emails (non-blocking — don't crash if Resend fails)

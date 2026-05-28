@@ -7,12 +7,17 @@ import type { Database } from './database.types';
  * that have already verified the caller's role).
  */
 export function createAdminClient() {
-  if (!process.env.SUPABASE_SERVICE_ROLE_KEY) {
-    throw new Error('SUPABASE_SERVICE_ROLE_KEY is not set');
+  const key = process.env.SUPABASE_SERVICE_ROLE_KEY;
+  if (!key || key === 'PASTE_SERVICE_ROLE_KEY_HERE') {
+    throw new Error(
+      'SUPABASE_SERVICE_ROLE_KEY is not configured. ' +
+      'Go to your Supabase dashboard → Settings → API → service_role key, ' +
+      'then paste it into .env.local (local) or Vercel Environment Variables (production).'
+    );
   }
   return createClient<Database>(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.SUPABASE_SERVICE_ROLE_KEY,
+    key,
     {
       auth: { persistSession: false, autoRefreshToken: false },
     }
