@@ -29,7 +29,7 @@ export function Hero({ alumniCount }: HeroProps) {
       />
       <div
         aria-hidden
-        className="animate-aurora absolute -right-32 top-44 h-[420px] w-[520px] rounded-[58%_42%_36%_64%/52%_60%_40%_48%] bg-[radial-gradient(circle_at_70%_40%,rgba(245,158,11,0.32),transparent_65%)] blur-3xl [animation-delay:-6s]"
+        className="animate-aurora absolute -right-32 top-44 h-[420px] w-[520px] rounded-[58%_42%_36%_64%/52%_60%_40%_48%] bg-[radial-gradient(circle_at_70%_40%,rgba(59,130,246,0.22),transparent_65%)] blur-3xl [animation-delay:-6s]"
         style={{ transform: `translate3d(0, ${slowOffset * -0.7}px, 0)` }}
       />
       <div
@@ -65,37 +65,41 @@ export function Hero({ alumniCount }: HeroProps) {
             </Reveal>
 
             <Reveal delay={240}>
-              <div className="mt-9 flex flex-col sm:flex-row sm:items-center gap-4">
-                <div className="flex flex-col items-start gap-1">
+              <div className="mt-9 flex flex-col gap-3">
+                <div className="flex flex-col sm:flex-row sm:items-center gap-3 sm:gap-4">
                   <Link
                     href="/register"
-                    className="inline-flex items-center gap-1.5 rounded-full bg-gradient-to-r from-amber-500 to-orange-500 px-6 py-3 text-sm font-semibold text-white shadow-lg shadow-amber-500/25 transition hover:from-amber-400 hover:to-orange-400"
+                    className="inline-flex w-full sm:w-auto items-center justify-center gap-1.5 rounded-full bg-gradient-to-r from-amber-500 to-orange-500 px-7 py-3.5 text-sm font-semibold text-white shadow-lg shadow-amber-500/25 transition hover:from-amber-400 hover:to-orange-400"
                   >
                     Register as alumnus
                     <ArrowRight className="h-4 w-4" />
                   </Link>
-                  <span className="text-[10px] text-white/50 pl-1 font-medium tracking-wide mt-1">Takes under 3 minutes · Vetted by Trust Committee</span>
+                  <Link
+                    href="/login"
+                    className="inline-flex w-full sm:w-auto items-center justify-center rounded-full border border-white/20 bg-white/[0.06] px-7 py-3.5 text-sm font-semibold text-white backdrop-blur transition hover:bg-white/10"
+                  >
+                    Member sign in
+                  </Link>
                 </div>
-                <Link
-                  href="/login"
-                  className="inline-flex items-center justify-center rounded-full border border-white/20 bg-white/[0.06] px-6 py-3 text-sm font-semibold text-white backdrop-blur transition hover:bg-white/10"
-                >
-                  Member sign in
-                </Link>
+                <div className="flex flex-col gap-1 sm:pl-2 mt-1">
+                  <span className="text-[11px] text-white/60 font-medium tracking-wide">
+                    Takes under 3 minutes · Vetted by Trust Committee
+                  </span>
+                  <p className="text-[11px] text-white/40 italic">
+                    Exclusively open to DAV Khagaul former students (matric/plus-two) and ex-teachers.
+                  </p>
+                </div>
               </div>
-              <p className="mt-4 text-[11px] text-white/40 italic pl-1">
-                Exclusively open to DAV Khagaul former students (matric/plus-two) and ex-teachers.
-              </p>
             </Reveal>
 
             <Reveal delay={320}>
               <div className="mt-8 flex items-center gap-4 text-xs text-white/60">
                 <div className="flex -space-x-2">
                   {[
-                    'from-amber-400 to-orange-500',
-                    'from-sky-400 to-indigo-500',
-                    'from-rose-400 to-pink-500',
-                    'from-emerald-400 to-teal-500',
+                    'from-blue-500 to-indigo-600',
+                    'from-sky-400 to-blue-500',
+                    'from-indigo-500 to-blue-700',
+                    'from-slate-400 to-slate-600',
                   ].map((g, i) => (
                     <span
                       key={i}
@@ -133,7 +137,7 @@ function HeroPreview() {
     <div className="relative mx-auto w-full max-w-[560px]">
       <div
         aria-hidden
-        className="absolute -inset-6 rounded-[36px] bg-gradient-to-br from-indigo-500/30 via-blue-500/20 to-amber-400/20 blur-2xl"
+        className="absolute -inset-6 rounded-[36px] bg-gradient-to-br from-indigo-500/30 via-blue-500/20 to-sky-400/10 blur-2xl"
       />
       <div className="relative overflow-hidden rounded-3xl border border-white/15 bg-gradient-to-br from-white/[0.08] to-white/[0.02] p-5 shadow-2xl shadow-indigo-900/40 backdrop-blur-xl">
         <div className="flex items-center gap-1.5 pb-4">
@@ -153,7 +157,7 @@ function HeroPreview() {
             </p>
             <p className="mt-1 text-xs text-slate-500">12 Dec · 142 RSVPs · 8 city chapters</p>
             <div className="mt-3 flex -space-x-2">
-              {['from-amber-400 to-orange-500', 'from-sky-400 to-indigo-500', 'from-rose-400 to-pink-500', 'from-emerald-400 to-teal-500', 'from-violet-400 to-fuchsia-500'].map((g, i) => (
+              {['from-blue-500 to-indigo-600', 'from-sky-400 to-blue-500', 'from-indigo-500 to-blue-700', 'from-slate-400 to-slate-600', 'from-blue-600 to-sky-500'].map((g, i) => (
                 <span
                   key={i}
                   className={`inline-block h-7 w-7 rounded-full border-2 border-white bg-gradient-to-br ${g}`}
@@ -170,7 +174,7 @@ function HeroPreview() {
             <p className="mt-2 font-sans text-2xl font-bold tracking-[-0.02em]">10,240</p>
             <p className="text-[11px] text-white/70">Verified alumni</p>
             <div className="mt-3 h-1.5 w-full overflow-hidden rounded-full bg-white/20">
-              <div className="h-full w-3/4 rounded-full bg-amber-400" />
+              <div className="h-full w-3/4 rounded-full bg-sky-400" />
             </div>
           </div>
 

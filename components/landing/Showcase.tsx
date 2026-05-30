@@ -28,10 +28,10 @@ export function Showcase({ events, announcements }: ShowcaseProps) {
       <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
         <Reveal>
           <div className="mx-auto max-w-3xl text-center">
-            <span className="inline-flex items-center gap-2 rounded-full border border-emerald-200 bg-emerald-50 px-3 py-1 text-xs font-semibold text-emerald-700">
+            <span className="inline-flex items-center gap-2 rounded-full border border-blue-200 bg-blue-50 px-3 py-1 text-xs font-semibold text-blue-700">
               <span className="relative flex h-2 w-2">
-                <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-emerald-400 opacity-75"></span>
-                <span className="relative inline-flex h-2 w-2 rounded-full bg-emerald-500"></span>
+                <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-blue-400 opacity-75"></span>
+                <span className="relative inline-flex h-2 w-2 rounded-full bg-blue-500"></span>
               </span>
               Live Trust Updates
             </span>
@@ -49,12 +49,12 @@ export function Showcase({ events, announcements }: ShowcaseProps) {
             <div className="flex h-full flex-col rounded-3xl border border-slate-200 bg-white p-6 shadow-xl shadow-slate-200/40 sm:p-8">
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-3">
-                  <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-emerald-50">
-                    <Calendar className="h-5 w-5 text-emerald-600" />
+                  <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-blue-50">
+                    <Calendar className="h-5 w-5 text-blue-600" />
                   </div>
                   <h3 className="text-xl font-bold text-slate-900">Upcoming Events</h3>
                 </div>
-                <Link href="/events" className="text-sm font-semibold text-emerald-600 hover:text-emerald-700 transition-colors">
+                <Link href="/events" className="text-sm font-semibold text-blue-600 hover:text-blue-700 transition-colors">
                   View all
                 </Link>
               </div>
@@ -65,7 +65,7 @@ export function Showcase({ events, announcements }: ShowcaseProps) {
                     <Link
                       key={e.id}
                       href={`/events/${e.id}`}
-                      className="group flex items-start gap-4 rounded-2xl border border-slate-100 bg-slate-50/50 p-4 transition-all duration-300 ease-out hover:-translate-y-1 hover:border-emerald-200 hover:bg-emerald-50/30 hover:shadow-lg"
+                      className="group flex items-start gap-4 rounded-2xl border border-slate-100 bg-slate-50/50 p-4 transition-all duration-300 ease-out hover:-translate-y-1 hover:border-blue-200 hover:bg-blue-50/30 hover:shadow-lg"
                     >
                       <div className="flex h-14 w-14 flex-none flex-col items-center justify-center rounded-xl bg-white text-center shadow-sm border border-slate-200">
                         <span className="text-[10px] font-bold uppercase text-slate-500">
@@ -76,14 +76,14 @@ export function Showcase({ events, announcements }: ShowcaseProps) {
                         </span>
                       </div>
                       <div className="min-w-0 flex-1">
-                        <p className="line-clamp-2 font-bold text-slate-900 transition-colors group-hover:text-emerald-700">
+                        <p className="line-clamp-2 font-bold text-slate-900 transition-colors group-hover:text-blue-700">
                           {e.title}
                         </p>
                         <p className="mt-1 flex items-center gap-1 text-sm text-slate-500">
                           <span className="truncate">{e.event_type === 'online' ? 'Online Event' : e.venue ?? 'Venue TBA'}</span>
                         </p>
                       </div>
-                      <ArrowRight className="h-5 w-5 flex-none self-center text-slate-300 transition-transform group-hover:-rotate-45 group-hover:text-emerald-500" />
+                      <ArrowRight className="h-5 w-5 flex-none self-center text-slate-300 transition-transform group-hover:-rotate-45 group-hover:text-blue-500" />
                     </Link>
                   ))
                 ) : (
@@ -100,12 +100,12 @@ export function Showcase({ events, announcements }: ShowcaseProps) {
             <div className="flex h-full flex-col rounded-3xl border border-slate-200 bg-white p-6 shadow-xl shadow-slate-200/40 sm:p-8">
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-3">
-                  <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-amber-50">
-                    <Bell className="h-5 w-5 text-amber-600" />
+                  <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-blue-50">
+                    <Bell className="h-5 w-5 text-blue-600" />
                   </div>
                   <h3 className="text-xl font-bold text-slate-900">Trust Announcements</h3>
                 </div>
-                <Link href="/announcements" className="text-sm font-semibold text-amber-600 hover:text-amber-700 transition-colors">
+                <Link href="/announcements" className="text-sm font-semibold text-blue-600 hover:text-blue-700 transition-colors">
                   View all
                 </Link>
               </div>
@@ -116,20 +116,20 @@ export function Showcase({ events, announcements }: ShowcaseProps) {
                     <Link
                       key={a.id}
                       href={`/announcements/${a.id}`}
-                      className="group flex items-start gap-4 rounded-2xl border border-slate-100 bg-slate-50/50 p-4 transition-all duration-300 ease-out hover:-translate-y-1 hover:border-amber-200 hover:bg-amber-50/30 hover:shadow-lg"
+                      className="group flex items-start gap-4 rounded-2xl border border-slate-100 bg-slate-50/50 p-4 transition-all duration-300 ease-out hover:-translate-y-1 hover:border-blue-200 hover:bg-blue-50/30 hover:shadow-lg"
                     >
                       <div className="min-w-0 flex-1">
-                        <span className="inline-block rounded-full bg-amber-100 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider text-amber-800 mb-2">
+                        <span className="inline-block rounded-full bg-blue-100 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider text-blue-800 mb-2">
                           Circular
                         </span>
-                        <p className="line-clamp-2 font-bold text-slate-900 transition-colors group-hover:text-amber-700">
+                        <p className="line-clamp-2 font-bold text-slate-900 transition-colors group-hover:text-blue-700">
                           {a.title}
                         </p>
                         <p className="mt-2 text-xs text-slate-500">
                           {a.published_at ? formatDate(a.published_at) : ''}
                         </p>
                       </div>
-                      <ArrowRight className="h-5 w-5 flex-none self-center text-slate-300 transition-transform group-hover:-rotate-45 group-hover:text-amber-500" />
+                      <ArrowRight className="h-5 w-5 flex-none self-center text-slate-300 transition-transform group-hover:-rotate-45 group-hover:text-blue-500" />
                     </Link>
                   ))
                 ) : (

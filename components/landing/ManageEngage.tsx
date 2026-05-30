@@ -11,9 +11,9 @@ const POINTS = [
 
 export function ManageEngage() {
   return (
-    <section className="scroll-lift relative overflow-hidden bg-[#fbfaf7] py-12 md:py-20">
-      <div aria-hidden className="absolute left-0 top-0 h-[45%] lg:h-full w-full lg:w-[38%] bg-[#f1efe8]" />
-      <div aria-hidden className="absolute right-10 top-16 h-28 w-28 rounded-full bg-amber-300/30 blur-2xl" />
+    <section className="scroll-lift relative overflow-hidden bg-slate-50 py-12 md:py-20">
+      <div aria-hidden className="absolute left-0 top-0 h-[45%] lg:h-full w-full lg:w-[38%] bg-slate-100/40" />
+      <div aria-hidden className="absolute right-10 top-16 h-28 w-28 rounded-full bg-blue-300/20 blur-2xl" />
       <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
         <div className="grid items-center gap-12 lg:grid-cols-[0.86fr_1.14fr]">
           <Reveal direction="left">
@@ -32,7 +32,7 @@ export function ManageEngage() {
               <ul className="mt-7 space-y-3.5 rounded-3xl border border-slate-200 bg-white/80 p-5 shadow-sm backdrop-blur">
                 {POINTS.map((p) => (
                   <li key={p.title} className="flex items-start gap-3 text-sm">
-                    <CheckCircle2 className="mt-1 h-4 w-4 flex-none text-emerald-500" />
+                    <CheckCircle2 className="mt-1 h-4 w-4 flex-none text-blue-600" />
                     <div>
                       <strong className="text-slate-950 font-bold block">{p.title}</strong>
                       <span className="text-slate-600 text-xs mt-0.5 block">{p.desc}</span>
@@ -67,7 +67,7 @@ export function ManageEngage() {
               />
               <div
                 aria-hidden
-                className="absolute bottom-6 right-6 h-[180px] w-[180px] sm:h-[290px] sm:w-[290px] rotate-12 rounded-[42%_58%_64%_36%/48%_38%_62%_52%] bg-gradient-to-br from-amber-300 to-orange-400 shadow-2xl shadow-amber-500/20"
+                className="absolute bottom-6 right-6 h-[180px] w-[180px] sm:h-[290px] sm:w-[290px] rotate-12 rounded-[42%_58%_64%_36%/48%_38%_62%_52%] bg-gradient-to-br from-indigo-600 via-blue-500 to-sky-400 shadow-2xl shadow-indigo-900/20"
               />
 
               <div className="absolute left-2 top-14 sm:top-20 w-[90%] sm:w-[78%] rotate-[-2deg] rounded-[28px] bg-white p-4 shadow-2xl shadow-indigo-900/20 ring-1 ring-slate-200">
@@ -75,19 +75,19 @@ export function ManageEngage() {
                   <p className="text-xs font-semibold uppercase tracking-wider text-slate-500">
                     Alumni directory
                   </p>
-                  <span className="rounded-full bg-emerald-50 px-2 py-0.5 text-[10px] font-semibold text-emerald-700">
+                  <span className="rounded-full bg-blue-50 px-2 py-0.5 text-[10px] font-semibold text-blue-700">
                     Verified
                   </span>
                 </div>
 
                 <div className="mt-3 grid grid-cols-3 gap-2">
                   {[
-                    { name: 'A. Kumar', batch: '1996', g: 'from-amber-400 to-orange-500' },
-                    { name: 'P. Singh', batch: '2003', g: 'from-sky-400 to-indigo-500' },
-                    { name: 'R. Verma', batch: '1984', g: 'from-rose-400 to-pink-500' },
-                    { name: 'S. Mishra', batch: '2010', g: 'from-emerald-400 to-teal-500' },
-                    { name: 'M. Raj', batch: '1972', g: 'from-violet-400 to-fuchsia-500' },
-                    { name: 'D. Jha', batch: '2018', g: 'from-cyan-400 to-blue-500' },
+                    { name: 'A. Kumar', batch: '1996', g: 'from-blue-500 to-indigo-600' },
+                    { name: 'P. Singh', batch: '2003', g: 'from-sky-400 to-blue-500' },
+                    { name: 'R. Verma', batch: '1984', g: 'from-indigo-400 to-sky-500' },
+                    { name: 'S. Mishra', batch: '2010', g: 'from-slate-400 to-slate-600' },
+                    { name: 'M. Raj', batch: '1972', g: 'from-blue-600 to-sky-500' },
+                    { name: 'D. Jha', batch: '2018', g: 'from-indigo-500 to-blue-700' },
                   ].map((m) => (
                     <div
                       key={m.name}
@@ -106,19 +106,19 @@ export function ManageEngage() {
 
                 <div className="mt-3 flex items-center justify-between rounded-lg bg-slate-900 px-3 py-2 text-[10px] sm:text-[11px] text-white">
                   <span>10,240 verified alumni</span>
-                  <span className="text-amber-300">View directory →</span>
+                  <span className="text-sky-300">View directory →</span>
                 </div>
               </div>
 
-              <div className="absolute bottom-8 right-2 w-[180px] sm:w-[250px] rotate-3 rounded-3xl border border-slate-200 bg-white p-3.5 sm:p-5 shadow-2xl shadow-amber-900/10">
-                <p className="text-[10px] sm:text-xs font-semibold uppercase tracking-wider text-amber-600">
+              <div className="absolute bottom-8 right-2 w-[180px] sm:w-[250px] rotate-3 rounded-3xl border border-slate-200 bg-white p-3.5 sm:p-5 shadow-2xl shadow-blue-900/10">
+                <p className="text-[10px] sm:text-xs font-semibold uppercase tracking-wider text-blue-600">
                   Targeted update
                 </p>
                 <p className="mt-1 sm:mt-2 text-xs sm:text-lg font-bold leading-tight text-slate-950">
                   Batch 1998 silver jubilee invites ready
                 </p>
                 <div className="mt-3 sm:mt-4 flex -space-x-2">
-                  {['bg-amber-400', 'bg-sky-400', 'bg-emerald-400', 'bg-rose-400'].map((c) => (
+                  {['bg-blue-600', 'bg-sky-400', 'bg-indigo-500', 'bg-slate-400'].map((c) => (
                     <span key={c} className={`h-6 w-6 sm:h-8 sm:w-8 rounded-full border-2 border-white ${c}`} />
                   ))}
                 </div>

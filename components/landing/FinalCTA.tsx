@@ -12,7 +12,7 @@ export function FinalCTA() {
     <section className="relative overflow-hidden bg-gradient-to-br from-[#0F2557] via-indigo-800 to-[#0a1130] py-16">
       <div
         aria-hidden
-        className="absolute -left-20 top-1/4 h-[340px] w-[340px] rounded-[42%_58%_64%_36%/48%_38%_62%_52%] bg-amber-400/20 blur-3xl"
+        className="absolute -left-20 top-1/4 h-[340px] w-[340px] rounded-[42%_58%_64%_36%/48%_38%_62%_52%] bg-blue-400/10 blur-3xl"
       />
       <div
         aria-hidden
@@ -48,7 +48,7 @@ export function FinalCTA() {
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               placeholder="Your email for updates"
-              className="min-w-0 flex-1 rounded-full border border-white/20 bg-white px-5 py-3 text-sm text-slate-900 placeholder:text-slate-400 shadow-sm focus:outline-none focus:ring-2 focus:ring-amber-400 lg:max-w-[280px]"
+              className="min-w-0 flex-1 rounded-full border border-white/20 bg-white px-5 py-3 text-sm text-slate-900 placeholder:text-slate-400 shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-400 lg:max-w-[280px]"
               aria-label="Email"
             />
             <button

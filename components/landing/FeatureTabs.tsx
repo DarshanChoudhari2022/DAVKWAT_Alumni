@@ -244,11 +244,11 @@ function MockPreview({ tab }: { tab: TabKey }) {
     <div className="grid grid-cols-2 gap-2.5 sm:grid-cols-3 sm:gap-3">
       {[
         { name: 'Rohan M.', role: 'Batch 2010 · Software Engineer', g: 'from-indigo-400 to-sky-500' },
-        { name: 'Priya S.', role: 'Batch 2014 · Doctor', g: 'from-rose-400 to-pink-500' },
-        { name: 'Amit K.', role: 'Batch 1998 · Entrepreneur', g: 'from-amber-400 to-orange-500' },
-        { name: 'Neha R.', role: 'Batch 2019 · Designer', g: 'from-violet-400 to-purple-500' },
-        { name: 'Rahul J.', role: 'Batch 2005 · Banker', g: 'from-emerald-400 to-teal-500' },
-        { name: 'Sneha P.', role: 'Batch 2021 · Researcher', g: 'from-fuchsia-400 to-pink-500' },
+        { name: 'Priya S.', role: 'Batch 2014 · Doctor', g: 'from-blue-400 to-sky-600' },
+        { name: 'Amit K.', role: 'Batch 1998 · Entrepreneur', g: 'from-indigo-500 to-blue-700' },
+        { name: 'Neha R.', role: 'Batch 2019 · Designer', g: 'from-sky-500 to-indigo-500' },
+        { name: 'Rahul J.', role: 'Batch 2005 · Banker', g: 'from-blue-500 to-slate-500' },
+        { name: 'Sneha P.', role: 'Batch 2021 · Researcher', g: 'from-indigo-600 to-sky-400' },
       ].map((p) => (
         <div
           key={p.name}

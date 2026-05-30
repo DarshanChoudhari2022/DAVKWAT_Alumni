@@ -62,38 +62,6 @@ export default async function HomePage() {
 
       <FeatureTabs />
 
-      <section className="bg-[#0a1130] py-16 text-white md:py-24">
-        <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-          <Reveal>
-            <h2 className="text-center font-sans text-3xl font-bold tracking-[-0.025em] sm:text-4xl lg:text-[44px]">
-              Generations connected by one DAV Khagaul identity
-            </h2>
-          </Reveal>
-
-          <div className="mt-16 grid grid-cols-2 gap-4 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6">
-            {[
-              { name: 'Batch\n1972', g: 'from-rose-400 to-orange-400' },
-              { name: 'Batch\n1984', g: 'from-emerald-400 to-teal-400' },
-              { name: 'Batch\n1996', g: 'from-sky-400 to-indigo-400' },
-              { name: 'Batch\n2003', g: 'from-amber-400 to-yellow-400' },
-              { name: 'Batch\n2010', g: 'from-violet-400 to-purple-400' },
-              { name: 'Batch\n2018', g: 'from-pink-400 to-rose-400' },
-            ].map((b, i) => (
-              <Reveal key={b.name} delay={i * 60}>
-                <div className="group flex flex-col items-center">
-                  <div
-                    className={`h-24 w-24 rounded-2xl bg-gradient-to-br ${b.g} shadow-lg transition group-hover:-translate-y-1 group-hover:shadow-xl sm:h-28 sm:w-28 md:h-32 md:w-32`}
-                  />
-                  <p className="mt-3 whitespace-pre-line text-center text-sm font-semibold leading-tight">
-                    {b.name}
-                  </p>
-                </div>
-              </Reveal>
-            ))}
-          </div>
-        </div>
-      </section>
-
       <div className="hidden lg:block">
         <FeatureList />
       </div>
