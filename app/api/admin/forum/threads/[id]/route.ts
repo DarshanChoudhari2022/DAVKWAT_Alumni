@@ -16,7 +16,12 @@ export async function PATCH(
   const { id } = await params;
   const body = await req.json();
 
-  const allowed: Record<string, unknown> = {};
+  const allowed: {
+    title?: string;
+    content?: string;
+    is_pinned?: boolean;
+    is_locked?: boolean;
+  } = {};
   if (typeof body.title === 'string' && body.title.trim().length > 0) {
     allowed.title = body.title.trim();
   }

@@ -1,12 +1,12 @@
 import type { Metadata } from 'next';
-import { Download, Users, CreditCard, Calendar } from 'lucide-react';
-import { Card } from '@/components/ui/card';
+import { Calendar, CreditCard, Download, Users } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { Card } from '@/components/ui/card';
 import { requireAdminAccess } from '@/lib/auth/admin-access';
 import { formatINR } from '@/lib/utils/format';
 import { ReportsCharts } from './ReportsCharts';
 
-export const metadata: Metadata = { title: 'Reports & Exports — Admin' };
+export const metadata: Metadata = { title: 'Reports & Exports - Admin' };
 
 export default async function AdminReportsPage() {
   const { database: supabase } = await requireAdminAccess();
@@ -22,57 +22,45 @@ export default async function AdminReportsPage() {
     registrationsByMonth,
     paymentsByMonth,
     popularThreads,
-  ] =
-    await Promise.all([
-      supabase.from('profiles').select('id', { count: 'exact', head: true }).eq('approval_status', 'approved'),
-      supabase.from('profiles').select('id', { count: 'exact', head: true }).eq('is_paid_member', true),
-      supabase.from('payments').select('amount').eq('status', 'success'),
-      supabase
-        .from('profiles')
-        .select('id', { count: 'exact', head: true })
-        .gte('last_seen_at', activeSince),
-      supabase
-        .from('profiles')
-        .select('batch_year')
-        .eq('approval_status', 'approved')
-        .order('batch_year', { ascending: true }),
-      supabase
-        .from('profiles')
-        .select('current_state')
-        .eq('approval_status', 'approved'),
-      supabase
-        .from('profiles')
-        .select('created_at')
-        .order('created_at', { ascending: true }),
-      supabase
-        .from('payments')
-        .select('amount, created_at')
-        .eq('status', 'success')
-        .order('created_at', { ascending: true }),
-      supabase
-        .from('forum_threads')
-        .select('id, title, reply_count, created_at')
-        .order('reply_count', { ascending: false })
-        .order('created_at', { ascending: false })
-        .limit(5),
-    ]);
+  ] = await Promise.all([
+    supabase.from('profiles').select('id', { count: 'exact', head: true }).eq('approval_status', 'approved'),
+    supabase.from('profiles').select('id', { count: 'exact', head: true }).eq('is_paid_member', true),
+    supabase.from('payments').select('amount').eq('status', 'success'),
+    supabase.from('profiles').select('id', { count: 'exact', head: true }).gte('last_seen_at', activeSince),
+    supabase
+      .from('profiles')
+      .select('batch_year')
+      .eq('approval_status', 'approved')
+      .order('batch_year', { ascending: true }),
+    supabase.from('profiles').select('current_state').eq('approval_status', 'approved'),
+    supabase.from('profiles').select('created_at').order('created_at', { ascending: true }),
+    supabase
+      .from('payments')
+      .select('amount, created_at')
+      .eq('status', 'success')
+      .order('created_at', { ascending: true }),
+    supabase
+      .from('forum_threads')
+      .select('id, title, reply_count, created_at')
+      .order('reply_count', { ascending: false })
+      .order('created_at', { ascending: false })
+      .limit(5),
+  ]);
 
   const totalRevenue = (revenueRes.data ?? []).reduce(
-    (s: number, p: { amount: number }) => s + Number(p.amount),
+    (sum: number, payment: { amount: number }) => sum + Number(payment.amount),
     0
   );
 
-  // Batch distribution data
   const batchMap = new Map<number, number>();
   for (const row of alumniByBatch.data ?? []) {
-    const yr = (row as { batch_year: number }).batch_year;
-    batchMap.set(yr, (batchMap.get(yr) ?? 0) + 1);
+    const year = (row as { batch_year: number }).batch_year;
+    batchMap.set(year, (batchMap.get(year) ?? 0) + 1);
   }
   const batchChartData = Array.from(batchMap.entries())
     .map(([year, count]) => ({ year: String(year), count }))
-    .slice(-20); // Last 20 batches
+    .slice(-20);
 
-  // State distribution
   const stateMap = new Map<string, number>();
   for (const row of alumniByState.data ?? []) {
     const state = (row as { current_state: string | null }).current_state ?? 'Unknown';
@@ -92,18 +80,16 @@ export default async function AdminReportsPage() {
     .map(([month, count]) => ({ month, count }))
     .slice(-12);
 
-  // Monthly payments
-  const monthMap = new Map<string, number>();
+  const revenueMap = new Map<string, number>();
   for (const row of paymentsByMonth.data ?? []) {
-    const r = row as { amount: number; created_at: string };
-    const month = r.created_at.slice(0, 7); // YYYY-MM
-    monthMap.set(month, (monthMap.get(month) ?? 0) + Number(r.amount));
+    const payment = row as { amount: number; created_at: string };
+    const month = payment.created_at.slice(0, 7);
+    revenueMap.set(month, (revenueMap.get(month) ?? 0) + Number(payment.amount));
   }
-  const paymentChartData = Array.from(monthMap.entries())
+  const paymentChartData = Array.from(revenueMap.entries())
     .map(([month, amount]) => ({ month, amount }))
     .slice(-12);
 
-  // Conversion rate
   const totalAlumni = totalRes.count ?? 0;
   const paidAlumni = paidRes.count ?? 0;
   const activeUsers = activeRes.count ?? 0;
@@ -114,8 +100,7 @@ export default async function AdminReportsPage() {
       <h1 className="font-display text-3xl font-semibold tracking-tight">Reports & Exports</h1>
       <p className="mt-1 text-sm text-slate-500">Analytics and data exports for the portal.</p>
 
-      {/* Summary stats */}
-      <div className="mt-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+      <div className="mt-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-5">
         <Card>
           <p className="text-sm text-slate-500">Total Alumni</p>
           <p className="mt-1 font-display text-2xl font-semibold">{totalAlumni}</p>
@@ -138,7 +123,6 @@ export default async function AdminReportsPage() {
         </Card>
       </div>
 
-      {/* Charts */}
       <ReportsCharts
         batchData={batchChartData}
         stateData={stateChartData}
@@ -153,7 +137,7 @@ export default async function AdminReportsPage() {
             <Card key={thread.id}>
               <p className="font-medium text-slate-900">{thread.title}</p>
               <p className="mt-1 text-sm text-slate-500">
-                {thread.reply_count} replies · created {new Date(thread.created_at).toLocaleDateString('en-IN')}
+                {thread.reply_count} replies - created {new Date(thread.created_at).toLocaleDateString('en-IN')}
               </p>
             </Card>
           ))}
@@ -163,7 +147,6 @@ export default async function AdminReportsPage() {
         </div>
       </section>
 
-      {/* Export cards */}
       <section className="mt-10">
         <h2 className="font-display text-xl font-semibold">Export Data</h2>
         <div className="mt-4 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
@@ -184,7 +167,7 @@ export default async function AdminReportsPage() {
             title="Event RSVPs"
             description="Export attendee list for a specific event."
             href="/admin/events"
-            note="Go to Events → Select event → RSVPs → Export"
+            note="Go to Events -> Select event -> RSVPs -> Export"
           />
         </div>
       </section>

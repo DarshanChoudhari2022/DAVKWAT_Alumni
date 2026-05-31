@@ -89,9 +89,7 @@ export default async function MembershipReceiptPage({
           </div>
           <div>
             <dt className="text-sm text-slate-500">Amount paid</dt>
-            <dd className="mt-1 font-medium text-slate-900">
-              {formatINR(Number(payment.amount))} {payment.currency}
-            </dd>
+            <dd className="mt-1 font-medium text-slate-900">{formatINR(Number(payment.amount))}</dd>
           </div>
           <div>
             <dt className="text-sm text-slate-500">Payment date</dt>

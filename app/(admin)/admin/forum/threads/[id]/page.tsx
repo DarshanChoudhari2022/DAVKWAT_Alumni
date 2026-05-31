@@ -20,7 +20,7 @@ export default async function AdminForumThreadPage({
   const { id } = await params;
   const { database: supabase } = await requireAdminAccess();
 
-  const [{ data: thread }, { data: replies }] = await Promise.all([
+  const [{ data: thread }, { data: repliesRaw }] = await Promise.all([
     supabase
       .from('forum_threads')
       .select(
@@ -30,9 +30,7 @@ export default async function AdminForumThreadPage({
       .maybeSingle(),
     supabase
       .from('forum_replies')
-      .select(
-        'id, content, is_deleted, created_at, profiles!forum_replies_author_id_fkey(full_name, avatar_url, batch_year)'
-      )
+      .select('id, author_id, content, is_deleted, created_at')
       .eq('thread_id', id)
       .order('created_at', { ascending: true }),
   ]);
@@ -40,6 +38,18 @@ export default async function AdminForumThreadPage({
   if (!thread) {
     notFound();
   }
+
+  const authorIds = Array.from(
+    new Set((repliesRaw ?? []).map((reply) => reply.author_id).filter(Boolean))
+  );
+  const { data: replyAuthors } = await supabase
+    .from('profiles')
+    .select('id, full_name, avatar_url, batch_year')
+    .in('id', authorIds.length > 0 ? authorIds : ['00000000-0000-0000-0000-000000000000']);
+
+  const replyAuthorsById = new Map(
+    (replyAuthors ?? []).map((profile) => [profile.id, profile])
+  );
 
   const author =
     thread.profiles && !Array.isArray(thread.profiles) ? thread.profiles : null;
@@ -93,9 +103,8 @@ export default async function AdminForumThreadPage({
       <section className="mt-10">
         <h2 className="font-display text-xl font-semibold">Replies</h2>
         <ul className="mt-4 space-y-3">
-          {(replies ?? []).map((reply) => {
-            const replyAuthor =
-              reply.profiles && !Array.isArray(reply.profiles) ? reply.profiles : null;
+          {(repliesRaw ?? []).map((reply) => {
+            const replyAuthor = replyAuthorsById.get(reply.author_id) ?? null;
             return (
               <li key={reply.id}>
                 <Card>
@@ -122,7 +131,7 @@ export default async function AdminForumThreadPage({
               </li>
             );
           })}
-          {(replies ?? []).length === 0 && (
+          {(repliesRaw ?? []).length === 0 && (
             <li>
               <Card className="text-center text-sm text-slate-500">No replies have been posted yet.</Card>
             </li>

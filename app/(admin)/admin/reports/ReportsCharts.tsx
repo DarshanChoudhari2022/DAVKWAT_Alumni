@@ -1,15 +1,15 @@
 'use client';
 
 import {
-  BarChart,
   Bar,
-  LineChart,
+  BarChart,
+  CartesianGrid,
   Line,
+  LineChart,
+  ResponsiveContainer,
+  Tooltip,
   XAxis,
   YAxis,
-  CartesianGrid,
-  Tooltip,
-  ResponsiveContainer,
 } from 'recharts';
 import { Card } from '@/components/ui/card';
 
@@ -55,7 +55,6 @@ export function ReportsCharts({
         </div>
       </Card>
 
-      {/* Batch Distribution */}
       <Card>
         <h3 className="font-display text-base font-semibold">Alumni by Batch Year</h3>
         <div className="mt-4 h-64">
@@ -77,7 +76,6 @@ export function ReportsCharts({
         </div>
       </Card>
 
-      {/* State Distribution */}
       <Card>
         <h3 className="font-display text-base font-semibold">Alumni by State (Top 10)</h3>
         <div className="mt-4 h-64">
@@ -99,7 +97,6 @@ export function ReportsCharts({
         </div>
       </Card>
 
-      {/* Revenue Over Time */}
       <Card>
         <h3 className="font-display text-base font-semibold">Monthly Revenue</h3>
         <div className="mt-4 h-64">
@@ -109,7 +106,7 @@ export function ReportsCharts({
                 <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" />
                 <XAxis dataKey="month" tick={{ fontSize: 11 }} />
                 <YAxis tick={{ fontSize: 11 }} />
-                <Tooltip formatter={(value: number) => [`₹${value.toLocaleString('en-IN')}`, 'Revenue']} />
+                <Tooltip formatter={(value: number) => [`INR ${value.toLocaleString('en-IN')}`, 'Revenue']} />
                 <Line
                   type="monotone"
                   dataKey="amount"

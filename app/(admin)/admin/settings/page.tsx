@@ -110,9 +110,9 @@ export default async function AdminSettingsPage() {
             membership renewal reminders, and segmented announcement emails.
           </p>
           <ul className="mt-4 space-y-2 text-sm text-slate-500">
-            <li>`RESEND_API_KEY` and `RESEND_FROM_EMAIL` enable outbound emails.</li>
-            <li>`EASEBUZZ_KEY` and `EASEBUZZ_SALT` enable online payment redirects.</li>
-            <li>`CRON_SECRET` secures the reminder cron endpoints.</li>
+            <li><code>RESEND_API_KEY</code> and <code>RESEND_FROM_EMAIL</code> enable outbound emails.</li>
+            <li><code>EASEBUZZ_KEY</code> and <code>EASEBUZZ_SALT</code> enable online payment redirects.</li>
+            <li><code>CRON_SECRET</code> secures the reminder cron endpoints.</li>
           </ul>
         </Card>
       </section>

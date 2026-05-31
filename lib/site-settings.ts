@@ -1,7 +1,7 @@
 import type { Database, Json } from '@/lib/supabase/database.types';
 import { createStaticClient } from '@/lib/supabase/static';
 
-type SiteSettingRow = Database['public']['Tables']['site_settings']['Row'];
+type SiteSettingRow = Pick<Database['public']['Tables']['site_settings']['Row'], 'key' | 'value'>;
 
 export interface SiteSettings {
   trustName: string;
