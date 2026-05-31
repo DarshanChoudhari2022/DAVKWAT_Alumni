@@ -4,7 +4,7 @@
 This manual helps DAVKAWT administrators operate the alumni portal after launch.
 
 ## Admin Access
-1. Sign in at `/login` with an account that has `admin` or `super_admin` role.
+1. Sign in at `/admin-login` with an account that has `admin` or `super_admin` role.
 2. Open `/admin` after login.
 3. If access is denied, confirm the user profile has `approval_status = approved` and role `admin` or `super_admin`.
 
@@ -94,6 +94,8 @@ Payment records include:
 - Status
 - Gateway response details
 - Payment date
+
+Until the payment gateway goes live, pending records may represent manual membership requests submitted by alumni for admin follow-up.
 
 Refunds should be handled according to the trust's finance policy and verified against Easebuzz records.
 

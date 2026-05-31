@@ -5,7 +5,6 @@ import { Card } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { createClient } from '@/lib/supabase/server';
-import { getPrisma } from '@/lib/prisma';
 import { getDefaultSignedInPath } from '@/lib/utils/auth-routing';
 import { logoutAction } from '../login/actions';
 import { formatDate } from '@/lib/utils/format';
@@ -18,23 +17,43 @@ export default async function PendingApprovalPage() {
 
   if (!user) redirect('/login');
 
-  // Use Prisma for profile query
-  const prisma = getPrisma();
-  const profile = await prisma.profiles.findUnique({
-    where: { id: user.id },
-    select: {
-      full_name: true,
-      batch_year: true,
-      course: true,
-      email: true,
-      role: true,
-      approval_status: true,
-      rejection_reason: true,
-      created_at: true,
-    },
-  });
+  const { data: profile, error } = await supabase
+    .from('profiles')
+    .select(
+      'full_name, batch_year, course, email, role, approval_status, rejection_reason, created_at'
+    )
+    .eq('id', user.id)
+    .maybeSingle();
 
-  if (!profile) redirect('/login');
+  if (error) {
+    console.error('[pending-approval] failed to load profile:', error);
+  }
+
+  if (!profile) {
+    return (
+      <div className="mx-auto max-w-2xl px-4 py-12 sm:px-6">
+        <Card className="p-8">
+          <Badge variant="warning">Action Needed</Badge>
+          <h1 className="mt-3 font-sans text-2xl font-bold tracking-[-0.02em]">
+            We could not load your registration
+          </h1>
+          <p className="mt-3 text-sm text-slate-600">
+            Your sign-in succeeded, but the alumni profile linked to this account is missing or
+            still syncing. Please try again shortly or email{' '}
+            <a href="mailto:contact@davkawt.org" className="text-[#0F2557] underline">
+              contact@davkawt.org
+            </a>
+            .
+          </p>
+          <form action={logoutAction} className="mt-8">
+            <Button type="submit" variant="outline">
+              Sign out
+            </Button>
+          </form>
+        </Card>
+      </div>
+    );
+  }
 
   if (profile.approval_status === 'approved') {
     redirect(getDefaultSignedInPath(profile.role, profile.approval_status));
@@ -68,7 +87,7 @@ export default async function PendingApprovalPage() {
           <Row k="Email" v={profile.email} />
           <Row k="Batch" v={String(profile.batch_year)} />
           <Row k="Course" v={profile.course} />
-          <Row k="Submitted" v={formatDate(profile.created_at.toISOString())} />
+          <Row k="Submitted" v={formatDate(profile.created_at)} />
         </div>
 
         {isRejected && profile.rejection_reason && (
@@ -80,7 +99,8 @@ export default async function PendingApprovalPage() {
         {!isRejected && (
           <p className="mt-6 text-sm text-slate-600">
             We typically review registrations within 2-3 working days. You&apos;ll receive an email
-            once approved. If you have questions, write to{' '}
+            once approved, along with the next membership fee instructions if applicable. If you
+            have questions, write to{' '}
             <a href="mailto:contact@davkawt.org" className="text-[#0F2557] underline">
               contact@davkawt.org
             </a>

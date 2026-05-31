@@ -1,6 +1,11 @@
 import { NextResponse } from 'next/server';
-import { createClient } from '@/lib/supabase/server';
+import { writeAuditLog } from '@/lib/audit';
+import { createAdminClient } from '@/lib/supabase/admin';
 import { verifyPaymentHash } from '@/lib/easebuzz/verify';
+
+function membershipRedirect(path: string) {
+  return new URL(path, process.env.NEXT_PUBLIC_APP_URL ?? 'http://localhost:3000');
+}
 
 /**
  * Easebuzz redirects here (surl / furl) after payment.
@@ -14,14 +19,30 @@ export async function POST(req: Request) {
       params[key] = String(value);
     });
 
-    const { txnid, status, hash, key, amount, productinfo, firstname, email,
-      udf1, udf2, udf3, udf4, udf5, payment_source, PG_TYPE, bank_ref_num, easepayid } = params;
+    const {
+      txnid,
+      status,
+      hash,
+      key,
+      amount,
+      productinfo,
+      firstname,
+      email,
+      udf1,
+      udf2,
+      udf3,
+      udf4,
+      udf5,
+      payment_source,
+      PG_TYPE,
+      bank_ref_num,
+      easepayid,
+    } = params;
 
     if (!txnid || !status || !hash) {
-      return NextResponse.redirect(new URL('/membership?error=invalid_response', process.env.NEXT_PUBLIC_APP_URL!));
+      return NextResponse.redirect(membershipRedirect('/membership?error=invalid_response'));
     }
 
-    // Verify hash
     const isValid = verifyPaymentHash({
       key: key ?? '',
       txnid,
@@ -31,19 +52,22 @@ export async function POST(req: Request) {
       email: email ?? '',
       status,
       hash,
-      udf1, udf2, udf3, udf4, udf5,
+      udf1,
+      udf2,
+      udf3,
+      udf4,
+      udf5,
     });
 
     if (!isValid) {
-      console.error('Payment hash verification failed for txnid:', txnid);
-      return NextResponse.redirect(new URL('/membership?error=hash_mismatch', process.env.NEXT_PUBLIC_APP_URL!));
+      console.error('[payments/verify] hash verification failed for txnid:', txnid);
+      return NextResponse.redirect(membershipRedirect('/membership?error=hash_mismatch'));
     }
 
-    const supabase = await createClient();
+    const admin = createAdminClient();
 
     if (status === 'success') {
-      // Update payment record
-      await supabase
+      await admin
         .from('payments')
         .update({
           status: 'success',
@@ -55,7 +79,6 @@ export async function POST(req: Request) {
         })
         .eq('txnid', txnid);
 
-      // Update profile membership
       const alumniId = udf1;
       const membershipType = udf3 as 'lifetime' | 'annual' | undefined;
       const durationMonths = udf4 ? parseInt(udf4, 10) : null;
@@ -68,7 +91,7 @@ export async function POST(req: Request) {
               ? new Date(Date.now() + durationMonths * 30 * 24 * 60 * 60 * 1000).toISOString()
               : new Date(Date.now() + 365 * 24 * 60 * 60 * 1000).toISOString();
 
-        await supabase
+        await admin
           .from('profiles')
           .update({
             is_paid_member: true,
@@ -79,30 +102,28 @@ export async function POST(req: Request) {
           .eq('id', alumniId);
       }
 
-      // Audit log
-      await supabase.from('audit_log').insert({
-        actor_id: alumniId ?? null,
+      await writeAuditLog({
+        actor_id: udf1 ?? null,
         action: 'payment_success',
         target_type: 'payment',
         metadata: { txnid, amount, plan_id: udf2 },
       });
 
-      return NextResponse.redirect(new URL('/membership?status=success', process.env.NEXT_PUBLIC_APP_URL!));
-    } else {
-      // Payment failed or cancelled
-      await supabase
-        .from('payments')
-        .update({
-          status: 'failed',
-          gateway_response: params,
-          updated_at: new Date().toISOString(),
-        })
-        .eq('txnid', txnid);
-
-      return NextResponse.redirect(new URL('/membership?status=failed', process.env.NEXT_PUBLIC_APP_URL!));
+      return NextResponse.redirect(membershipRedirect('/membership?status=success'));
     }
+
+    await admin
+      .from('payments')
+      .update({
+        status: 'failed',
+        gateway_response: params,
+        updated_at: new Date().toISOString(),
+      })
+      .eq('txnid', txnid);
+
+    return NextResponse.redirect(membershipRedirect('/membership?status=failed'));
   } catch (err) {
-    console.error('Payment verification error:', err);
-    return NextResponse.redirect(new URL('/membership?error=server_error', process.env.NEXT_PUBLIC_APP_URL!));
+    console.error('[payments/verify] unexpected error:', err);
+    return NextResponse.redirect(membershipRedirect('/membership?error=server_error'));
   }
 }

@@ -1,4 +1,5 @@
 import { NextResponse } from 'next/server';
+import { writeAuditLog } from '@/lib/audit';
 import { createAdminClient } from '@/lib/supabase/admin';
 import { verifyPaymentHash } from '@/lib/easebuzz/verify';
 
@@ -77,7 +78,7 @@ export async function POST(req: Request) {
           .eq('id', alumniId);
       }
 
-      await supabase.from('audit_log').insert({
+      await writeAuditLog({
         actor_id: alumniId ?? null,
         action: 'payment_webhook_success',
         target_type: 'payment',

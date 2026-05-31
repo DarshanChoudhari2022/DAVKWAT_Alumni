@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { writeAuditLog } from '@/lib/audit';
 import { createClient } from '@/lib/supabase/server';
 import { membershipPlanSchema } from '@/lib/validations/admin';
 
@@ -31,7 +32,7 @@ export async function POST(req: NextRequest) {
   const { error } = await supabase.from('membership_plans').insert(parsed.data);
   if (error) return NextResponse.json({ error: error.message }, { status: 500 });
 
-  await supabase.from('audit_log').insert({
+  await writeAuditLog({
     actor_id: user.id,
     action: 'create_membership_plan',
     target_type: 'membership_plan',
@@ -56,7 +57,7 @@ export async function PATCH(req: NextRequest) {
 
   if (error) return NextResponse.json({ error: error.message }, { status: 500 });
 
-  await supabase.from('audit_log').insert({
+  await writeAuditLog({
     actor_id: user.id,
     action: 'update_membership_plan',
     target_type: 'membership_plan',
@@ -82,7 +83,7 @@ export async function DELETE(req: NextRequest) {
 
   if (error) return NextResponse.json({ error: error.message }, { status: 500 });
 
-  await supabase.from('audit_log').insert({
+  await writeAuditLog({
     actor_id: user.id,
     action: 'delete_membership_plan',
     target_type: 'membership_plan',

@@ -1,20 +1,31 @@
 'use client';
 
 import { useState, useTransition } from 'react';
+import { useRouter } from 'next/navigation';
 import { Button } from '@/components/ui/button';
 
 interface PayButtonProps {
   planId: string;
   planName: string;
   amount: number;
+  hasPendingRequest?: boolean;
 }
 
-export function PayButton({ planId, planName: _planName, amount }: PayButtonProps) {
+export function PayButton({
+  planId,
+  planName,
+  amount,
+  hasPendingRequest = false,
+}: PayButtonProps) {
   const [error, setError] = useState<string | null>(null);
+  const [success, setSuccess] = useState<string | null>(null);
   const [isPending, startTransition] = useTransition();
+  const router = useRouter();
 
-  function handlePay() {
+  function handleSubmitRequest() {
     setError(null);
+    setSuccess(null);
+
     startTransition(async () => {
       try {
         const res = await fetch('/api/payments/initiate', {
@@ -25,44 +36,54 @@ export function PayButton({ planId, planName: _planName, amount }: PayButtonProp
         const data = await res.json();
 
         if (!res.ok || data.error) {
-          setError(data.error ?? 'Failed to initiate payment.');
+          setError(data.error ?? 'Failed to submit your membership request.');
           return;
         }
 
-        // Redirect to Easebuzz payment page
-        if (data.paymentUrl) {
-          window.location.href = data.paymentUrl;
-        } else if (data.accessKey) {
-          // Easebuzz v2 — post to their pay URL
-          const form = document.createElement('form');
-          form.method = 'POST';
-          form.action = process.env.NEXT_PUBLIC_EASEBUZZ_PAY_URL ?? 'https://pay.easebuzz.in/pay/initiateLink';
-          const input = document.createElement('input');
-          input.type = 'hidden';
-          input.name = 'access_key';
-          input.value = data.accessKey;
-          form.appendChild(input);
-          document.body.appendChild(form);
-          form.submit();
-        } else {
-          setError('Unexpected payment gateway response.');
-        }
+        setSuccess(
+          data.message ??
+            `${planName} has been submitted to the DAVKAWT admin team for manual payment follow-up.`
+        );
+        router.refresh();
       } catch {
         setError('Network error. Please try again.');
       }
     });
   }
 
+  if (hasPendingRequest) {
+    return (
+      <div>
+        <Button className="w-full" variant="outline" disabled>
+          Request submitted for {new Intl.NumberFormat('en-IN', {
+            style: 'currency',
+            currency: 'INR',
+            maximumFractionDigits: 0,
+          }).format(amount)}
+        </Button>
+        <p className="mt-2 text-center text-sm text-slate-500" role="status">
+          The admin team already has this membership request.
+        </p>
+      </div>
+    );
+  }
+
   return (
     <div>
-      <Button
-        onClick={handlePay}
-        disabled={isPending}
-        className="w-full"
-        variant="primary"
-      >
-        {isPending ? 'Processing…' : `Pay ${new Intl.NumberFormat('en-IN', { style: 'currency', currency: 'INR', maximumFractionDigits: 0 }).format(amount)}`}
+      <Button onClick={handleSubmitRequest} disabled={isPending} className="w-full" variant="primary">
+        {isPending
+          ? 'Submitting request...'
+          : `Request ${new Intl.NumberFormat('en-IN', {
+              style: 'currency',
+              currency: 'INR',
+              maximumFractionDigits: 0,
+            }).format(amount)} plan`}
       </Button>
+      {success && (
+        <p className="mt-2 text-center text-sm text-emerald-600" role="status">
+          {success}
+        </p>
+      )}
       {error && (
         <p className="mt-2 text-center text-sm text-rose-600" role="alert">
           {error}

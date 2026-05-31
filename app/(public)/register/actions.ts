@@ -3,7 +3,6 @@
 import { redirect } from 'next/navigation';
 import { createClient } from '@/lib/supabase/server';
 import { createAdminClient } from '@/lib/supabase/admin';
-import { getPrisma } from '@/lib/prisma';
 import {
   accountSchema,
   academicSchema,
@@ -31,22 +30,26 @@ export interface RegisterState {
 async function cleanUpOrphanedUser(email: string): Promise<{ cleaned: boolean; error?: string }> {
   try {
     const admin = createAdminClient();
-    const prisma = getPrisma();
 
-    // First check if a profile with this email already exists (Prisma)
-    const existingProfile = await prisma.profiles.findFirst({
-      where: { email },
-      select: { id: true },
-    });
+    const { data: existingProfile, error: profileError } = await admin
+      .from('profiles')
+      .select('id')
+      .eq('email', email)
+      .limit(1)
+      .maybeSingle();
+
+    if (profileError) {
+      console.error('[register] failed to check for existing profile:', profileError);
+      return { cleaned: false, error: profileError.message };
+    }
 
     if (existingProfile) {
-      // User has a profile — they're a real user, not an orphan
+      // User has a profile, so this is not an orphaned auth account.
       return { cleaned: false };
     }
 
-    // No profile found. Check if there's an orphaned auth user with this email.
-    const perPage = 200;
-    for (let page = 1; page <= 25; page += 1) {
+    const perPage = 1000;
+    for (let page = 1; page <= 20; page += 1) {
       const { data: authData, error: authError } = await admin.auth.admin.listUsers({
         page,
         perPage,
@@ -85,7 +88,7 @@ async function cleanUpOrphanedUser(email: string): Promise<{ cleaned: boolean; e
 }
 
 /**
- * Insert profile row via Prisma (direct DB connection, bypasses RLS).
+ * Insert profile row via service-role Supabase client (bypasses RLS).
  * Retries once on transient failure.
  */
 async function insertProfile(
@@ -94,33 +97,35 @@ async function insertProfile(
   attempt = 1
 ): Promise<{ success: boolean; error?: string }> {
   try {
-    const prisma = getPrisma();
-    await prisma.profiles.create({
-      data: {
-        id: userId,
-        email: data.email as string,
-        full_name: data.full_name as string,
-        batch_year: data.batch_year as number,
-        course: data.course as string,
-        roll_number: (data.roll_number as string) || null,
-        phone: (data.phone as string) || null,
-        current_city: (data.current_city as string) || null,
-        current_state: (data.current_state as string) || null,
-        current_country: (data.current_country as string) || 'India',
-        date_of_birth: (data.date_of_birth as string) ? new Date(data.date_of_birth as string) : null,
-        gender: (data.gender as string) || null,
-        occupation: (data.occupation as string) || null,
-        company: (data.company as string) || null,
-        job_title: (data.job_title as string) || null,
-        industry: (data.industry as string) || null,
-        linkedin_url: (data.linkedin_url as string) || null,
-        bio: (data.bio as string) || null,
-        hide_email: data.hide_email as boolean,
-        hide_phone: data.hide_phone as boolean,
-        role: 'pending',
-        approval_status: 'pending',
-      },
+    const admin = createAdminClient();
+    const { error } = await admin.from('profiles').insert({
+      id: userId,
+      email: data.email as string,
+      full_name: data.full_name as string,
+      batch_year: data.batch_year as number,
+      course: data.course as string,
+      roll_number: (data.roll_number as string) || null,
+      phone: (data.phone as string) || null,
+      current_city: (data.current_city as string) || null,
+      current_state: (data.current_state as string) || null,
+      current_country: (data.current_country as string) || 'India',
+      date_of_birth: (data.date_of_birth as string) || null,
+      gender: (data.gender as string) || null,
+      occupation: (data.occupation as string) || null,
+      company: (data.company as string) || null,
+      job_title: (data.job_title as string) || null,
+      industry: (data.industry as string) || null,
+      linkedin_url: (data.linkedin_url as string) || null,
+      bio: (data.bio as string) || null,
+      hide_email: data.hide_email as boolean,
+      hide_phone: data.hide_phone as boolean,
+      role: 'pending',
+      approval_status: 'pending',
     });
+
+    if (error) {
+      throw new Error(error.message);
+    }
 
     console.log(`[register] profile created successfully for user ${userId}`);
     return { success: true };
@@ -136,6 +141,22 @@ async function insertProfile(
 
     return { success: false, error: msg };
   }
+}
+
+async function signUpUser(
+  supabase: Awaited<ReturnType<typeof createClient>>,
+  email: string,
+  password: string,
+  fullName: string
+) {
+  return supabase.auth.signUp({
+    email,
+    password,
+    options: {
+      emailRedirectTo: `${APP_URL}/auth/callback`,
+      data: { full_name: fullName },
+    },
+  });
 }
 
 export async function registerAction(
@@ -169,22 +190,24 @@ export async function registerAction(
   const data = parsed.data;
   console.log(`[register] starting registration for ${data.email}`);
 
-  // ---------- 2. Clean up orphaned auth user (if any) ----------
-  const orphanResult = await cleanUpOrphanedUser(data.email);
-  if (orphanResult.error && !orphanResult.cleaned) {
-    console.warn('[register] orphan check warning:', orphanResult.error);
+  // ---------- 2. Create auth user ----------
+  const supabase = await createClient();
+  let signUpResult = await signUpUser(supabase, data.email, data.password, data.full_name);
+
+  if (signUpResult.error?.message?.toLowerCase().includes('already')) {
+    const orphanResult = await cleanUpOrphanedUser(data.email);
+
+    if (orphanResult.cleaned) {
+      signUpResult = await signUpUser(supabase, data.email, data.password, data.full_name);
+    } else {
+      if (orphanResult.error) {
+        console.warn('[register] orphan cleanup warning:', orphanResult.error);
+      }
+      return { error: 'An account with this email already exists. Please log in instead.' };
+    }
   }
 
-  // ---------- 3. Create auth user ----------
-  const supabase = await createClient();
-  const { data: signUpData, error: signUpError } = await supabase.auth.signUp({
-    email: data.email,
-    password: data.password,
-    options: {
-      emailRedirectTo: `${APP_URL}/auth/callback`,
-      data: { full_name: data.full_name },
-    },
-  });
+  const { data: signUpData, error: signUpError } = signUpResult;
 
   if (signUpError) {
     console.error('[register] signUp error:', {
@@ -192,29 +215,44 @@ export async function registerAction(
       status: signUpError.status,
     });
 
-    if (signUpError.message?.toLowerCase().includes('already')) {
-      return { error: 'An account with this email already exists. Please log in instead.' };
-    }
     return { error: signUpError.message || 'An error occurred during registration.' };
   }
 
   // Detect "fake duplicate": Supabase returns a user with empty identities
   // when email confirmation is enabled and the email is already taken
-  const user = signUpData.user;
-  if (!user || !user.id) {
+  let currentUser = signUpData.user;
+  if (!currentUser || !currentUser.id) {
     console.error('[register] signUp returned no user object');
     return { error: 'Could not create account. Please try again.' };
   }
 
-  if (user.identities && user.identities.length === 0) {
-    console.warn('[register] detected fake-duplicate user (email already registered):', data.email);
-    return { error: 'An account with this email already exists. Please log in or check your email for a verification link.' };
+  if (currentUser.identities && currentUser.identities.length === 0) {
+    const orphanResult = await cleanUpOrphanedUser(data.email);
+
+    if (orphanResult.cleaned) {
+      const retryResult = await signUpUser(supabase, data.email, data.password, data.full_name);
+      if (retryResult.error || !retryResult.data.user?.id) {
+        console.error('[register] retry after orphan cleanup failed:', retryResult.error);
+        return {
+          error:
+            'We found an incomplete earlier registration, but could not finish repairing it. Please try again.',
+        };
+      }
+
+      currentUser = retryResult.data.user;
+    } else {
+      console.warn('[register] detected duplicate signup for existing account:', data.email);
+      return {
+        error:
+          'An account with this email already exists. Please log in or check your email for a verification link.',
+      };
+    }
   }
 
-  const userId = user.id;
+  const userId = currentUser.id;
   console.log(`[register] auth user created: ${userId}`);
 
-  // ---------- 4. Insert profile via Prisma (bypasses RLS) ----------
+  // ---------- 3. Insert profile via service role ----------
   const profileResult = await insertProfile(userId, data);
 
   if (!profileResult.success) {
@@ -273,7 +311,7 @@ export async function registerAction(
   }
 
   // ---------- 6. Redirect based on email confirmation status ----------
-  const emailConfirmed = user.email_confirmed_at != null;
+  const emailConfirmed = currentUser.email_confirmed_at != null;
 
   if (emailConfirmed) {
     console.log('[register] email auto-confirmed, redirecting to pending-approval');

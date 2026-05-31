@@ -4,7 +4,7 @@ import { MailCheck } from 'lucide-react';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 
-export const metadata: Metadata = { title: 'Verify Your Email — DAVKAWT' };
+export const metadata: Metadata = { title: 'Verify Your Email - DAVKAWT' };
 
 export default function VerifyEmailPage() {
   return (
@@ -17,8 +17,9 @@ export default function VerifyEmailPage() {
           Check your email
         </h1>
         <p className="mt-2 text-sm text-slate-600">
-          We&apos;ve sent a verification link to your email address. Please click the link
-          to verify your account and complete registration.
+          We&apos;ve sent a verification link to your email address. Please click the link to
+          verify your account and complete registration. Once verified, your profile will move into
+          the admin review queue for approval.
         </p>
         <div className="mt-6 space-y-3">
           <p className="text-xs text-slate-500">

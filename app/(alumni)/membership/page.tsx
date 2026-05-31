@@ -1,10 +1,10 @@
 import type { Metadata } from 'next';
 import { redirect } from 'next/navigation';
-import { CheckCircle2, Crown, AlertCircle } from 'lucide-react';
+import { AlertCircle, CheckCircle2, Crown } from 'lucide-react';
 import { Card } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { createClient } from '@/lib/supabase/server';
-import { formatINR, formatDate } from '@/lib/utils/format';
+import { formatDate, formatINR } from '@/lib/utils/format';
 import { PayButton } from './PayButton';
 
 export const metadata: Metadata = { title: 'Membership' };
@@ -12,14 +12,17 @@ export const metadata: Metadata = { title: 'Membership' };
 export default async function MembershipPage() {
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
-  if (!user) redirect('/login');
+
+  if (!user) {
+    redirect('/login');
+  }
 
   const [{ data: profile }, { data: plans }, { data: payments }] = await Promise.all([
     supabase
       .from('profiles')
       .select('full_name, email, is_paid_member, membership_type, membership_expires_at')
       .eq('id', user.id)
-      .single(),
+      .maybeSingle(),
     supabase
       .from('membership_plans')
       .select('id, name, description, amount, membership_type, duration_months')
@@ -27,28 +30,36 @@ export default async function MembershipPage() {
       .order('amount', { ascending: true }),
     supabase
       .from('payments')
-      .select('id, txnid, amount, status, payment_mode, created_at')
+      .select('id, plan_id, txnid, amount, status, payment_mode, created_at')
       .eq('alumni_id', user.id)
       .order('created_at', { ascending: false })
       .limit(10),
   ]);
 
-  if (!profile) redirect('/login');
+  if (!profile) {
+    redirect('/login');
+  }
 
   const isExpiringSoon =
-    profile.membership_expires_at &&
+    profile.membership_expires_at != null &&
     new Date(profile.membership_expires_at).getTime() - Date.now() < 30 * 24 * 60 * 60 * 1000;
+  const pendingPlanIds = new Set(
+    (payments ?? [])
+      .filter((payment) => payment.status === 'pending' && payment.plan_id)
+      .map((payment) => payment.plan_id as string)
+  );
+  const hasPendingMembershipRequest = pendingPlanIds.size > 0;
 
   return (
     <div className="mx-auto max-w-4xl px-4 py-10 sm:px-6 lg:px-8">
       <header>
         <h1 className="font-display text-3xl font-semibold tracking-tight">Membership</h1>
         <p className="mt-1 text-sm text-slate-500">
-          Support the Trust and enjoy exclusive member benefits.
+          Review the current alumni membership fee plans and notify the admin team which one you
+          want to take up.
         </p>
       </header>
 
-      {/* Current status */}
       {profile.is_paid_member ? (
         <Card className="mt-6 border-emerald-200 bg-emerald-50/50">
           <div className="flex items-start gap-4">
@@ -61,7 +72,7 @@ export default async function MembershipPage() {
               </h2>
               <p className="mt-0.5 text-sm text-emerald-700">
                 {profile.membership_type === 'lifetime'
-                  ? 'Lifetime membership — never expires'
+                  ? 'Lifetime membership - never expires'
                   : profile.membership_expires_at
                     ? `Expires on ${formatDate(profile.membership_expires_at)}`
                     : 'Active membership'}
@@ -69,9 +80,26 @@ export default async function MembershipPage() {
               {isExpiringSoon && profile.membership_type !== 'lifetime' && (
                 <div className="mt-2 flex items-center gap-1.5 text-sm text-amber-700">
                   <AlertCircle className="h-4 w-4" />
-                  Your membership expires soon. Consider renewing below.
+                  Your membership expires soon. You can submit a renewal request below.
                 </div>
               )}
+            </div>
+          </div>
+        </Card>
+      ) : hasPendingMembershipRequest ? (
+        <Card className="mt-6 border-blue-200 bg-blue-50/60">
+          <div className="flex items-start gap-4">
+            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-blue-100 text-blue-600">
+              <AlertCircle className="h-5 w-5" />
+            </div>
+            <div>
+              <h2 className="font-display text-lg font-semibold text-blue-900">
+                Membership request received
+              </h2>
+              <p className="mt-0.5 text-sm text-blue-800">
+                Your preferred membership plan has been recorded. An administrator will review it
+                and share payment instructions separately while the online gateway remains offline.
+              </p>
             </div>
           </div>
         </Card>
@@ -83,20 +111,26 @@ export default async function MembershipPage() {
             </div>
             <div>
               <h2 className="font-display text-lg font-semibold text-amber-800">
-                Not a paying member yet
+                Membership fee collection is in manual review mode
               </h2>
               <p className="mt-0.5 text-sm text-amber-700">
-                Choose a plan below to become a member and support the alumni community.
+                Select a plan below to notify the DAVKAWT admin team. They will confirm the next
+                steps and activate payment processing separately.
               </p>
             </div>
           </div>
         </Card>
       )}
 
-      {/* Plans */}
       {(!profile.is_paid_member || isExpiringSoon) && (
         <section className="mt-8">
-          <h2 className="font-display text-xl font-semibold">Choose a Plan</h2>
+          <div className="flex flex-col gap-2">
+            <h2 className="font-display text-xl font-semibold">Choose a Plan</h2>
+            <p className="text-sm text-slate-500">
+              The payment gateway is temporarily disabled. Submitting a plan records your request
+              for admin follow-up.
+            </p>
+          </div>
           <div className="mt-4 grid gap-4 sm:grid-cols-2">
             {(plans ?? []).map((plan) => (
               <Card
@@ -108,10 +142,7 @@ export default async function MembershipPage() {
                 }`}
               >
                 {plan.membership_type === 'lifetime' && (
-                  <Badge
-                    variant="primary"
-                    className="absolute -top-2.5 right-4"
-                  >
+                  <Badge variant="primary" className="absolute -top-2.5 right-4">
                     Recommended
                   </Badge>
                 )}
@@ -124,16 +155,16 @@ export default async function MembershipPage() {
                 </p>
                 <p className="mt-0.5 text-xs text-slate-500">
                   {plan.membership_type === 'lifetime'
-                    ? 'One-time payment'
+                    ? 'One-time fee'
                     : `Per year${plan.duration_months ? ` (${plan.duration_months} months)` : ''}`}
                 </p>
                 <ul className="mt-4 space-y-2 text-sm text-slate-700">
                   <BenefitItem>Full alumni directory access</BenefitItem>
-                  <BenefitItem>Event registrations & RSVP</BenefitItem>
+                  <BenefitItem>Event registrations and RSVP</BenefitItem>
                   <BenefitItem>Forum participation</BenefitItem>
                   <BenefitItem>Verified member badge</BenefitItem>
                   {plan.membership_type === 'lifetime' && (
-                    <BenefitItem>Priority support & recognition</BenefitItem>
+                    <BenefitItem>Priority support and recognition</BenefitItem>
                   )}
                 </ul>
                 <div className="mt-6">
@@ -141,28 +172,28 @@ export default async function MembershipPage() {
                     planId={plan.id}
                     planName={plan.name}
                     amount={Number(plan.amount)}
+                    hasPendingRequest={pendingPlanIds.has(plan.id)}
                   />
                 </div>
               </Card>
             ))}
             {(plans ?? []).length === 0 && (
               <Card className="col-span-full text-center text-sm text-slate-500">
-                No membership plans available at the moment.
+                No membership plans are available at the moment.
               </Card>
             )}
           </div>
         </section>
       )}
 
-      {/* Payment history */}
       {(payments ?? []).length > 0 && (
         <section className="mt-10">
-          <h2 className="font-display text-xl font-semibold">Payment History</h2>
+          <h2 className="font-display text-xl font-semibold">Membership Requests</h2>
           <div className="mt-4 overflow-x-auto">
             <table className="w-full text-sm">
               <thead>
                 <tr className="border-b border-slate-200 text-left text-xs uppercase tracking-wide text-slate-500">
-                  <th className="pb-2 pr-4">Transaction ID</th>
+                  <th className="pb-2 pr-4">Reference</th>
                   <th className="pb-2 pr-4">Amount</th>
                   <th className="pb-2 pr-4">Status</th>
                   <th className="pb-2 pr-4">Mode</th>
@@ -170,25 +201,27 @@ export default async function MembershipPage() {
                 </tr>
               </thead>
               <tbody>
-                {payments?.map((p) => (
-                  <tr key={p.id} className="border-b border-slate-100">
-                    <td className="py-3 pr-4 font-mono text-xs">{p.txnid}</td>
-                    <td className="py-3 pr-4">{formatINR(Number(p.amount))}</td>
+                {payments?.map((payment) => (
+                  <tr key={payment.id} className="border-b border-slate-100">
+                    <td className="py-3 pr-4 font-mono text-xs">{payment.txnid}</td>
+                    <td className="py-3 pr-4">{formatINR(Number(payment.amount))}</td>
                     <td className="py-3 pr-4">
                       <Badge
                         variant={
-                          p.status === 'success'
+                          payment.status === 'success'
                             ? 'success'
-                            : p.status === 'failed'
+                            : payment.status === 'failed'
                               ? 'error'
                               : 'warning'
                         }
                       >
-                        {p.status}
+                        {payment.status}
                       </Badge>
                     </td>
-                    <td className="py-3 pr-4 capitalize">{p.payment_mode ?? '—'}</td>
-                    <td className="py-3">{formatDate(p.created_at)}</td>
+                    <td className="py-3 pr-4 capitalize">
+                      {payment.payment_mode?.replace(/_/g, ' ') ?? 'manual review'}
+                    </td>
+                    <td className="py-3">{formatDate(payment.created_at)}</td>
                   </tr>
                 ))}
               </tbody>

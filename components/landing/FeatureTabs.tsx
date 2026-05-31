@@ -61,7 +61,7 @@ const CONTENT: Record<TabKey, { title: string; bullets: string[] }> = {
       'RSVP to official Trust and batch events',
       'Online, in-person, and hybrid formats',
       'Calendar-ready event details and attendee lists',
-      'Event payments and membership support via Easebuzz',
+      'Membership request tracking and event participation support',
     ],
   },
   announcements: {
@@ -104,8 +104,8 @@ const CONTENT: Record<TabKey, { title: string; bullets: string[] }> = {
     title: 'Manage membership and contributions securely.',
     bullets: [
       'Annual and lifetime membership plans',
-      'Secure Easebuzz payment flow',
-      'Receipts, renewal reminders, and payment history',
+      'Manual fee coordination until the payment gateway goes live',
+      'Membership records, renewal reminders, and payment history',
       'Transparent records for Trust administration',
     ],
   },

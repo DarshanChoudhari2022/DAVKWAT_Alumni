@@ -22,7 +22,6 @@ export function Footer() {
                 { href: '/about', label: 'About the Trust' },
                 { href: '/register', label: 'Register as Alumnus' },
                 { href: '/login', label: 'Member Login' },
-                { href: '/login?redirect=/admin', label: 'Admin Login' },
               ].map((l) => (
                 <li key={l.href}>
                   <Link href={l.href} className="text-slate-600 hover:text-[#0F2557]">

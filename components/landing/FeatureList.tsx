@@ -53,7 +53,11 @@ const FEATURES = [
     icon: CreditCard,
     title: 'Secure Membership',
     desc: 'Support the Trust through official registrations.',
-    bullets: ['Easebuzz secure payment flows', 'Instant digital receipts', 'Safe welfare funding allocation'],
+    bullets: [
+      'Manual membership fee coordination until gateway launch',
+      'Clear membership request tracking',
+      'Safe welfare funding allocation',
+    ],
     color: 'from-sky-500 to-blue-600',
   },
   {

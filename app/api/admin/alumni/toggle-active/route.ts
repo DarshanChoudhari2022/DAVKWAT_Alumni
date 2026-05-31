@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { writeAuditLog } from '@/lib/audit';
 import { createClient } from '@/lib/supabase/server';
 import { toggleActiveSchema } from '@/lib/validations/admin';
 
@@ -35,8 +36,7 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: error.message }, { status: 500 });
   }
 
-  // Audit log
-  await supabase.from('audit_log').insert({
+  await writeAuditLog({
     actor_id: user.id,
     action: is_active ? 'reactivate_alumni' : 'deactivate_alumni',
     target_type: 'profile',

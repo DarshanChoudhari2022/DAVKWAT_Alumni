@@ -3,7 +3,6 @@
 import { redirect } from 'next/navigation';
 import { revalidatePath } from 'next/cache';
 import { createClient } from '@/lib/supabase/server';
-import { getPrisma } from '@/lib/prisma';
 import { resolveSignedInRedirect } from '@/lib/utils/auth-routing';
 import { loginSchema } from '@/lib/validations/registration';
 
@@ -41,18 +40,20 @@ export async function loginAction(_prev: AuthState, formData: FormData): Promise
     return { error: 'Login failed. Please try again.' };
   }
 
-  // Use Prisma instead of Supabase client for profile query
-  const prisma = getPrisma();
-  const profile = await prisma.profiles.findUnique({
-    where: { id: user.id },
-    select: { role: true, approval_status: true },
-  });
-
   revalidatePath('/', 'layout');
+
+  const { data: profile } = await supabase
+    .from('profiles')
+    .select('role, approval_status')
+    .eq('id', user.id)
+    .maybeSingle();
 
   if (!profile) {
     await supabase.auth.signOut();
-    return { error: 'Your account profile was not found. Please contact admin or try registering again.' };
+    return {
+      error:
+        'Your account profile was not found. Please contact the admin team or register again.',
+    };
   }
 
   redirect(resolveSignedInRedirect(redirectTo, profile.role, profile.approval_status));

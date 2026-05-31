@@ -5,14 +5,14 @@ Production-ready full-stack alumni portal for **DAV Khagaul Alumni Welfare Trust
 ## Stack
 - Next.js 15 (App Router, TS strict) · Tailwind v4 · shadcn/ui
 - Supabase (Postgres + Auth + Storage + RLS, ap-south-1)
-- Easebuzz payments · Resend email · React Email
+- Manual membership fee workflow (gateway-ready) · Resend email · React Email
 - Vercel hosting · Sentry · GitHub Actions
 
 ## Local Setup
 
 ```bash
 pnpm install            # or npm / yarn
-cp .env.local.example .env.local   # fill in values, including DATABASE_URL and DIRECT_URL for Prisma
+cp .env.local.example .env.local   # fill in values for Supabase, Resend, and optional future payment gateway setup
 pnpm dev
 ```
 

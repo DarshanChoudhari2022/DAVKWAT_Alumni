@@ -76,7 +76,9 @@ export default async function AdminPaymentsPage({
       <header className="flex flex-wrap items-end justify-between gap-4">
         <div>
           <h1 className="font-display text-3xl font-semibold tracking-tight">Payments</h1>
-          <p className="mt-1 text-sm text-slate-500">{count ?? 0} total transactions.</p>
+          <p className="mt-1 text-sm text-slate-500">
+            {count ?? 0} total transactions, including manual membership requests awaiting review.
+          </p>
         </div>
         <Button asChild variant="outline" size="sm">
           <a href={`/api/admin/export?type=payments&status=${sp.status ?? ''}&q=${sp.q ?? ''}`}>
