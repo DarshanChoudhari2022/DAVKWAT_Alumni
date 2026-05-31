@@ -6,6 +6,7 @@ import { Card } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { createClient } from '@/lib/supabase/server';
 import { formatDate } from '@/lib/utils/format';
+import { sanitizeHtml, stripHtml } from '@/lib/utils/sanitize';
 
 export async function generateMetadata({
   params,
@@ -19,7 +20,10 @@ export async function generateMetadata({
     .select('title, content')
     .eq('slug', slug)
     .single();
-  return { title: data?.title ?? 'Announcement', description: data?.content?.slice(0, 200) ?? undefined };
+  return {
+    title: data?.title ?? 'Announcement',
+    description: data?.content ? stripHtml(data.content).slice(0, 200) : undefined,
+  };
 }
 
 export default async function AnnouncementDetailPage({
@@ -32,7 +36,7 @@ export default async function AnnouncementDetailPage({
 
   const { data: a } = await supabase
     .from('announcements')
-    .select('*, author:profiles(full_name, avatar_url)')
+    .select('id, title, content, is_pinned, published_at')
     .eq('slug', slug)
     .eq('is_published', true)
     .single();
@@ -60,10 +64,10 @@ export default async function AnnouncementDetailPage({
       </header>
 
       <Card className="mt-6 p-6 sm:p-8">
-        {/* MVP: render body as preserved text. TipTap-rendered HTML coming in Week 7 polish. */}
-        <div className="prose prose-slate max-w-none whitespace-pre-line text-base leading-relaxed">
-          {a.content}
-        </div>
+        <div
+          className="prose prose-slate max-w-none text-base leading-relaxed"
+          dangerouslySetInnerHTML={{ __html: sanitizeHtml(a.content) }}
+        />
       </Card>
     </article>
   );

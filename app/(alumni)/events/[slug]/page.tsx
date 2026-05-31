@@ -31,12 +31,16 @@ export default async function EventDetailPage({
 }) {
   const { slug } = await params;
   const supabase = await createClient();
-  const { data: { user } } = await supabase.auth.getUser();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
   if (!user) redirect('/login');
 
   const { data: event } = await supabase
     .from('events')
-    .select('*')
+    .select(
+      'id, title, slug, description, event_type, venue, online_link, starts_at, ends_at, registration_deadline, max_attendees, is_published'
+    )
     .eq('slug', slug)
     .eq('is_published', true)
     .single();
@@ -57,26 +61,42 @@ export default async function EventDetailPage({
   ]);
 
   const isPast = new Date(event.starts_at).getTime() < Date.now();
+  const isRegistrationClosed =
+    isPast ||
+    (event.registration_deadline != null &&
+      new Date(event.registration_deadline).getTime() < Date.now());
   const spotsLeft =
-    event.max_attendees != null && goingCount != null ? Math.max(0, event.max_attendees - goingCount) : null;
+    event.max_attendees != null && goingCount != null
+      ? Math.max(0, event.max_attendees - goingCount)
+      : null;
 
   return (
     <article className="mx-auto max-w-3xl px-4 py-10 sm:px-6 lg:px-8">
-      <Link href="/events" className="inline-flex items-center gap-1 text-sm text-slate-500 hover:text-[#0F2557]">
+      <Link
+        href="/events"
+        className="inline-flex items-center gap-1 text-sm text-slate-500 hover:text-[#0F2557]"
+      >
         <ArrowLeft aria-hidden className="h-4 w-4" /> Back to events
       </Link>
 
       <header className="mt-4">
         <div className="flex flex-wrap items-center gap-2">
           <Badge variant={isPast ? 'default' : 'warning'}>{formatDateTime(event.starts_at)}</Badge>
-          <Badge variant="default" className="capitalize">{event.event_type}</Badge>
+          <Badge variant="default" className="capitalize">
+            {event.event_type}
+          </Badge>
           {isPast && <Badge variant="default">Past event</Badge>}
         </div>
-        <h1 className="mt-3 font-display text-3xl font-semibold tracking-tight sm:text-4xl">{event.title}</h1>
+        <h1 className="mt-3 font-display text-3xl font-semibold tracking-tight sm:text-4xl">
+          {event.title}
+        </h1>
         <dl className="mt-4 grid gap-2 text-sm text-slate-600 sm:grid-cols-2">
           <div className="flex items-center gap-2">
             <Calendar aria-hidden className="h-4 w-4 text-slate-400" />
-            <span>{formatDateTime(event.starts_at)}{event.ends_at ? ` — ${formatDateTime(event.ends_at)}` : ''}</span>
+            <span>
+              {formatDateTime(event.starts_at)}
+              {event.ends_at ? ` - ${formatDateTime(event.ends_at)}` : ''}
+            </span>
           </div>
           {event.venue && (
             <div className="flex items-center gap-2">
@@ -87,7 +107,9 @@ export default async function EventDetailPage({
           {event.max_attendees != null && (
             <div className="flex items-center gap-2">
               <Users aria-hidden className="h-4 w-4 text-slate-400" />
-              <span>{goingCount ?? 0} going · {spotsLeft ?? 0} spots left</span>
+              <span>
+                {goingCount ?? 0} going - {spotsLeft ?? 0} spots left
+              </span>
             </div>
           )}
         </dl>
@@ -99,14 +121,14 @@ export default async function EventDetailPage({
             {event.description}
           </div>
         )}
-        {event.event_type === 'online' && event.online_link && (
+        {event.event_type !== 'in_person' && event.online_link && (
           <div className="mt-6 rounded-lg border border-slate-200 bg-slate-50 p-4">
             <p className="text-sm font-medium">Join link</p>
             <a
               href={event.online_link}
               target="_blank"
               rel="noopener noreferrer"
-              className="mt-1 block text-sm break-all text-[#0F2557] underline"
+              className="mt-1 block break-all text-sm text-[#0F2557] underline"
             >
               {event.online_link}
             </a>
@@ -122,6 +144,7 @@ export default async function EventDetailPage({
             slug={event.slug}
             hasRsvp={!!myRsvp}
             spotsLeft={spotsLeft}
+            isRegistrationClosed={isRegistrationClosed}
           />
         </Card>
       )}

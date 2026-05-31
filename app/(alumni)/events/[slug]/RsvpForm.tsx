@@ -11,6 +11,7 @@ interface Props {
   slug: string;
   hasRsvp: boolean;
   spotsLeft: number | null;
+  isRegistrationClosed: boolean;
 }
 
 const initial: RsvpState = {};
@@ -24,7 +25,13 @@ function SubmitButton({ label }: { label: string }) {
   );
 }
 
-export function RsvpForm({ eventId, slug, hasRsvp, spotsLeft }: Props) {
+export function RsvpForm({
+  eventId,
+  slug,
+  hasRsvp,
+  spotsLeft,
+  isRegistrationClosed,
+}: Props) {
   const [state, action] = useActionState(rsvpAction, initial);
 
   const isRegistered = state.success || (hasRsvp && !state.error);
@@ -46,7 +53,9 @@ export function RsvpForm({ eventId, slug, hasRsvp, spotsLeft }: Props) {
         </div>
       )}
 
-      {spotsLeft !== null && spotsLeft <= 0 && !isRegistered ? (
+      {isRegistrationClosed && !isRegistered ? (
+        <p className="text-sm text-slate-500">RSVPs are closed for this event.</p>
+      ) : spotsLeft !== null && spotsLeft <= 0 && !isRegistered ? (
         <p className="text-sm text-slate-500">This event is full.</p>
       ) : !isRegistered ? (
         <SubmitButton label="Register for this event" />

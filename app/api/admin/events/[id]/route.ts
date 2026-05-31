@@ -30,14 +30,22 @@ export async function PATCH(
 
   const allowed: Record<string, unknown> = {};
   if (typeof body.is_published === 'boolean') allowed.is_published = body.is_published;
-  if (typeof body.title === 'string') allowed.title = body.title;
-  if (typeof body.description === 'string') allowed.description = body.description;
+  if (typeof body.title === 'string') allowed.title = body.title.trim();
+  if (body.description === null || typeof body.description === 'string') {
+    allowed.description = body.description?.trim() ?? null;
+  }
   if (typeof body.event_type === 'string') allowed.event_type = body.event_type;
-  if (typeof body.venue === 'string') allowed.venue = body.venue;
-  if (typeof body.online_url === 'string') allowed.online_url = body.online_url;
+  if (body.venue === null || typeof body.venue === 'string') {
+    allowed.venue = body.venue?.trim() || null;
+  }
+  if (body.online_link === null || typeof body.online_link === 'string') {
+    allowed.online_link = body.online_link?.trim() || null;
+  }
   if (body.starts_at) allowed.starts_at = body.starts_at;
   if (body.ends_at !== undefined) allowed.ends_at = body.ends_at;
-  if (body.capacity !== undefined) allowed.capacity = body.capacity;
+  if (body.max_attendees === null || typeof body.max_attendees === 'number') {
+    allowed.max_attendees = body.max_attendees;
+  }
 
   allowed.updated_at = new Date().toISOString();
 

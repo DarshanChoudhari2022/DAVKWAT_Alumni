@@ -5,6 +5,7 @@ import { Card } from '@/components/ui/card';
 import { Pagination } from '@/components/shared/Pagination';
 import { createClient } from '@/lib/supabase/server';
 import { formatDate } from '@/lib/utils/format';
+import { stripHtml } from '@/lib/utils/sanitize';
 
 export const metadata: Metadata = { title: 'Announcements' };
 
@@ -55,7 +56,11 @@ export default async function AnnouncementsPage({
                       </span>
                     </div>
                     <h2 className="mt-1.5 font-display text-lg font-semibold">{a.title}</h2>
-                    {a.content && <p className="mt-1 line-clamp-2 text-sm text-slate-600">{a.content.slice(0, 200)}</p>}
+                    {a.content && (
+                      <p className="mt-1 line-clamp-2 text-sm text-slate-600">
+                        {stripHtml(a.content).slice(0, 200)}
+                      </p>
+                    )}
                   </div>
                 </div>
               </Card>

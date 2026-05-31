@@ -23,16 +23,38 @@ export async function rsvpAction(
     return { error: 'Invalid event.' };
   }
 
-  // Capacity check
+  // Capacity and registration-window checks
   const [{ data: event }, { count: goingCount }] = await Promise.all([
-    supabase.from('events').select('max_attendees').eq('id', eventId).single(),
+    supabase
+      .from('events')
+      .select('max_attendees, starts_at, registration_deadline')
+      .eq('id', eventId)
+      .single(),
     supabase
       .from('event_rsvps')
       .select('id', { count: 'exact', head: true })
       .eq('event_id', eventId),
   ]);
 
-  if (event?.max_attendees && goingCount !== null && goingCount + 1 > event.max_attendees) {
+  if (!event) {
+    return { error: 'This event no longer exists.' };
+  }
+
+  const now = Date.now();
+  const startsAt = new Date(event.starts_at).getTime();
+  const deadline = event.registration_deadline
+    ? new Date(event.registration_deadline).getTime()
+    : null;
+
+  if (startsAt <= now || (deadline !== null && deadline <= now)) {
+    return { error: 'RSVPs are closed for this event.' };
+  }
+
+  if (
+    event.max_attendees != null &&
+    goingCount !== null &&
+    goingCount + 1 > event.max_attendees
+  ) {
     return { error: 'Sorry, this event is full.' };
   }
 

@@ -12,7 +12,7 @@ Production-ready full-stack alumni portal for **DAV Khagaul Alumni Welfare Trust
 
 ```bash
 pnpm install            # or npm / yarn
-cp .env.local.example .env.local   # fill in values
+cp .env.local.example .env.local   # fill in values, including DATABASE_URL and DIRECT_URL for Prisma
 pnpm dev
 ```
 
@@ -20,7 +20,7 @@ pnpm dev
 Run migrations in order from `supabase/migrations/` on your Supabase project (SQL editor or `supabase db push`). Then run `supabase/seed.sql` to insert default forum categories, membership plans, and site settings.
 
 ## Project Structure
-See `PRD_DAVKAWT_Alumni_Portal.md` in the repo root for full spec.
+Use `GETTING_STARTED.md` for local setup and `ADMIN_USER_MANUAL.md` for operational workflows.
 
 ## Conventions
 - Server Components by default; `'use client'` only when needed.

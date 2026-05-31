@@ -5,6 +5,8 @@ import { Card } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { createClient } from '@/lib/supabase/server';
+import { prisma } from '@/lib/prisma';
+import { getDefaultSignedInPath } from '@/lib/utils/auth-routing';
 import { logoutAction } from '../login/actions';
 import { formatDate } from '@/lib/utils/format';
 
@@ -16,16 +18,25 @@ export default async function PendingApprovalPage() {
 
   if (!user) redirect('/login');
 
-  const { data: profile } = await supabase
-    .from('profiles')
-    .select('full_name, batch_year, course, email, approval_status, rejection_reason, created_at')
-    .eq('id', user.id)
-    .single();
+  // Use Prisma for profile query
+  const profile = await prisma.profiles.findUnique({
+    where: { id: user.id },
+    select: {
+      full_name: true,
+      batch_year: true,
+      course: true,
+      email: true,
+      role: true,
+      approval_status: true,
+      rejection_reason: true,
+      created_at: true,
+    },
+  });
 
   if (!profile) redirect('/login');
 
   if (profile.approval_status === 'approved') {
-    redirect('/dashboard');
+    redirect(getDefaultSignedInPath(profile.role, profile.approval_status));
   }
 
   const isRejected = profile.approval_status === 'rejected';
@@ -56,7 +67,7 @@ export default async function PendingApprovalPage() {
           <Row k="Email" v={profile.email} />
           <Row k="Batch" v={String(profile.batch_year)} />
           <Row k="Course" v={profile.course} />
-          <Row k="Submitted" v={formatDate(profile.created_at)} />
+          <Row k="Submitted" v={formatDate(profile.created_at.toISOString())} />
         </div>
 
         {isRejected && profile.rejection_reason && (

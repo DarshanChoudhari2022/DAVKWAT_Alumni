@@ -8,7 +8,7 @@ import { Avatar } from '@/components/shared/Avatar';
 import { createClient } from '@/lib/supabase/server';
 import { formatDate, formatDateTime } from '@/lib/utils/format';
 
-export const metadata: Metadata = { title: 'Event RSVPs — Admin' };
+export const metadata: Metadata = { title: 'Event RSVPs - Admin' };
 
 export default async function EventRsvpsPage({
   params,
@@ -34,7 +34,10 @@ export default async function EventRsvpsPage({
 
   return (
     <div className="mx-auto max-w-4xl px-4 py-8 sm:px-6 lg:px-8">
-      <Link href="/admin/events" className="inline-flex items-center gap-1 text-sm text-slate-500 hover:text-[#0F2557]">
+      <Link
+        href="/admin/events"
+        className="inline-flex items-center gap-1 text-sm text-slate-500 hover:text-[#0F2557]"
+      >
         <ArrowLeft className="h-3.5 w-3.5" /> Back to Events
       </Link>
 
@@ -42,11 +45,11 @@ export default async function EventRsvpsPage({
         <div>
           <h1 className="font-display text-2xl font-semibold tracking-tight">{event.title}</h1>
           <p className="mt-1 text-sm text-slate-500">
-            {formatDateTime(event.starts_at)} · {rsvps?.length ?? 0} RSVPs
+            {formatDateTime(event.starts_at)} - {rsvps?.length ?? 0} RSVPs
           </p>
         </div>
         <Button asChild variant="outline" size="sm">
-          <a href={`/api/admin/export?type=event_rsvps&eventId=${id}`}>
+          <a href={`/api/admin/export?type=rsvps&eventId=${id}`}>
             <Download className="h-4 w-4" />
             Export CSV
           </a>
@@ -65,7 +68,17 @@ export default async function EventRsvpsPage({
           </thead>
           <tbody>
             {(rsvps ?? []).map((r) => {
-              const p = r.profiles && !Array.isArray(r.profiles) ? r.profiles as { id: string; full_name: string; email: string; batch_year: number; current_city: string | null; avatar_url: string | null } : null;
+              const p =
+                r.profiles && !Array.isArray(r.profiles)
+                  ? (r.profiles as {
+                      id: string;
+                      full_name: string;
+                      email: string;
+                      batch_year: number;
+                      current_city: string | null;
+                      avatar_url: string | null;
+                    })
+                  : null;
               if (!p) return null;
               return (
                 <tr key={r.id} className="border-b border-slate-100">
@@ -79,7 +92,7 @@ export default async function EventRsvpsPage({
                     </div>
                   </td>
                   <td className="py-3 pr-3">{p.batch_year}</td>
-                  <td className="py-3 pr-3">{p.current_city ?? '—'}</td>
+                  <td className="py-3 pr-3">{p.current_city ?? '-'}</td>
                   <td className="py-3">{formatDate(r.registered_at)}</td>
                 </tr>
               );

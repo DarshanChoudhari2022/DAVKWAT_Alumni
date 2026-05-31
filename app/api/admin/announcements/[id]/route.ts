@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
+import { sanitizeHtml } from '@/lib/utils/sanitize';
 
 async function assertAdmin() {
   const supabase = await createClient();
@@ -35,9 +36,7 @@ export async function PATCH(
   }
   if (typeof body.is_pinned === 'boolean') allowed.is_pinned = body.is_pinned;
   if (typeof body.title === 'string') allowed.title = body.title;
-  if (typeof body.content === 'string') allowed.content = body.content;
-  if (typeof body.category === 'string') allowed.category = body.category;
-  if (typeof body.excerpt === 'string') allowed.excerpt = body.excerpt;
+  if (typeof body.content === 'string') allowed.content = sanitizeHtml(body.content);
   if (typeof body.cover_image_url === 'string') allowed.cover_image_url = body.cover_image_url;
 
   allowed.updated_at = new Date().toISOString();

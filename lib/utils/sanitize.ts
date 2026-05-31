@@ -18,3 +18,11 @@ export function sanitizeHtml(dirty: string): string {
     ALLOW_DATA_ATTR: false,
   });
 }
+
+export function stripHtml(dirty: string): string {
+  return sanitizeHtml(dirty)
+    .replace(/<[^>]+>/g, ' ')
+    .replace(/&nbsp;/g, ' ')
+    .replace(/\s+/g, ' ')
+    .trim();
+}

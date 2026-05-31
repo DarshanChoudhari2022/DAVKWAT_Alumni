@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
+import { sanitizeHtml } from '@/lib/utils/sanitize';
 
 export async function POST(req: NextRequest) {
   const supabase = await createClient();
@@ -23,13 +24,15 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: 'Title, content, and slug are required.' }, { status: 400 });
   }
 
+  const sanitizedContent = sanitizeHtml(content.trim());
+
   const now = new Date().toISOString();
 
   const { data, error } = await supabase
     .from('announcements')
     .insert({
       title: title.trim(),
-      content: content.trim(),
+      content: sanitizedContent,
       slug,
       is_pinned: !!is_pinned,
       is_published: false,

@@ -1,5 +1,5 @@
 import type { Metadata } from 'next';
-import { createClient } from '@/lib/supabase/server';
+import { prisma } from '@/lib/prisma';
 import { Badge } from '@/components/ui/badge';
 import { Card } from '@/components/ui/card';
 import { Avatar } from '@/components/shared/Avatar';
@@ -14,30 +14,37 @@ export default async function ApprovalsPage({
   searchParams: Promise<{ filter?: string }>;
 }) {
   const sp = await searchParams;
-  const supabase = await createClient();
 
-  let query = supabase
-    .from('profiles')
-    .select(
-      'id, full_name, email, batch_year, course, current_city, phone, created_at, avatar_url'
-    )
-    .eq('approval_status', 'pending')
-    .order('created_at', { ascending: true });
-
-  // Time-based filter
+  // Build Prisma where clause with optional time filter
   const now = new Date();
+  let createdAtFilter: { gte?: Date; lt?: Date } | undefined;
+
   if (sp.filter === 'today') {
-    const startOfDay = new Date(now.getFullYear(), now.getMonth(), now.getDate()).toISOString();
-    query = query.gte('created_at', startOfDay);
+    createdAtFilter = { gte: new Date(now.getFullYear(), now.getMonth(), now.getDate()) };
   } else if (sp.filter === 'week') {
-    const weekAgo = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000).toISOString();
-    query = query.gte('created_at', weekAgo);
+    createdAtFilter = { gte: new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000) };
   } else if (sp.filter === 'older') {
-    const weekAgo = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000).toISOString();
-    query = query.lt('created_at', weekAgo);
+    createdAtFilter = { lt: new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000) };
   }
 
-  const { data: pending } = await query;
+  const pending = await prisma.profiles.findMany({
+    where: {
+      approval_status: 'pending',
+      ...(createdAtFilter ? { created_at: createdAtFilter } : {}),
+    },
+    select: {
+      id: true,
+      full_name: true,
+      email: true,
+      batch_year: true,
+      course: true,
+      current_city: true,
+      phone: true,
+      created_at: true,
+      avatar_url: true,
+    },
+    orderBy: { created_at: 'asc' },
+  });
 
   return (
     <div className="mx-auto max-w-5xl px-4 py-8 sm:px-6 lg:px-8">
@@ -45,7 +52,7 @@ export default async function ApprovalsPage({
         <div>
           <h1 className="font-display text-3xl font-semibold tracking-tight">Pending Approvals</h1>
           <p className="mt-1 text-sm text-slate-500">
-            {pending?.length ?? 0} alumni waiting for approval.
+            {pending.length} alumni waiting for approval.
           </p>
         </div>
         <nav className="inline-flex rounded-lg border border-slate-200 bg-white p-1" aria-label="Filter">
@@ -71,7 +78,7 @@ export default async function ApprovalsPage({
       </header>
 
       <ul className="mt-6 space-y-3">
-        {(pending ?? []).map((p) => (
+        {pending.map((p) => (
           <li key={p.id}>
             <Card>
               <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
@@ -86,7 +93,7 @@ export default async function ApprovalsPage({
                       {p.current_city && <Badge variant="default">{p.current_city}</Badge>}
                     </div>
                     <p className="mt-1 text-xs text-slate-400">
-                      Registered {formatDate(p.created_at)}
+                      Registered {formatDate(p.created_at.toISOString())}
                     </p>
                   </div>
                 </div>
@@ -95,7 +102,7 @@ export default async function ApprovalsPage({
             </Card>
           </li>
         ))}
-        {(pending ?? []).length === 0 && (
+        {pending.length === 0 && (
           <li>
             <Card className="text-center text-sm text-slate-500">
               No pending approvals. All caught up!

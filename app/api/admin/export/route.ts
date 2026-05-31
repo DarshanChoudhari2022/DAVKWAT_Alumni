@@ -74,8 +74,11 @@ export async function GET(req: NextRequest) {
       );
 
     const status = searchParams.get('status');
+    const membership = searchParams.get('membership');
     const q = searchParams.get('q');
     if (status) query = query.eq('approval_status', status as 'pending' | 'approved' | 'rejected');
+    if (membership === 'paid') query = query.eq('is_paid_member', true);
+    if (membership === 'free') query = query.eq('is_paid_member', false);
     if (q) query = query.or(`full_name.ilike.%${q}%,email.ilike.%${q}%`);
 
     const { data: rows } = await query.order('created_at', { ascending: false });
@@ -101,8 +104,19 @@ export async function GET(req: NextRequest) {
         alumni_email: profile?.email ?? '',
       };
     });
+    const q = searchParams.get('q')?.trim().toLowerCase();
+    if (q) {
+      data = data.filter((row) => {
+        const txnid = String(row.txnid ?? '').toLowerCase();
+        const alumniName = String(row.alumni_name ?? '').toLowerCase();
+        const alumniEmail = String(row.alumni_email ?? '').toLowerCase();
+        return (
+          txnid.includes(q) || alumniName.includes(q) || alumniEmail.includes(q)
+        );
+      });
+    }
 
-  } else if (type === 'rsvps') {
+  } else if (type === 'rsvps' || type === 'event_rsvps') {
     columns = RSVP_COLUMNS;
     filename = 'event-rsvps-export';
     const eventId = searchParams.get('eventId');

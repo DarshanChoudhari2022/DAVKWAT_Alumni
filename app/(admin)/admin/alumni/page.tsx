@@ -61,7 +61,9 @@ export default async function AdminAlumniPage({
           <p className="mt-1 text-sm text-slate-500">{count ?? 0} total records.</p>
         </div>
         <Button asChild variant="outline" size="sm">
-          <a href={`/api/admin/export?type=alumni&status=${sp.status ?? ''}&q=${sp.q ?? ''}`}>
+          <a
+            href={`/api/admin/export?type=alumni&status=${sp.status ?? ''}&membership=${sp.membership ?? ''}&q=${sp.q ?? ''}`}
+          >
             <Download className="h-4 w-4" />
             Export CSV
           </a>

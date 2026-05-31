@@ -11,6 +11,10 @@ import { loginAction, type AuthState } from './actions';
 
 const initialState: AuthState = {};
 
+interface LoginFormProps {
+  redirectTo?: string;
+}
+
 function SubmitButton() {
   const { pending } = useFormStatus();
   return (
@@ -20,11 +24,20 @@ function SubmitButton() {
   );
 }
 
-export function LoginForm() {
+export function LoginForm({ redirectTo }: LoginFormProps) {
   const [state, formAction] = useActionState(loginAction, initialState);
+  const isAdminLogin = redirectTo?.startsWith('/admin');
 
   return (
     <form action={formAction} className="mt-6 space-y-4">
+      {redirectTo && <input type="hidden" name="redirect" value={redirectTo} />}
+
+      {isAdminLogin && (
+        <div className="rounded-lg border border-blue-200 bg-blue-50 p-3 text-sm text-blue-700">
+          Admin access uses the same sign in form.
+        </div>
+      )}
+
       {state.error && (
         <div role="alert" className="rounded-lg border border-rose-200 bg-rose-50 p-3 text-sm text-rose-700">
           {state.error}

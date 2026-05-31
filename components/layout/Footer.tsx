@@ -9,8 +9,9 @@ export function Footer() {
           <div className="md:col-span-2">
             <Logo />
             <p className="mt-4 max-w-sm text-sm text-slate-600">
-              The official digital home of DAV Khagaul Alumni Welfare Trust —
-              connecting verified alumni, Trust updates, events, membership, and welfare initiatives.
+              The official digital home of DAV Khagaul Alumni Welfare Trust -
+              connecting verified alumni, Trust updates, events, membership, and welfare
+              initiatives.
             </p>
           </div>
 
@@ -21,6 +22,7 @@ export function Footer() {
                 { href: '/about', label: 'About the Trust' },
                 { href: '/register', label: 'Register as Alumnus' },
                 { href: '/login', label: 'Member Login' },
+                { href: '/login?redirect=/admin', label: 'Admin Login' },
               ].map((l) => (
                 <li key={l.href}>
                   <Link href={l.href} className="text-slate-600 hover:text-[#0F2557]">
@@ -57,7 +59,7 @@ export function Footer() {
           <p>
             &copy; {new Date().getFullYear()} DAV Khagaul Alumni Welfare Trust. All rights reserved.
           </p>
-          <p>Registered Educational Trust · Bihar, India</p>
+          <p>Registered Educational Trust - Bihar, India</p>
         </div>
       </div>
     </footer>

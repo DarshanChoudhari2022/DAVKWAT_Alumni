@@ -6,6 +6,7 @@ import { formatDate } from '@/lib/utils/format';
 interface ShowcaseEvent {
   id: string;
   title: string;
+  slug: string;
   starts_at: string;
   venue: string | null;
   event_type: string;
@@ -14,6 +15,7 @@ interface ShowcaseEvent {
 interface ShowcaseAnnouncement {
   id: string;
   title: string;
+  slug: string;
   published_at: string | null;
 }
 
@@ -46,7 +48,10 @@ export function Showcase({ events, announcements }: ShowcaseProps) {
 
         <div className="mt-12 grid gap-8 lg:grid-cols-2">
           <Reveal direction="left">
-            <div className="flex h-full flex-col rounded-3xl border border-slate-200 bg-white p-6 shadow-xl shadow-slate-200/40 sm:p-8">
+            <div
+              id="events"
+              className="flex h-full flex-col rounded-3xl border border-slate-200 bg-white p-6 shadow-xl shadow-slate-200/40 sm:p-8"
+            >
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-3">
                   <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-blue-50">
@@ -64,7 +69,7 @@ export function Showcase({ events, announcements }: ShowcaseProps) {
                   events.slice(0, 3).map((e) => (
                     <Link
                       key={e.id}
-                      href={`/events/${e.id}`}
+                      href={`/events/${e.slug}`}
                       className="group flex items-start gap-4 rounded-2xl border border-slate-100 bg-slate-50/50 p-4 transition-all duration-300 ease-out hover:-translate-y-1 hover:border-blue-200 hover:bg-blue-50/30 hover:shadow-lg"
                     >
                       <div className="flex h-14 w-14 flex-none flex-col items-center justify-center rounded-xl bg-white text-center shadow-sm border border-slate-200">
@@ -97,7 +102,10 @@ export function Showcase({ events, announcements }: ShowcaseProps) {
           </Reveal>
 
           <Reveal direction="right" delay={100}>
-            <div className="flex h-full flex-col rounded-3xl border border-slate-200 bg-white p-6 shadow-xl shadow-slate-200/40 sm:p-8">
+            <div
+              id="announcements"
+              className="flex h-full flex-col rounded-3xl border border-slate-200 bg-white p-6 shadow-xl shadow-slate-200/40 sm:p-8"
+            >
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-3">
                   <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-blue-50">
@@ -115,7 +123,7 @@ export function Showcase({ events, announcements }: ShowcaseProps) {
                   announcements.slice(0, 3).map((a) => (
                     <Link
                       key={a.id}
-                      href={`/announcements/${a.id}`}
+                      href={`/announcements/${a.slug}`}
                       className="group flex items-start gap-4 rounded-2xl border border-slate-100 bg-slate-50/50 p-4 transition-all duration-300 ease-out hover:-translate-y-1 hover:border-blue-200 hover:bg-blue-50/30 hover:shadow-lg"
                     >
                       <div className="min-w-0 flex-1">
