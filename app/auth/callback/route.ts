@@ -1,4 +1,5 @@
 import { NextResponse, type NextRequest } from 'next/server';
+import { createAdminClient } from '@/lib/supabase/admin';
 import { createClient } from '@/lib/supabase/server';
 
 /**
@@ -15,6 +16,16 @@ export async function GET(request: NextRequest) {
     const { error } = await supabase.auth.exchangeCodeForSession(code);
     if (error) {
       return NextResponse.redirect(`${origin}/login?error=verification_failed`);
+    }
+
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
+    if (user) {
+      await createAdminClient()
+        .from('profiles')
+        .update({ last_seen_at: new Date().toISOString() })
+        .eq('id', user.id);
     }
   }
 

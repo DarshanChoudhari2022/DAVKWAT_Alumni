@@ -19,12 +19,14 @@ export default async function AnnouncementsPage({
   const sp = await searchParams;
   const page = Math.max(1, parseInt(sp.page ?? '1', 10) || 1);
   const offset = (page - 1) * PAGE_SIZE;
+  const now = new Date().toISOString();
 
   const supabase = await createClient();
   const q = supabase
     .from('announcements')
-    .select('id, title, slug, content, is_pinned, published_at', { count: 'exact' })
-    .eq('is_published', true);
+    .select('id, title, slug, content, is_pinned, published_at, scheduled_for, cover_image_url', { count: 'exact' })
+    .eq('is_published', true)
+    .or(`scheduled_for.is.null,scheduled_for.lte.${now}`);
 
   const { data, count } = await q
     .order('is_pinned', { ascending: false })
@@ -56,6 +58,9 @@ export default async function AnnouncementsPage({
                       </span>
                     </div>
                     <h2 className="mt-1.5 font-display text-lg font-semibold">{a.title}</h2>
+                    {a.cover_image_url && (
+                      <p className="mt-1 text-xs text-slate-400">Cover image attached</p>
+                    )}
                     {a.content && (
                       <p className="mt-1 line-clamp-2 text-sm text-slate-600">
                         {stripHtml(a.content).slice(0, 200)}

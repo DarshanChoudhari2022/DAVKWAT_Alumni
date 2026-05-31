@@ -1,6 +1,6 @@
 import type { Metadata } from 'next';
 import { notFound } from 'next/navigation';
-import { createClient } from '@/lib/supabase/server';
+import { requireAdminAccess } from '@/lib/auth/admin-access';
 import { EventForm } from '../../EventForm';
 
 export const metadata: Metadata = { title: 'Edit Event — Admin' };
@@ -11,10 +11,10 @@ export default async function EditEventPage({
   params: Promise<{ id: string }>;
 }) {
   const { id } = await params;
-  const supabase = await createClient();
+  const { database: supabase } = await requireAdminAccess();
   const { data } = await supabase
     .from('events')
-    .select('id, title, description, event_type, venue, online_link, starts_at, ends_at, max_attendees')
+    .select('id, title, description, event_type, venue, online_link, banner_image_url, starts_at, ends_at, registration_deadline, is_published, max_attendees')
     .eq('id', id)
     .single();
 
@@ -33,8 +33,11 @@ export default async function EditEventPage({
             event_type: data.event_type,
             venue: data.venue ?? '',
             online_link: data.online_link ?? '',
+            banner_image_url: data.banner_image_url ?? '',
             starts_at: data.starts_at,
             ends_at: data.ends_at ?? '',
+            registration_deadline: data.registration_deadline ?? '',
+            is_published: data.is_published,
             max_attendees: data.max_attendees,
           }}
         />

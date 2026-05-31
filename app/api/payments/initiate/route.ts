@@ -3,6 +3,7 @@ import { nanoid } from 'nanoid';
 import { writeAuditLog } from '@/lib/audit';
 import { createAdminClient } from '@/lib/supabase/admin';
 import { createClient } from '@/lib/supabase/server';
+import { APP_URL } from '@/lib/resend/client';
 
 export async function POST(req: Request) {
   try {
@@ -68,16 +69,19 @@ export async function POST(req: Request) {
     }
 
     const txnid = `DAVKAWT-MANUAL-${Date.now()}-${nanoid(6).toUpperCase()}`;
+    const gatewayConfigured = Boolean(process.env.EASEBUZZ_KEY && process.env.EASEBUZZ_SALT);
     const { error: insertError } = await admin.from('payments').insert({
       alumni_id: user.id,
       plan_id: plan.id,
       txnid,
       amount: plan.amount,
       status: 'pending',
-      payment_mode: 'manual_review',
+      payment_mode: gatewayConfigured ? 'easebuzz' : 'manual_review',
       gateway_response: {
-        mode: 'manual_review',
-        note: 'Gateway integration intentionally skipped until production payment credentials are added.',
+        mode: gatewayConfigured ? 'easebuzz' : 'manual_review',
+        note: gatewayConfigured
+          ? 'Gateway initiation prepared. Merchant credentials must be verified before live use.'
+          : 'Gateway credentials are not configured yet, so the request is recorded for manual follow-up.',
         membership_type: plan.membership_type,
         duration_months: plan.duration_months,
       },
@@ -99,10 +103,53 @@ export async function POST(req: Request) {
       },
     });
 
+    if (gatewayConfigured) {
+      const { initiatePayment } = await import('@/lib/easebuzz/initiate');
+      const payment = await initiatePayment({
+        txnid,
+        amount: Number(plan.amount).toFixed(2),
+        productinfo: plan.name,
+        firstname: profile.full_name,
+        email: user.email ?? '',
+        surl: `${APP_URL}/api/payments/verify`,
+        furl: `${APP_URL}/api/payments/verify`,
+        udf1: user.id,
+        udf2: plan.id,
+        udf3: plan.membership_type,
+        udf4: plan.duration_months ? String(plan.duration_months) : '',
+      });
+
+      if (payment.error || !payment.paymentUrl) {
+        await admin
+          .from('payments')
+          .update({
+            status: 'failed',
+            gateway_response: {
+              mode: 'easebuzz',
+              error: payment.error ?? 'Payment initiation failed',
+            },
+            updated_at: new Date().toISOString(),
+          })
+          .eq('txnid', txnid);
+
+        return NextResponse.json(
+          { error: payment.error ?? 'Could not start the payment.' },
+          { status: 502 }
+        );
+      }
+
+      return NextResponse.json({
+        success: true,
+        txnid,
+        redirectUrl: payment.paymentUrl,
+        message: `Redirecting to Easebuzz for ${plan.name}.`,
+      });
+    }
+
     return NextResponse.json({
       success: true,
       txnid,
-      message: `${plan.name} request submitted. The DAVKAWT admin team will contact you with payment instructions.`,
+      message: `${plan.name} request recorded. Easebuzz credentials are not configured yet, so the admin team will follow up manually.`,
     });
   } catch (err) {
     console.error('[payments/initiate] unexpected error:', err);

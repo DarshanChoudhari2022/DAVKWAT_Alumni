@@ -1,23 +1,13 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { requireAdminApiAccess } from '@/lib/auth/admin-api';
 import { writeAuditLog } from '@/lib/audit';
-import { createClient } from '@/lib/supabase/server';
 import { changeRoleSchema } from '@/lib/validations/admin';
 
 export async function POST(req: NextRequest) {
-  const supabase = await createClient();
-  const { data: { user } } = await supabase.auth.getUser();
-  if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+  const { adminAccess, error: authError } = await requireAdminApiAccess();
+  if (authError || !adminAccess) return authError;
 
-  // Verify admin
-  const { data: adminProfile } = await supabase
-    .from('profiles')
-    .select('role')
-    .eq('id', user.id)
-    .single();
-
-  if (!adminProfile || !['admin', 'super_admin'].includes(adminProfile.role)) {
-    return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
-  }
+  const supabase = adminAccess.database;
 
   const body = await req.json();
   const parsed = changeRoleSchema.safeParse(body);
@@ -28,21 +18,21 @@ export async function POST(req: NextRequest) {
   const { alumniId, role } = parsed.data;
 
   // Only super_admin can assign super_admin
-  if (role === 'super_admin' && adminProfile.role !== 'super_admin') {
+  if (role === 'super_admin' && adminAccess.role !== 'super_admin') {
     return NextResponse.json({ error: 'Only super admins can assign super_admin role.' }, { status: 403 });
   }
 
-  const { error } = await supabase
+  const { error: updateError } = await supabase
     .from('profiles')
     .update({ role, updated_at: new Date().toISOString() })
     .eq('id', alumniId);
 
-  if (error) {
-    return NextResponse.json({ error: error.message }, { status: 500 });
+  if (updateError) {
+    return NextResponse.json({ error: updateError.message }, { status: 500 });
   }
 
   await writeAuditLog({
-    actor_id: user.id,
+    actor_id: adminAccess.actorProfileId,
     action: 'change_role',
     target_type: 'profile',
     target_id: alumniId,

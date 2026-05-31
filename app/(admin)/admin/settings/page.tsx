@@ -1,9 +1,11 @@
 import type { Metadata } from 'next';
-import { createClient } from '@/lib/supabase/server';
+import { requireAdminAccess } from '@/lib/auth/admin-access';
 import { Card } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
+import { mapSiteSettings } from '@/lib/site-settings';
 import { formatINR } from '@/lib/utils/format';
 import { MembershipPlanForm } from './MembershipPlanForm';
+import { SiteSettingsForm } from './SiteSettingsForm';
 import { SettingsActions } from './SettingsActions';
 
 interface Plan {
@@ -16,33 +18,38 @@ interface Plan {
   is_active: boolean;
 }
 
-export const metadata: Metadata = { title: 'Settings — Admin' };
+export const metadata: Metadata = { title: 'Settings - Admin' };
 
 export default async function AdminSettingsPage() {
-  const supabase = await createClient();
+  const adminAccess = await requireAdminAccess();
+  const supabase = adminAccess.database;
+  const isSuperAdmin = adminAccess.role === 'super_admin';
 
-  // Check super_admin
-  const { data: { user } } = await supabase.auth.getUser();
-  const { data: profile } = await supabase
-    .from('profiles')
-    .select('role')
-    .eq('id', user!.id)
-    .single();
+  const [{ data: plans }, { data: siteSettingsRows }] = await Promise.all([
+    supabase
+      .from('membership_plans')
+      .select('id, name, description, amount, membership_type, duration_months, is_active')
+      .order('created_at', { ascending: true }),
+    supabase.from('site_settings').select('key, value'),
+  ]);
 
-  const isSuperAdmin = profile?.role === 'super_admin';
-
-  // Fetch membership plans
-  const { data: plans } = await supabase
-    .from('membership_plans')
-    .select('id, name, description, amount, membership_type, duration_months, is_active')
-    .order('created_at', { ascending: true });
+  const siteSettings = mapSiteSettings(siteSettingsRows);
 
   return (
     <div className="mx-auto max-w-4xl px-4 py-8 sm:px-6 lg:px-8">
       <h1 className="font-display text-3xl font-semibold tracking-tight">Settings</h1>
       <p className="mt-1 text-sm text-slate-500">Manage membership plans and site configuration.</p>
 
-      {/* Membership Plans */}
+      <section className="mt-8">
+        <h2 className="font-display text-xl font-semibold">Basic Site Settings</h2>
+        <Card className="mt-4">
+          <p className="text-sm text-slate-500">
+            Update the trust identity, public contact details, and social links used across the portal.
+          </p>
+          <SiteSettingsForm initial={siteSettings} />
+        </Card>
+      </section>
+
       <section className="mt-8">
         <div className="flex items-end justify-between">
           <h2 className="font-display text-xl font-semibold">Membership Plans</h2>
@@ -89,14 +96,27 @@ export default async function AdminSettingsPage() {
           )}
         </ul>
 
-        {/* New plan form */}
         <Card className="mt-6">
           <h3 className="font-display font-semibold">Add New Plan</h3>
           <MembershipPlanForm />
         </Card>
       </section>
 
-      {/* Admin Users — only super_admin */}
+      <section className="mt-10">
+        <h2 className="font-display text-xl font-semibold">Email and Payment Readiness</h2>
+        <Card className="mt-4">
+          <p className="text-sm text-slate-600">
+            The portal already includes approval emails, rejection emails, event reminders, payment receipts,
+            membership renewal reminders, and segmented announcement emails.
+          </p>
+          <ul className="mt-4 space-y-2 text-sm text-slate-500">
+            <li>`RESEND_API_KEY` and `RESEND_FROM_EMAIL` enable outbound emails.</li>
+            <li>`EASEBUZZ_KEY` and `EASEBUZZ_SALT` enable online payment redirects.</li>
+            <li>`CRON_SECRET` secures the reminder cron endpoints.</li>
+          </ul>
+        </Card>
+      </section>
+
       {isSuperAdmin && (
         <section className="mt-10">
           <h2 className="font-display text-xl font-semibold">Admin Users</h2>
@@ -111,7 +131,7 @@ export default async function AdminSettingsPage() {
 }
 
 async function AdminUsersList() {
-  const supabase = await createClient();
+  const { database: supabase } = await requireAdminAccess();
   const { data: admins } = await supabase
     .from('profiles')
     .select('id, full_name, email, role')
@@ -134,7 +154,9 @@ async function AdminUsersList() {
               <td className="py-2.5 pr-3 font-medium">{a.full_name}</td>
               <td className="py-2.5 pr-3 text-slate-500">{a.email}</td>
               <td className="py-2.5">
-                <Badge variant="primary" className="capitalize">{a.role}</Badge>
+                <Badge variant="primary" className="capitalize">
+                  {a.role}
+                </Badge>
               </td>
             </tr>
           ))}

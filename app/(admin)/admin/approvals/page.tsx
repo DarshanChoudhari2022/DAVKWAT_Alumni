@@ -2,7 +2,7 @@ import type { Metadata } from 'next';
 import { Avatar } from '@/components/shared/Avatar';
 import { Badge } from '@/components/ui/badge';
 import { Card } from '@/components/ui/card';
-import { createClient } from '@/lib/supabase/server';
+import { requireAdminAccess } from '@/lib/auth/admin-access';
 import { formatDate } from '@/lib/utils/format';
 import { ApprovalActions } from './ApprovalActions';
 
@@ -18,7 +18,7 @@ export default async function ApprovalsPage({
   const startOfToday = new Date(now.getFullYear(), now.getMonth(), now.getDate()).toISOString();
   const oneWeekAgo = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000).toISOString();
 
-  const supabase = await createClient();
+  const { database: supabase } = await requireAdminAccess();
   let query = supabase
     .from('profiles')
     .select(

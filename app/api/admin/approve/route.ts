@@ -1,26 +1,12 @@
 import { NextResponse } from 'next/server';
+import { requireAdminApiAccess } from '@/lib/auth/admin-api';
 import { writeAuditLog } from '@/lib/audit';
 import { createAdminClient } from '@/lib/supabase/admin';
-import { createClient } from '@/lib/supabase/server';
 
 export async function POST(req: Request) {
   try {
-    const supabase = await createClient();
-    const { data: { user } } = await supabase.auth.getUser();
-
-    if (!user) {
-      return NextResponse.json({ error: 'Not authenticated.' }, { status: 401 });
-    }
-
-    const { data: adminProfile } = await supabase
-      .from('profiles')
-      .select('role')
-      .eq('id', user.id)
-      .maybeSingle();
-
-    if (!adminProfile || !['admin', 'super_admin'].includes(adminProfile.role)) {
-      return NextResponse.json({ error: 'Forbidden.' }, { status: 403 });
-    }
+    const { adminAccess, error } = await requireAdminApiAccess();
+    if (error || !adminAccess) return error;
 
     const { alumniId } = (await req.json()) as { alumniId?: string };
     if (!alumniId) {
@@ -35,7 +21,7 @@ export async function POST(req: Request) {
         approval_status: 'approved',
         role: 'alumni',
         approved_at: now,
-        approved_by: user.id,
+        approved_by: adminAccess.actorProfileId,
         rejection_reason: null,
         updated_at: now,
       })
@@ -56,7 +42,7 @@ export async function POST(req: Request) {
     }
 
     await writeAuditLog({
-      actor_id: user.id,
+      actor_id: adminAccess.actorProfileId,
       action: 'alumni_approved',
       target_type: 'profile',
       target_id: alumniId,

@@ -1,24 +1,19 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { createClient } from '@/lib/supabase/server';
+import {
+  getAdminActorProfileErrorResponse,
+  requireAdminApiAccess,
+} from '@/lib/auth/admin-api';
 import { sanitizeHtml } from '@/lib/utils/sanitize';
 
 export async function POST(req: NextRequest) {
-  const supabase = await createClient();
-  const { data: { user } } = await supabase.auth.getUser();
-  if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+  const { adminAccess, error: authError } = await requireAdminApiAccess();
+  if (authError || !adminAccess) return authError;
+  if (!adminAccess.actorProfileId) return getAdminActorProfileErrorResponse();
 
-  const { data: profile } = await supabase
-    .from('profiles')
-    .select('role')
-    .eq('id', user.id)
-    .single();
-
-  if (!profile || !['admin', 'super_admin'].includes(profile.role)) {
-    return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
-  }
+  const supabase = adminAccess.database;
 
   const body = await req.json();
-  const { title, content, is_pinned, slug, cover_image_url } = body;
+  const { title, content, is_pinned, is_published, slug, cover_image_url, scheduled_for } = body;
 
   if (!title?.trim() || !content?.trim() || !slug) {
     return NextResponse.json({ error: 'Title, content, and slug are required.' }, { status: 400 });
@@ -26,26 +21,40 @@ export async function POST(req: NextRequest) {
 
   const sanitizedContent = sanitizeHtml(content.trim());
 
+  const scheduledForValue =
+    typeof scheduled_for === 'string' && scheduled_for.trim().length > 0
+      ? scheduled_for
+      : null;
   const now = new Date().toISOString();
+  const publishedAt = is_published
+    ? scheduledForValue && new Date(scheduledForValue).getTime() > Date.now()
+      ? scheduledForValue
+      : now
+    : null;
 
-  const { data, error } = await supabase
+  const { data, error: insertError } = await supabase
     .from('announcements')
     .insert({
       title: title.trim(),
       content: sanitizedContent,
       slug,
       is_pinned: !!is_pinned,
-      is_published: false,
-      author_id: user.id,
+      is_published: !!is_published,
+      author_id: adminAccess.actorProfileId,
       cover_image_url: cover_image_url ?? null,
+      scheduled_for: scheduledForValue,
+      published_at: publishedAt,
       created_at: now,
       updated_at: now,
     })
     .select('id')
     .single();
 
-  if (error) {
-    return NextResponse.json({ error: error.message }, { status: 500 });
+  if (insertError || !data) {
+    return NextResponse.json(
+      { error: insertError?.message ?? 'Failed to create announcement.' },
+      { status: 500 }
+    );
   }
   return NextResponse.json({ ok: true, id: data.id });
 }

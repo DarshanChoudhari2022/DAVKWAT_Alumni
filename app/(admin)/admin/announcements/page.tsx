@@ -5,7 +5,7 @@ import { Card } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Pagination } from '@/components/shared/Pagination';
-import { createClient } from '@/lib/supabase/server';
+import { requireAdminAccess } from '@/lib/auth/admin-access';
 import { formatDate } from '@/lib/utils/format';
 import { AnnouncementActions } from './AnnouncementActions';
 
@@ -22,17 +22,23 @@ export default async function AdminAnnouncementsPage({
   const page = Math.max(1, parseInt(sp.page ?? '1', 10) || 1);
   const offset = (page - 1) * PAGE_SIZE;
 
-  const supabase = await createClient();
+  const { database: supabase } = await requireAdminAccess();
+  const now = new Date().toISOString();
 
   let query = supabase
     .from('announcements')
     .select(
-      'id, title, slug, is_pinned, is_published, published_at, created_at, author_id, profiles(full_name)',
+      'id, title, slug, is_pinned, is_published, published_at, scheduled_for, created_at, author_id, profiles(full_name)',
       { count: 'exact' }
     );
 
-  if (sp.status === 'published') query = query.eq('is_published', true);
+  if (sp.status === 'published') {
+    query = query.eq('is_published', true).or(`scheduled_for.is.null,scheduled_for.lte.${now}`);
+  }
   if (sp.status === 'draft') query = query.eq('is_published', false);
+  if (sp.status === 'scheduled') {
+    query = query.eq('is_published', true).not('scheduled_for', 'is', null).gt('scheduled_for', now);
+  }
 
   const { data, count } = await query
     .order('created_at', { ascending: false })
@@ -60,6 +66,7 @@ export default async function AdminAnnouncementsPage({
         {[
           { label: 'All', value: '' },
           { label: 'Published', value: 'published' },
+          { label: 'Scheduled', value: 'scheduled' },
           { label: 'Drafts', value: 'draft' },
         ].map((f) => (
           <Link
@@ -105,7 +112,9 @@ export default async function AdminAnnouncementsPage({
                     </div>
                   </td>
                   <td className="py-3 pr-3">
-                    {a.is_published ? (
+                    {a.is_published && a.scheduled_for && new Date(a.scheduled_for).getTime() > Date.now() ? (
+                      <Badge variant="warning">Scheduled</Badge>
+                    ) : a.is_published ? (
                       <Badge variant="success">
                         <Eye className="mr-1 h-3 w-3" />Published
                       </Badge>
@@ -116,7 +125,7 @@ export default async function AdminAnnouncementsPage({
                     )}
                   </td>
                   <td className="py-3 pr-3 text-slate-500">
-                    {a.published_at ? formatDate(a.published_at) : formatDate(a.created_at)}
+                    {a.scheduled_for ? formatDate(a.scheduled_for) : a.published_at ? formatDate(a.published_at) : formatDate(a.created_at)}
                   </td>
                   <td className="py-3 text-right">
                     <AnnouncementActions

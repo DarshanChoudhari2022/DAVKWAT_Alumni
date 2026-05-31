@@ -5,7 +5,7 @@ import { Card } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Pagination } from '@/components/shared/Pagination';
-import { createClient } from '@/lib/supabase/server';
+import { requireAdminAccess } from '@/lib/auth/admin-access';
 import { formatDateTime } from '@/lib/utils/format';
 import { EventActions } from './EventActions';
 
@@ -23,7 +23,7 @@ export default async function AdminEventsPage({
   const page = Math.max(1, parseInt(sp.page ?? '1', 10) || 1);
   const offset = (page - 1) * PAGE_SIZE;
 
-  const supabase = await createClient();
+  const { database: supabase } = await requireAdminAccess();
   const now = new Date().toISOString();
 
   let query = supabase

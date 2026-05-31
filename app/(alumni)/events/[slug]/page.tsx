@@ -1,3 +1,4 @@
+/* eslint-disable @next/next/no-img-element */
 import type { Metadata } from 'next';
 import Link from 'next/link';
 import { notFound, redirect } from 'next/navigation';
@@ -39,7 +40,7 @@ export default async function EventDetailPage({
   const { data: event } = await supabase
     .from('events')
     .select(
-      'id, title, slug, description, event_type, venue, online_link, starts_at, ends_at, registration_deadline, max_attendees, is_published'
+      'id, title, slug, description, event_type, venue, online_link, banner_image_url, starts_at, ends_at, registration_deadline, max_attendees, is_published'
     )
     .eq('slug', slug)
     .eq('is_published', true)
@@ -116,6 +117,13 @@ export default async function EventDetailPage({
       </header>
 
       <Card className="mt-6 p-6 sm:p-8">
+        {event.banner_image_url && (
+          <img
+            src={event.banner_image_url}
+            alt={event.title}
+            className="mb-6 h-auto w-full rounded-2xl border border-slate-200 object-cover"
+          />
+        )}
         {event.description && (
           <div className="whitespace-pre-line text-base leading-relaxed text-slate-700">
             {event.description}
@@ -139,6 +147,11 @@ export default async function EventDetailPage({
       {!isPast && (
         <Card className="mt-6 p-6 sm:p-8">
           <h2 className="font-display text-xl font-semibold">RSVP</h2>
+          {event.registration_deadline && (
+            <p className="mt-1 text-sm text-slate-500">
+              Registration closes on {formatDateTime(event.registration_deadline)}.
+            </p>
+          )}
           <RsvpForm
             eventId={event.id}
             slug={event.slug}

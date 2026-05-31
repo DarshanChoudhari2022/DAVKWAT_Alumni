@@ -5,7 +5,7 @@ import { Card } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Pagination } from '@/components/shared/Pagination';
-import { createClient } from '@/lib/supabase/server';
+import { requireAdminAccess } from '@/lib/auth/admin-access';
 import { formatINR, formatDateTime } from '@/lib/utils/format';
 
 export const metadata: Metadata = { title: 'Payments — Admin' };
@@ -14,6 +14,9 @@ const PAGE_SIZE = 10;
 
 interface SearchParams {
   status?: string;
+  plan?: string;
+  date_from?: string;
+  date_to?: string;
   q?: string;
   page?: string;
 }
@@ -40,7 +43,11 @@ export default async function AdminPaymentsPage({
   const page = Math.max(1, parseInt(sp.page ?? '1', 10) || 1);
   const offset = (page - 1) * PAGE_SIZE;
 
-  const supabase = await createClient();
+  const { database: supabase } = await requireAdminAccess();
+  const { data: plans } = await supabase
+    .from('membership_plans')
+    .select('id, name')
+    .order('amount', { ascending: true });
 
   let query = supabase
     .from('payments')
@@ -51,6 +58,16 @@ export default async function AdminPaymentsPage({
 
   if (sp.status && sp.status !== 'all') {
     query = query.eq('status', sp.status as 'pending' | 'success' | 'failed' | 'refunded');
+  }
+  if (sp.plan) {
+    query = query.eq('plan_id', sp.plan);
+  }
+  if (sp.date_from) {
+    query = query.gte('created_at', new Date(sp.date_from).toISOString());
+  }
+  if (sp.date_to) {
+    const endOfDay = new Date(`${sp.date_to}T23:59:59.999`);
+    query = query.lte('created_at', endOfDay.toISOString());
   }
   if (sp.q) {
     query = query.or(`txnid.ilike.%${sp.q}%,profiles.full_name.ilike.%${sp.q}%`);
@@ -124,6 +141,30 @@ export default async function AdminPaymentsPage({
           <option value="failed">Failed</option>
           <option value="refunded">Refunded</option>
         </select>
+        <select
+          name="plan"
+          defaultValue={sp.plan ?? ''}
+          className="h-10 rounded-lg border border-slate-200 bg-white px-3 text-sm"
+        >
+          <option value="">All plans</option>
+          {(plans ?? []).map((plan) => (
+            <option key={plan.id} value={plan.id}>
+              {plan.name}
+            </option>
+          ))}
+        </select>
+        <input
+          type="date"
+          name="date_from"
+          defaultValue={sp.date_from ?? ''}
+          className="h-10 rounded-lg border border-slate-200 bg-white px-3 text-sm"
+        />
+        <input
+          type="date"
+          name="date_to"
+          defaultValue={sp.date_to ?? ''}
+          className="h-10 rounded-lg border border-slate-200 bg-white px-3 text-sm"
+        />
         <button
           type="submit"
           className="inline-flex h-10 items-center rounded-lg bg-[#0F2557] px-5 text-sm font-medium text-white hover:bg-[#0F2557]/90"
@@ -196,7 +237,13 @@ export default async function AdminPaymentsPage({
         page={page}
         totalPages={totalPages}
         basePath="/admin/payments"
-        searchParams={{ status: sp.status, q: sp.q }}
+        searchParams={{
+          status: sp.status,
+          plan: sp.plan,
+          date_from: sp.date_from,
+          date_to: sp.date_to,
+          q: sp.q,
+        }}
       />
     </div>
   );

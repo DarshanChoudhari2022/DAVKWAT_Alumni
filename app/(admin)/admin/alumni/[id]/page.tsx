@@ -5,9 +5,10 @@ import { ArrowLeft, Mail, Phone, MapPin, Briefcase, GraduationCap, Calendar } fr
 import { Card } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Avatar } from '@/components/shared/Avatar';
-import { createClient } from '@/lib/supabase/server';
+import { requireAdminAccess } from '@/lib/auth/admin-access';
 import { formatDate, formatINR } from '@/lib/utils/format';
 import { AlumniDetailActions } from './AlumniDetailActions';
+import { AdminProfileEditForm } from './AdminProfileEditForm';
 
 export const metadata: Metadata = { title: 'Alumni Detail — Admin' };
 
@@ -17,7 +18,7 @@ export default async function AdminAlumniDetailPage({
   params: Promise<{ id: string }>;
 }) {
   const { id } = await params;
-  const supabase = await createClient();
+  const { database: supabase } = await requireAdminAccess();
 
   const { data: alumni } = await supabase
     .from('profiles')
@@ -238,6 +239,38 @@ export default async function AdminAlumniDetailPage({
           <p className="mt-2 text-sm text-rose-600">{alumni.rejection_reason}</p>
         </Card>
       )}
+
+      <Card className="mt-6">
+        <h2 className="font-display text-lg font-semibold">Edit Selected Fields</h2>
+        <p className="mt-1 text-sm text-slate-500">
+          Update contact, professional, privacy, and profile information for this alumni record.
+        </p>
+        <div className="mt-4">
+          <AdminProfileEditForm
+            alumniId={alumni.id}
+            initial={{
+              full_name: alumni.full_name,
+              email: alumni.email,
+              display_name: alumni.display_name,
+              phone: alumni.phone,
+              alternate_phone: alumni.alternate_phone,
+              current_city: alumni.current_city,
+              current_state: alumni.current_state,
+              current_country: alumni.current_country,
+              occupation: alumni.occupation,
+              company: alumni.company,
+              job_title: alumni.job_title,
+              industry: alumni.industry,
+              linkedin_url: alumni.linkedin_url,
+              website_url: alumni.website_url,
+              bio: alumni.bio,
+              achievements: alumni.achievements,
+              hide_email: alumni.hide_email,
+              hide_phone: alumni.hide_phone,
+            }}
+          />
+        </div>
+      </Card>
     </div>
   );
 }

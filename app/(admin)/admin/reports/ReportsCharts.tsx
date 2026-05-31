@@ -16,12 +16,45 @@ import { Card } from '@/components/ui/card';
 interface ReportsChartsProps {
   batchData: { year: string; count: number }[];
   stateData: { state: string; count: number }[];
+  registrationData: { month: string; count: number }[];
   paymentData: { month: string; amount: number }[];
 }
 
-export function ReportsCharts({ batchData, stateData, paymentData }: ReportsChartsProps) {
+export function ReportsCharts({
+  batchData,
+  stateData,
+  registrationData,
+  paymentData,
+}: ReportsChartsProps) {
   return (
     <div className="mt-8 grid gap-6 lg:grid-cols-2">
+      <Card>
+        <h3 className="font-display text-base font-semibold">Registrations Over Time</h3>
+        <div className="mt-4 h-64">
+          {registrationData.length > 0 ? (
+            <ResponsiveContainer width="100%" height="100%">
+              <LineChart data={registrationData}>
+                <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" />
+                <XAxis dataKey="month" tick={{ fontSize: 11 }} />
+                <YAxis tick={{ fontSize: 11 }} />
+                <Tooltip />
+                <Line
+                  type="monotone"
+                  dataKey="count"
+                  stroke="#2563EB"
+                  strokeWidth={2}
+                  dot={{ r: 4, fill: '#2563EB' }}
+                />
+              </LineChart>
+            </ResponsiveContainer>
+          ) : (
+            <p className="flex h-full items-center justify-center text-sm text-slate-400">
+              No registration data yet.
+            </p>
+          )}
+        </div>
+      </Card>
+
       {/* Batch Distribution */}
       <Card>
         <h3 className="font-display text-base font-semibold">Alumni by Batch Year</h3>
@@ -67,7 +100,7 @@ export function ReportsCharts({ batchData, stateData, paymentData }: ReportsChar
       </Card>
 
       {/* Revenue Over Time */}
-      <Card className="lg:col-span-2">
+      <Card>
         <h3 className="font-display text-base font-semibold">Monthly Revenue</h3>
         <div className="mt-4 h-64">
           {paymentData.length > 0 ? (

@@ -1,24 +1,13 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { requireAdminApiAccess } from '@/lib/auth/admin-api';
 import { writeAuditLog } from '@/lib/audit';
-import { createClient } from '@/lib/supabase/server';
 import { membershipPlanSchema } from '@/lib/validations/admin';
 
-async function verifyAdmin(supabase: Awaited<ReturnType<typeof createClient>>) {
-  const { data: { user } } = await supabase.auth.getUser();
-  if (!user) return null;
-  const { data: profile } = await supabase
-    .from('profiles')
-    .select('role')
-    .eq('id', user.id)
-    .single();
-  if (!profile || !['admin', 'super_admin'].includes(profile.role)) return null;
-  return user;
-}
-
 export async function POST(req: NextRequest) {
-  const supabase = await createClient();
-  const user = await verifyAdmin(supabase);
-  if (!user) return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
+  const { adminAccess, error: authError } = await requireAdminApiAccess();
+  if (authError || !adminAccess) return authError;
+
+  const supabase = adminAccess.database;
 
   const body = await req.json();
   const parsed = membershipPlanSchema.safeParse(body);
@@ -29,11 +18,11 @@ export async function POST(req: NextRequest) {
     );
   }
 
-  const { error } = await supabase.from('membership_plans').insert(parsed.data);
-  if (error) return NextResponse.json({ error: error.message }, { status: 500 });
+  const { error: insertError } = await supabase.from('membership_plans').insert(parsed.data);
+  if (insertError) return NextResponse.json({ error: insertError.message }, { status: 500 });
 
   await writeAuditLog({
-    actor_id: user.id,
+    actor_id: adminAccess.actorProfileId,
     action: 'create_membership_plan',
     target_type: 'membership_plan',
     metadata: { name: parsed.data.name },
@@ -43,22 +32,23 @@ export async function POST(req: NextRequest) {
 }
 
 export async function PATCH(req: NextRequest) {
-  const supabase = await createClient();
-  const user = await verifyAdmin(supabase);
-  if (!user) return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
+  const { adminAccess, error: authError } = await requireAdminApiAccess();
+  if (authError || !adminAccess) return authError;
+
+  const supabase = adminAccess.database;
 
   const { id, ...updates } = await req.json();
   if (!id) return NextResponse.json({ error: 'Plan ID required' }, { status: 400 });
 
-  const { error } = await supabase
+  const { error: updateError } = await supabase
     .from('membership_plans')
     .update(updates)
     .eq('id', id);
 
-  if (error) return NextResponse.json({ error: error.message }, { status: 500 });
+  if (updateError) return NextResponse.json({ error: updateError.message }, { status: 500 });
 
   await writeAuditLog({
-    actor_id: user.id,
+    actor_id: adminAccess.actorProfileId,
     action: 'update_membership_plan',
     target_type: 'membership_plan',
     target_id: id,
@@ -69,22 +59,23 @@ export async function PATCH(req: NextRequest) {
 }
 
 export async function DELETE(req: NextRequest) {
-  const supabase = await createClient();
-  const user = await verifyAdmin(supabase);
-  if (!user) return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
+  const { adminAccess, error: authError } = await requireAdminApiAccess();
+  if (authError || !adminAccess) return authError;
+
+  const supabase = adminAccess.database;
 
   const { id } = await req.json();
   if (!id) return NextResponse.json({ error: 'Plan ID required' }, { status: 400 });
 
-  const { error } = await supabase
+  const { error: deleteError } = await supabase
     .from('membership_plans')
     .delete()
     .eq('id', id);
 
-  if (error) return NextResponse.json({ error: error.message }, { status: 500 });
+  if (deleteError) return NextResponse.json({ error: deleteError.message }, { status: 500 });
 
   await writeAuditLog({
-    actor_id: user.id,
+    actor_id: adminAccess.actorProfileId,
     action: 'delete_membership_plan',
     target_type: 'membership_plan',
     target_id: id,

@@ -72,7 +72,23 @@ SET role = 'super_admin', approval_status = 'approved'
 WHERE email = 'your-email@example.com';
 ```
 
-## 9. Common commands
+## 9. Optional standalone admin login
+
+If you want `/admin-login` to work without Supabase Auth, add these variables to `.env.local`:
+
+```bash
+ADMIN_LOGIN_EMAIL=admin@example.com
+ADMIN_LOGIN_PASSWORD=ChooseAStrongPassword123
+ADMIN_SESSION_SECRET=replace-this-with-a-long-random-secret
+ADMIN_PROFILE_ID=
+```
+
+Notes:
+- `ADMIN_PROFILE_ID` is optional, but recommended. Set it to the UUID of an approved `admin` or `super_admin` profile in `profiles`.
+- If `ADMIN_PROFILE_ID` is omitted, the app will try to match `ADMIN_LOGIN_EMAIL` to an approved admin profile, then fall back to the first approved admin profile it finds.
+- The local admin login still uses Supabase data through the service role key, so `SUPABASE_SERVICE_ROLE_KEY` must stay configured.
+
+## 10. Common commands
 
 ```bash
 pnpm dev          # local dev
@@ -81,9 +97,10 @@ pnpm typecheck    # strict TS check
 pnpm lint         # eslint
 ```
 
-## 10. Troubleshooting
+## 11. Troubleshooting
 
 - **Cannot find module errors after install**: delete `.next/` and `node_modules/`, then reinstall.
 - **RLS errors when querying**: confirm you ran `0002_rls.sql` and the helper functions (`is_admin`, `is_approved_alumni`) exist.
 - **Emails not sending in dev**: Resend sandbox restricts recipients to your verified email. Use the default `onboarding@resend.dev` only for development.
 - **Sign-up email confirmation loop**: in Supabase Auth settings, either disable "Confirm email" for development or use the link from the Resend log.
+- **Local admin login opens the dashboard but create/update actions fail**: set `ADMIN_PROFILE_ID` to an approved admin profile UUID, or promote an alumni record to `admin` / `super_admin` first.

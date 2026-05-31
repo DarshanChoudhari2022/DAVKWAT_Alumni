@@ -2,6 +2,7 @@
 
 import { redirect } from 'next/navigation';
 import { revalidatePath } from 'next/cache';
+import { createAdminClient } from '@/lib/supabase/admin';
 import { createClient } from '@/lib/supabase/server';
 import { resolveSignedInRedirect } from '@/lib/utils/auth-routing';
 import { loginSchema } from '@/lib/validations/registration';
@@ -39,6 +40,11 @@ export async function loginAction(_prev: AuthState, formData: FormData): Promise
   if (!user) {
     return { error: 'Login failed. Please try again.' };
   }
+
+  await createAdminClient()
+    .from('profiles')
+    .update({ last_seen_at: new Date().toISOString() })
+    .eq('id', user.id);
 
   revalidatePath('/', 'layout');
 

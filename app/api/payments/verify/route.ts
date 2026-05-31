@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import { writeAuditLog } from '@/lib/audit';
 import { createAdminClient } from '@/lib/supabase/admin';
+import { getMembershipExpiryDate, sendPaymentReceiptEmail } from '@/lib/payments/membership';
 import { verifyPaymentHash } from '@/lib/easebuzz/verify';
 
 function membershipRedirect(path: string) {
@@ -84,12 +85,7 @@ export async function POST(req: Request) {
       const durationMonths = udf4 ? parseInt(udf4, 10) : null;
 
       if (alumniId) {
-        const expiresAt =
-          membershipType === 'lifetime'
-            ? null
-            : durationMonths
-              ? new Date(Date.now() + durationMonths * 30 * 24 * 60 * 60 * 1000).toISOString()
-              : new Date(Date.now() + 365 * 24 * 60 * 60 * 1000).toISOString();
+        const expiresAt = getMembershipExpiryDate(membershipType, durationMonths);
 
         await admin
           .from('profiles')
@@ -107,6 +103,14 @@ export async function POST(req: Request) {
         action: 'payment_success',
         target_type: 'payment',
         metadata: { txnid, amount, plan_id: udf2 },
+      });
+
+      await sendPaymentReceiptEmail({
+        txnid,
+        alumniId,
+        planId: udf2,
+        amount,
+        membershipType,
       });
 
       return NextResponse.redirect(membershipRedirect('/membership?status=success'));

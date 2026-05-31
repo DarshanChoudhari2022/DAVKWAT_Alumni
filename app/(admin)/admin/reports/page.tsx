@@ -2,21 +2,35 @@ import type { Metadata } from 'next';
 import { Download, Users, CreditCard, Calendar } from 'lucide-react';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { createClient } from '@/lib/supabase/server';
+import { requireAdminAccess } from '@/lib/auth/admin-access';
 import { formatINR } from '@/lib/utils/format';
 import { ReportsCharts } from './ReportsCharts';
 
 export const metadata: Metadata = { title: 'Reports & Exports — Admin' };
 
 export default async function AdminReportsPage() {
-  const supabase = await createClient();
+  const { database: supabase } = await requireAdminAccess();
+  const activeSince = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString();
 
-  // Aggregate stats
-  const [totalRes, paidRes, revenueRes, alumniByBatch, alumniByState, paymentsByMonth] =
+  const [
+    totalRes,
+    paidRes,
+    revenueRes,
+    activeRes,
+    alumniByBatch,
+    alumniByState,
+    registrationsByMonth,
+    paymentsByMonth,
+    popularThreads,
+  ] =
     await Promise.all([
       supabase.from('profiles').select('id', { count: 'exact', head: true }).eq('approval_status', 'approved'),
       supabase.from('profiles').select('id', { count: 'exact', head: true }).eq('is_paid_member', true),
       supabase.from('payments').select('amount').eq('status', 'success'),
+      supabase
+        .from('profiles')
+        .select('id', { count: 'exact', head: true })
+        .gte('last_seen_at', activeSince),
       supabase
         .from('profiles')
         .select('batch_year')
@@ -27,10 +41,20 @@ export default async function AdminReportsPage() {
         .select('current_state')
         .eq('approval_status', 'approved'),
       supabase
+        .from('profiles')
+        .select('created_at')
+        .order('created_at', { ascending: true }),
+      supabase
         .from('payments')
         .select('amount, created_at')
         .eq('status', 'success')
         .order('created_at', { ascending: true }),
+      supabase
+        .from('forum_threads')
+        .select('id, title, reply_count, created_at')
+        .order('reply_count', { ascending: false })
+        .order('created_at', { ascending: false })
+        .limit(5),
     ]);
 
   const totalRevenue = (revenueRes.data ?? []).reduce(
@@ -59,6 +83,15 @@ export default async function AdminReportsPage() {
     .sort((a, b) => b.count - a.count)
     .slice(0, 10);
 
+  const registrationMap = new Map<string, number>();
+  for (const row of registrationsByMonth.data ?? []) {
+    const month = (row as { created_at: string }).created_at.slice(0, 7);
+    registrationMap.set(month, (registrationMap.get(month) ?? 0) + 1);
+  }
+  const registrationChartData = Array.from(registrationMap.entries())
+    .map(([month, count]) => ({ month, count }))
+    .slice(-12);
+
   // Monthly payments
   const monthMap = new Map<string, number>();
   for (const row of paymentsByMonth.data ?? []) {
@@ -73,6 +106,7 @@ export default async function AdminReportsPage() {
   // Conversion rate
   const totalAlumni = totalRes.count ?? 0;
   const paidAlumni = paidRes.count ?? 0;
+  const activeUsers = activeRes.count ?? 0;
   const conversionRate = totalAlumni > 0 ? ((paidAlumni / totalAlumni) * 100).toFixed(1) : '0';
 
   return (
@@ -95,6 +129,10 @@ export default async function AdminReportsPage() {
           <p className="mt-1 font-display text-2xl font-semibold">{conversionRate}%</p>
         </Card>
         <Card>
+          <p className="text-sm text-slate-500">Active Users (30d)</p>
+          <p className="mt-1 font-display text-2xl font-semibold">{activeUsers}</p>
+        </Card>
+        <Card>
           <p className="text-sm text-slate-500">Total Revenue</p>
           <p className="mt-1 font-display text-2xl font-semibold">{formatINR(totalRevenue)}</p>
         </Card>
@@ -104,8 +142,26 @@ export default async function AdminReportsPage() {
       <ReportsCharts
         batchData={batchChartData}
         stateData={stateChartData}
+        registrationData={registrationChartData}
         paymentData={paymentChartData}
       />
+
+      <section className="mt-10">
+        <h2 className="font-display text-xl font-semibold">Popular Content</h2>
+        <div className="mt-4 space-y-3">
+          {(popularThreads.data ?? []).map((thread) => (
+            <Card key={thread.id}>
+              <p className="font-medium text-slate-900">{thread.title}</p>
+              <p className="mt-1 text-sm text-slate-500">
+                {thread.reply_count} replies · created {new Date(thread.created_at).toLocaleDateString('en-IN')}
+              </p>
+            </Card>
+          ))}
+          {(popularThreads.data ?? []).length === 0 && (
+            <Card className="text-sm text-slate-500">No forum activity yet.</Card>
+          )}
+        </div>
+      </section>
 
       {/* Export cards */}
       <section className="mt-10">

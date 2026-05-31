@@ -1,23 +1,13 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { requireAdminApiAccess } from '@/lib/auth/admin-api';
 import { writeAuditLog } from '@/lib/audit';
-import { createClient } from '@/lib/supabase/server';
 import { toggleActiveSchema } from '@/lib/validations/admin';
 
 export async function POST(req: NextRequest) {
-  const supabase = await createClient();
-  const { data: { user } } = await supabase.auth.getUser();
-  if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+  const { adminAccess, error: authError } = await requireAdminApiAccess();
+  if (authError || !adminAccess) return authError;
 
-  // Verify admin
-  const { data: adminProfile } = await supabase
-    .from('profiles')
-    .select('role')
-    .eq('id', user.id)
-    .single();
-
-  if (!adminProfile || !['admin', 'super_admin'].includes(adminProfile.role)) {
-    return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
-  }
+  const supabase = adminAccess.database;
 
   const body = await req.json();
   const parsed = toggleActiveSchema.safeParse(body);
@@ -27,17 +17,17 @@ export async function POST(req: NextRequest) {
 
   const { alumniId, is_active } = parsed.data;
 
-  const { error } = await supabase
+  const { error: updateError } = await supabase
     .from('profiles')
     .update({ is_active, updated_at: new Date().toISOString() })
     .eq('id', alumniId);
 
-  if (error) {
-    return NextResponse.json({ error: error.message }, { status: 500 });
+  if (updateError) {
+    return NextResponse.json({ error: updateError.message }, { status: 500 });
   }
 
   await writeAuditLog({
-    actor_id: user.id,
+    actor_id: adminAccess.actorProfileId,
     action: is_active ? 'reactivate_alumni' : 'deactivate_alumni',
     target_type: 'profile',
     target_id: alumniId,

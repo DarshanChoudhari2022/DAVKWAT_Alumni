@@ -5,8 +5,9 @@ import { notFound } from 'next/navigation';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Avatar } from '@/components/shared/Avatar';
-import { createClient } from '@/lib/supabase/server';
+import { requireAdminAccess } from '@/lib/auth/admin-access';
 import { formatDate, formatDateTime } from '@/lib/utils/format';
+import { EventReminderButton } from './EventReminderButton';
 
 export const metadata: Metadata = { title: 'Event RSVPs - Admin' };
 
@@ -16,7 +17,7 @@ export default async function EventRsvpsPage({
   params: Promise<{ id: string }>;
 }) {
   const { id } = await params;
-  const supabase = await createClient();
+  const { database: supabase } = await requireAdminAccess();
 
   const { data: event } = await supabase
     .from('events')
@@ -54,6 +55,7 @@ export default async function EventRsvpsPage({
             Export CSV
           </a>
         </Button>
+        <EventReminderButton eventId={id} />
       </header>
 
       <div className="mt-6 overflow-x-auto">

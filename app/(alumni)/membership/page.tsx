@@ -9,13 +9,19 @@ import { PayButton } from './PayButton';
 
 export const metadata: Metadata = { title: 'Membership' };
 
-export default async function MembershipPage() {
+export default async function MembershipPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ status?: string; error?: string; payment?: string }>;
+}) {
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
 
   if (!user) {
     redirect('/login');
   }
+
+  const sp = await searchParams;
 
   const [{ data: profile }, { data: plans }, { data: payments }] = await Promise.all([
     supabase
@@ -30,7 +36,7 @@ export default async function MembershipPage() {
       .order('amount', { ascending: true }),
     supabase
       .from('payments')
-      .select('id, plan_id, txnid, amount, status, payment_mode, created_at')
+      .select('id, plan_id, txnid, amount, status, payment_mode, created_at, receipt_url')
       .eq('alumni_id', user.id)
       .order('created_at', { ascending: false })
       .limit(10),
@@ -55,10 +61,32 @@ export default async function MembershipPage() {
       <header>
         <h1 className="font-display text-3xl font-semibold tracking-tight">Membership</h1>
         <p className="mt-1 text-sm text-slate-500">
-          Review the current alumni membership fee plans and notify the admin team which one you
-          want to take up.
+          Review the current alumni membership fee plans and continue to payment when the gateway
+          credentials are configured.
         </p>
       </header>
+
+      {sp.status === 'success' && (
+        <Card className="mt-6 border-emerald-200 bg-emerald-50/60 text-sm text-emerald-800">
+          Your payment was successful and your membership status has been updated.
+        </Card>
+      )}
+      {sp.status === 'failed' && (
+        <Card className="mt-6 border-rose-200 bg-rose-50/60 text-sm text-rose-700">
+          Payment failed or was not completed. You can retry by choosing your membership plan
+          again below.
+        </Card>
+      )}
+      {sp.error && (
+        <Card className="mt-6 border-amber-200 bg-amber-50/60 text-sm text-amber-800">
+          Payment could not be completed: {sp.error.replace(/_/g, ' ')}.
+        </Card>
+      )}
+      {sp.payment && (
+        <Card className="mt-6 border-slate-200 bg-slate-50 text-sm text-slate-700">
+          Receipt available for payment reference <span className="font-mono">{sp.payment}</span>. You can also open it from your payment history below.
+        </Card>
+      )}
 
       {profile.is_paid_member ? (
         <Card className="mt-6 border-emerald-200 bg-emerald-50/50">
@@ -97,8 +125,8 @@ export default async function MembershipPage() {
                 Membership request received
               </h2>
               <p className="mt-0.5 text-sm text-blue-800">
-                Your preferred membership plan has been recorded. An administrator will review it
-                and share payment instructions separately while the online gateway remains offline.
+                Your preferred membership plan has been recorded. If the payment gateway is not yet
+                configured, an administrator will review it and share the next steps separately.
               </p>
             </div>
           </div>
@@ -111,11 +139,11 @@ export default async function MembershipPage() {
             </div>
             <div>
               <h2 className="font-display text-lg font-semibold text-amber-800">
-                Membership fee collection is in manual review mode
+                Membership payment setup is pending credentials
               </h2>
               <p className="mt-0.5 text-sm text-amber-700">
-                Select a plan below to notify the DAVKAWT admin team. They will confirm the next
-                steps and activate payment processing separately.
+                Select a plan below to proceed. If Easebuzz credentials are not configured yet, the
+                request will be recorded for admin follow-up instead of redirecting to the gateway.
               </p>
             </div>
           </div>
@@ -127,8 +155,8 @@ export default async function MembershipPage() {
           <div className="flex flex-col gap-2">
             <h2 className="font-display text-xl font-semibold">Choose a Plan</h2>
             <p className="text-sm text-slate-500">
-              The payment gateway is temporarily disabled. Submitting a plan records your request
-              for admin follow-up.
+              If Easebuzz is configured, you will be redirected to complete payment online. If not,
+              the request will be recorded for manual follow-up.
             </p>
           </div>
           <div className="mt-4 grid gap-4 sm:grid-cols-2">
@@ -197,7 +225,8 @@ export default async function MembershipPage() {
                   <th className="pb-2 pr-4">Amount</th>
                   <th className="pb-2 pr-4">Status</th>
                   <th className="pb-2 pr-4">Mode</th>
-                  <th className="pb-2">Date</th>
+                 <th className="pb-2">Date</th>
+                  <th className="pb-2">Receipt</th>
                 </tr>
               </thead>
               <tbody>
@@ -222,6 +251,18 @@ export default async function MembershipPage() {
                       {payment.payment_mode?.replace(/_/g, ' ') ?? 'manual review'}
                     </td>
                     <td className="py-3">{formatDate(payment.created_at)}</td>
+                    <td className="py-3">
+                      {payment.receipt_url ? (
+                        <a
+                          href={payment.receipt_url}
+                          className="text-[#0F2557] underline hover:no-underline"
+                        >
+                          View
+                        </a>
+                      ) : (
+                        <span className="text-slate-400">-</span>
+                      )}
+                    </td>
                   </tr>
                 ))}
               </tbody>

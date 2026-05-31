@@ -1,20 +1,20 @@
 import type { Metadata } from 'next';
 import { Badge } from '@/components/ui/badge';
+import { getPublicSiteSettings } from '@/lib/site-settings';
 
 export const metadata: Metadata = { title: 'About the Trust' };
+export const revalidate = 300;
 
-export default function AboutPage() {
+export default async function AboutPage() {
+  const settings = await getPublicSiteSettings();
+
   return (
     <article className="mx-auto max-w-4xl px-4 py-16 sm:px-6 lg:px-8">
-      <Badge variant="primary">Registered Educational Trust · Bihar</Badge>
+      <Badge variant="primary">Registered Educational Trust - Bihar</Badge>
       <h1 className="mt-4 font-sans text-3xl font-bold tracking-[-0.025em] text-slate-950 sm:text-4xl lg:text-[44px]">
-        DAV Khagaul Alumni Welfare Trust
+        {settings.trustName}
       </h1>
-      <p className="mt-5 max-w-3xl text-lg leading-relaxed text-slate-600">
-        DAVKAWT is the official alumni welfare trust for DAV Khagaul alumni, created to
-        preserve lifelong bonds, support students and alumni, and strengthen the institution
-        that shaped generations.
-      </p>
+      <p className="mt-5 max-w-3xl text-lg leading-relaxed text-slate-600">{settings.aboutShort}</p>
       <div className="prose-davkawt mt-10">
         <h2>Our mission</h2>
         <p>
@@ -35,6 +35,11 @@ export default function AboutPage() {
           The portal gives DAVKAWT a professional, secure, and mobile-first digital presence
           so alumni can reconnect with confidence, contribute transparently, and help future
           generations benefit from a stronger DAV Khagaul community.
+        </p>
+        <h2>Reach the Trust</h2>
+        <p>
+          Contact email: {settings.contactEmail}
+          {settings.contactPhone ? ` | Contact phone: ${settings.contactPhone}` : ''}
         </p>
       </div>
     </article>

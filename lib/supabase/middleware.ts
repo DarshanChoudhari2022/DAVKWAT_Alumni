@@ -7,8 +7,12 @@ import {
   isAlumniRoute,
   resolveSignedInRedirect,
 } from '@/lib/utils/auth-routing';
+import {
+  LOCAL_ADMIN_COOKIE_NAME,
+  verifyLocalAdminSessionToken,
+} from '@/lib/auth/local-admin';
 
-const AUTH_ROUTES = ['/login', '/register', '/forgot-password'];
+const AUTH_ROUTES = ['/login', '/register', '/forgot-password', '/admin-login'];
 
 export async function updateSession(request: NextRequest): Promise<NextResponse> {
   let response = NextResponse.next({ request });
@@ -32,6 +36,9 @@ export async function updateSession(request: NextRequest): Promise<NextResponse>
     }
   );
 
+  const localAdminSession = await verifyLocalAdminSessionToken(
+    request.cookies.get(LOCAL_ADMIN_COOKIE_NAME)?.value
+  );
   const { data: { user } } = await supabase.auth.getUser();
   const pathname = request.nextUrl.pathname;
   const requestedPath = `${pathname}${request.nextUrl.search}`;
@@ -40,10 +47,23 @@ export async function updateSession(request: NextRequest): Promise<NextResponse>
   const needsAdmin = isAdminRoute(pathname);
   const isAuthPage = AUTH_ROUTES.some((r) => pathname === r);
 
+  if (localAdminSession) {
+    if (pathname === '/admin-login') {
+      const url = request.nextUrl.clone();
+      url.pathname = '/admin';
+      url.search = '';
+      return NextResponse.redirect(url);
+    }
+
+    if (needsAdmin) {
+      return response;
+    }
+  }
+
   // Not logged in -> redirect protected routes to /login
   if (!user && (needsAlumni || needsAdmin)) {
     const url = request.nextUrl.clone();
-    url.pathname = '/login';
+    url.pathname = needsAdmin ? '/admin-login' : '/login';
     url.searchParams.set('redirect', requestedPath);
     return NextResponse.redirect(url);
   }

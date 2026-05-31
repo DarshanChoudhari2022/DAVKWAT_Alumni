@@ -4,9 +4,11 @@
 This manual helps DAVKAWT administrators operate the alumni portal after launch.
 
 ## Admin Access
-1. Sign in at `/admin-login` with an account that has `admin` or `super_admin` role.
-2. Open `/admin` after login.
-3. If access is denied, confirm the user profile has `approval_status = approved` and role `admin` or `super_admin`.
+1. Open `/admin-login`.
+2. If standalone admin login is configured, sign in with `ADMIN_LOGIN_EMAIL` and `ADMIN_LOGIN_PASSWORD` from the environment.
+3. Otherwise, sign in with a Supabase account that has `admin` or `super_admin` role.
+4. Open `/admin` after login.
+5. If access is denied, confirm the user profile has `approval_status = approved` and role `admin` or `super_admin`.
 
 ## Dashboard
 The admin dashboard provides high-level operational metrics:
@@ -151,6 +153,7 @@ Before switching to production:
 ## Security Checklist for Admins
 - Do not share admin credentials.
 - Use strong passwords.
+- Keep `ADMIN_SESSION_SECRET` long and random.
 - Review role changes carefully.
 - Export data only when needed.
 - Store exports securely.

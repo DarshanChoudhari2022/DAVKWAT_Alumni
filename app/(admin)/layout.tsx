@@ -1,5 +1,4 @@
 import Link from 'next/link';
-import { redirect } from 'next/navigation';
 import {
   LayoutDashboard,
   UserCheck,
@@ -14,8 +13,8 @@ import {
 import { Logo } from '@/components/shared/Logo';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { logoutAction } from '@/app/(public)/login/actions';
-import { createClient } from '@/lib/supabase/server';
+import { adminLogoutAction } from '@/app/(public)/admin-login/actions';
+import { requireAdminAccess } from '@/lib/auth/admin-access';
 
 const ADMIN_NAV = [
   { href: '/admin', label: 'Dashboard', icon: LayoutDashboard },
@@ -30,19 +29,8 @@ const ADMIN_NAV = [
 ];
 
 export default async function AdminLayout({ children }: { children: React.ReactNode }) {
-  const supabase = await createClient();
-  const { data: { user } } = await supabase.auth.getUser();
-  if (!user) redirect('/login');
-
-  const { data: profile } = await supabase
-    .from('profiles')
-    .select('role, full_name')
-    .eq('id', user.id)
-    .single();
-
-  if (!profile || !['admin', 'super_admin'].includes(profile.role)) {
-    redirect('/dashboard');
-  }
+  const adminAccess = await requireAdminAccess();
+  const supabase = adminAccess.database;
 
   // Get pending approval count for badge
   const { count: pendingCount } = await supabase
@@ -79,8 +67,8 @@ export default async function AdminLayout({ children }: { children: React.ReactN
           </ul>
         </nav>
         <div className="border-t border-slate-200 p-3">
-          <p className="mb-2 truncate px-3 text-xs text-slate-500">{profile.full_name}</p>
-          <form action={logoutAction}>
+          <p className="mb-2 truncate px-3 text-xs text-slate-500">{adminAccess.displayName}</p>
+          <form action={adminLogoutAction}>
             <Button type="submit" variant="ghost" size="sm" className="w-full justify-start">
               Sign out
             </Button>
@@ -95,7 +83,7 @@ export default async function AdminLayout({ children }: { children: React.ReactN
             <Logo />
             <Badge variant="primary" className="text-[10px]">Admin</Badge>
           </div>
-          <form action={logoutAction}>
+          <form action={adminLogoutAction}>
             <Button type="submit" variant="ghost" size="sm">Sign out</Button>
           </form>
         </header>

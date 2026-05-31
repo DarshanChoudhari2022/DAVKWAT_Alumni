@@ -13,6 +13,7 @@ export const metadata: Metadata = { title: 'Dashboard' };
 
 export default async function DashboardPage() {
   const supabase = await createClient();
+  const now = new Date().toISOString();
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) redirect('/login');
 
@@ -35,13 +36,14 @@ export default async function DashboardPage() {
       .from('events')
       .select('id, title, slug, starts_at, venue, event_type')
       .eq('is_published', true)
-      .gte('starts_at', new Date().toISOString())
+      .gte('starts_at', now)
       .order('starts_at', { ascending: true })
       .limit(2),
     supabase
       .from('announcements')
       .select('id, title, slug, published_at')
       .eq('is_published', true)
+      .or(`scheduled_for.is.null,scheduled_for.lte.${now}`)
       .order('is_pinned', { ascending: false })
       .order('published_at', { ascending: false })
       .limit(3),

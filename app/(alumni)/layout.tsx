@@ -3,6 +3,8 @@ import { LayoutDashboard, Users, Calendar, MessageSquare, Megaphone, CreditCard,
 import { Logo } from '@/components/shared/Logo';
 import { logoutAction } from '@/app/(public)/login/actions';
 import { Button } from '@/components/ui/button';
+import { createAdminClient } from '@/lib/supabase/admin';
+import { createClient } from '@/lib/supabase/server';
 
 const NAV = [
   { href: '/dashboard', label: 'Dashboard', icon: LayoutDashboard },
@@ -14,7 +16,23 @@ const NAV = [
   { href: '/profile', label: 'Profile', icon: User },
 ];
 
-export default function AlumniLayout({ children }: { children: React.ReactNode }) {
+export default async function AlumniLayout({ children }: { children: React.ReactNode }) {
+  try {
+    const supabase = await createClient();
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
+
+    if (user) {
+      await createAdminClient()
+        .from('profiles')
+        .update({ last_seen_at: new Date().toISOString() })
+        .eq('id', user.id);
+    }
+  } catch (error) {
+    console.error('[alumni/layout] last_seen_at update failed:', error);
+  }
+
   return (
     <div className="flex min-h-dvh flex-col lg:flex-row">
       {/* Desktop sidebar */}

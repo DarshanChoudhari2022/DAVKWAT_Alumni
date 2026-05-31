@@ -6,7 +6,7 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Avatar } from '@/components/shared/Avatar';
 import { Pagination } from '@/components/shared/Pagination';
-import { createClient } from '@/lib/supabase/server';
+import { requireAdminAccess } from '@/lib/auth/admin-access';
 import { formatDate } from '@/lib/utils/format';
 
 export const metadata: Metadata = { title: 'Alumni Management — Admin' };
@@ -29,7 +29,7 @@ export default async function AdminAlumniPage({
   const page = Math.max(1, parseInt(sp.page ?? '1', 10) || 1);
   const offset = (page - 1) * PAGE_SIZE;
 
-  const supabase = await createClient();
+  const { database: supabase } = await requireAdminAccess();
 
   let query = supabase
     .from('profiles')

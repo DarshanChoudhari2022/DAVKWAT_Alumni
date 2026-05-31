@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { createClient } from '@/lib/supabase/server';
+import { requireAdminApiAccess } from '@/lib/auth/admin-api';
 import { arrayToCSV, arrayToXLSX } from '@/lib/utils/export';
 
 const ALUMNI_COLUMNS = [
@@ -40,20 +40,10 @@ const RSVP_COLUMNS = [
 ];
 
 export async function GET(req: NextRequest) {
-  const supabase = await createClient();
-  const { data: { user } } = await supabase.auth.getUser();
-  if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+  const { adminAccess, error } = await requireAdminApiAccess();
+  if (error || !adminAccess) return error;
 
-  // Verify admin
-  const { data: adminProfile } = await supabase
-    .from('profiles')
-    .select('role')
-    .eq('id', user.id)
-    .single();
-
-  if (!adminProfile || !['admin', 'super_admin'].includes(adminProfile.role)) {
-    return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
-  }
+  const supabase = adminAccess.database;
 
   const { searchParams } = new URL(req.url);
   const type = searchParams.get('type');

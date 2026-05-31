@@ -40,6 +40,11 @@ export function PayButton({
           return;
         }
 
+        if (data.redirectUrl) {
+          window.location.href = data.redirectUrl;
+          return;
+        }
+
         setSuccess(
           data.message ??
             `${planName} has been submitted to the DAVKAWT admin team for manual payment follow-up.`

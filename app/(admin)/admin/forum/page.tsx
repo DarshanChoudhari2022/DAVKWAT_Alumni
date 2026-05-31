@@ -4,14 +4,14 @@ import { Plus, MessageSquare, Lock, Pin } from 'lucide-react';
 import { Card } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { createClient } from '@/lib/supabase/server';
+import { requireAdminAccess } from '@/lib/auth/admin-access';
 import { formatRelative } from '@/lib/utils/format';
 import { ForumActions } from './ForumActions';
 
 export const metadata: Metadata = { title: 'Forum Management — Admin' };
 
 export default async function AdminForumPage() {
-  const supabase = await createClient();
+  const { database: supabase } = await requireAdminAccess();
 
   const { data: categories } = await supabase
     .from('forum_categories')
@@ -94,7 +94,9 @@ export default async function AdminForumPage() {
                       <div className="flex items-center gap-2">
                         {t.is_pinned && <Pin className="h-3 w-3 text-amber-500" />}
                         {t.is_locked && <Lock className="h-3 w-3 text-slate-400" />}
-                        <span className="line-clamp-1 font-medium">{t.title}</span>
+                        <Link href={`/admin/forum/threads/${t.id}`} className="line-clamp-1 font-medium hover:text-[#0F2557]">
+                          {t.title}
+                        </Link>
                       </div>
                       <p className="text-xs text-slate-400">{formatRelative(t.created_at)}</p>
                     </td>

@@ -1,29 +1,17 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { createClient } from '@/lib/supabase/server';
+import { requireAdminApiAccess } from '@/lib/auth/admin-api';
 
 async function assertAdmin() {
-  const supabase = await createClient();
-  const { data: { user } } = await supabase.auth.getUser();
-  if (!user) return { supabase: null, error: NextResponse.json({ error: 'Unauthorized' }, { status: 401 }) };
-
-  const { data: profile } = await supabase
-    .from('profiles')
-    .select('role')
-    .eq('id', user.id)
-    .single();
-
-  if (!profile || !['admin', 'super_admin'].includes(profile.role)) {
-    return { supabase: null, error: NextResponse.json({ error: 'Forbidden' }, { status: 403 }) };
-  }
-  return { supabase, error: null };
+  const { adminAccess, error: authError } = await requireAdminApiAccess();
+  return { authError, supabase: adminAccess?.database ?? null };
 }
 
 export async function PATCH(
   req: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
-  const { supabase, error } = await assertAdmin();
-  if (error || !supabase) return error;
+  const { authError, supabase } = await assertAdmin();
+  if (!supabase) return authError ?? NextResponse.json({ error: 'Forbidden' }, { status: 403 });
 
   const { id } = await params;
   const body = await req.json();
@@ -41,8 +29,14 @@ export async function PATCH(
   if (body.online_link === null || typeof body.online_link === 'string') {
     allowed.online_link = body.online_link?.trim() || null;
   }
+  if (body.banner_image_url === null || typeof body.banner_image_url === 'string') {
+    allowed.banner_image_url = body.banner_image_url?.trim() || null;
+  }
   if (body.starts_at) allowed.starts_at = body.starts_at;
   if (body.ends_at !== undefined) allowed.ends_at = body.ends_at;
+  if (body.registration_deadline !== undefined) {
+    allowed.registration_deadline = body.registration_deadline;
+  }
   if (body.max_attendees === null || typeof body.max_attendees === 'number') {
     allowed.max_attendees = body.max_attendees;
   }
@@ -62,8 +56,8 @@ export async function DELETE(
   _req: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
-  const { supabase, error } = await assertAdmin();
-  if (error || !supabase) return error;
+  const { authError, supabase } = await assertAdmin();
+  if (!supabase) return authError ?? NextResponse.json({ error: 'Forbidden' }, { status: 403 });
 
   const { id } = await params;
 

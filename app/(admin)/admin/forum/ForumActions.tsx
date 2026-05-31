@@ -1,8 +1,9 @@
 'use client';
 
+import Link from 'next/link';
 import { useTransition } from 'react';
 import { useRouter } from 'next/navigation';
-import { Pin, PinOff, Lock, Unlock, Trash2, ToggleLeft, ToggleRight } from 'lucide-react';
+import { Pencil, Pin, PinOff, Lock, Unlock, Trash2, ToggleLeft, ToggleRight } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 
 interface ForumActionsProps {
@@ -68,6 +69,11 @@ export function ForumActions({ type, id, isActive, isPinned, isLocked }: ForumAc
 
   return (
     <div className="flex shrink-0 items-center gap-1">
+      <Button variant="ghost" size="icon" asChild className="h-8 w-8" title="Moderate">
+        <Link href={`/admin/forum/threads/${id}`}>
+          <Pencil className="h-3.5 w-3.5" />
+        </Link>
+      </Button>
       <Button
         variant="ghost"
         size="icon"

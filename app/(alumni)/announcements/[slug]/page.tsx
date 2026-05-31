@@ -1,3 +1,4 @@
+/* eslint-disable @next/next/no-img-element */
 import type { Metadata } from 'next';
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
@@ -33,12 +34,14 @@ export default async function AnnouncementDetailPage({
 }) {
   const { slug } = await params;
   const supabase = await createClient();
+  const now = new Date().toISOString();
 
   const { data: a } = await supabase
     .from('announcements')
-    .select('id, title, content, is_pinned, published_at')
+    .select('id, title, content, is_pinned, published_at, cover_image_url, scheduled_for')
     .eq('slug', slug)
     .eq('is_published', true)
+    .or(`scheduled_for.is.null,scheduled_for.lte.${now}`)
     .single();
 
   if (!a) notFound();
@@ -64,6 +67,13 @@ export default async function AnnouncementDetailPage({
       </header>
 
       <Card className="mt-6 p-6 sm:p-8">
+        {a.cover_image_url && (
+          <img
+            src={a.cover_image_url}
+            alt={a.title}
+            className="mb-6 h-auto w-full rounded-2xl border border-slate-200 object-cover"
+          />
+        )}
         <div
           className="prose prose-slate max-w-none text-base leading-relaxed"
           dangerouslySetInnerHTML={{ __html: sanitizeHtml(a.content) }}

@@ -1,17 +1,18 @@
 import type { Metadata } from 'next';
 import Link from 'next/link';
-import { Users, UserCheck, CreditCard, TrendingUp } from 'lucide-react';
+import { CalendarDays, Users, UserCheck, CreditCard, TrendingUp } from 'lucide-react';
 import { Card } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { createClient } from '@/lib/supabase/server';
+import { requireAdminAccess } from '@/lib/auth/admin-access';
 import { formatINR, formatDate } from '@/lib/utils/format';
 
 export const metadata: Metadata = { title: 'Admin Dashboard' };
 
 export default async function AdminDashboardPage() {
-  const supabase = await createClient();
+  const { database: supabase } = await requireAdminAccess();
+  const now = new Date().toISOString();
 
-  const [totalAlumni, pendingApprovals, paidMembers, totalRevenue, recentRegistrations] =
+  const [totalAlumni, pendingApprovals, paidMembers, totalRevenue, upcomingEvents, recentRegistrations] =
     await Promise.all([
       supabase
         .from('profiles')
@@ -30,6 +31,11 @@ export default async function AdminDashboardPage() {
         .select('amount')
         .eq('status', 'success'),
       supabase
+        .from('events')
+        .select('id', { count: 'exact', head: true })
+        .eq('is_published', true)
+        .gte('starts_at', now),
+      supabase
         .from('profiles')
         .select('id, full_name, batch_year, course, approval_status, created_at')
         .order('created_at', { ascending: false })
@@ -47,7 +53,7 @@ export default async function AdminDashboardPage() {
       <p className="mt-1 text-sm text-slate-500">Overview of the DAVKAWT Alumni Portal.</p>
 
       {/* Stats grid */}
-      <div className="mt-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+      <div className="mt-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-5">
         <StatCard
           icon={Users}
           label="Total Alumni"
@@ -72,6 +78,12 @@ export default async function AdminDashboardPage() {
           label="Total Revenue"
           value={formatINR(revenue)}
           href="/admin/payments"
+        />
+        <StatCard
+          icon={CalendarDays}
+          label="Upcoming Events"
+          value={String(upcomingEvents.count ?? 0)}
+          href="/admin/events?filter=upcoming"
         />
       </div>
 

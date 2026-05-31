@@ -12,6 +12,7 @@ export const revalidate = 300; // 5 min ISR for the landing page
 
 async function getLandingData() {
   const supabase = createStaticClient();
+  const now = new Date().toISOString();
 
   // During CI builds, env vars may be missing — return empty defaults
   if (!supabase) {
@@ -30,6 +31,7 @@ async function getLandingData() {
       .from('announcements')
       .select('id, title, slug, cover_image_url, published_at')
       .eq('is_published', true)
+      .or(`scheduled_for.is.null,scheduled_for.lte.${now}`)
       .order('is_pinned', { ascending: false })
       .order('published_at', { ascending: false })
       .limit(4),

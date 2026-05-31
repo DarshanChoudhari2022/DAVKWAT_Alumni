@@ -1,30 +1,18 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { createClient } from '@/lib/supabase/server';
+import { requireAdminApiAccess } from '@/lib/auth/admin-api';
 import { sanitizeHtml } from '@/lib/utils/sanitize';
 
 async function assertAdmin() {
-  const supabase = await createClient();
-  const { data: { user } } = await supabase.auth.getUser();
-  if (!user) return { supabase: null, error: NextResponse.json({ error: 'Unauthorized' }, { status: 401 }) };
-
-  const { data: profile } = await supabase
-    .from('profiles')
-    .select('role')
-    .eq('id', user.id)
-    .single();
-
-  if (!profile || !['admin', 'super_admin'].includes(profile.role)) {
-    return { supabase: null, error: NextResponse.json({ error: 'Forbidden' }, { status: 403 }) };
-  }
-  return { supabase, error: null };
+  const { adminAccess, error: authError } = await requireAdminApiAccess();
+  return { authError, supabase: adminAccess?.database ?? null };
 }
 
 export async function PATCH(
   req: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
-  const { supabase, error } = await assertAdmin();
-  if (error || !supabase) return error;
+  const { authError, supabase } = await assertAdmin();
+  if (!supabase) return authError ?? NextResponse.json({ error: 'Forbidden' }, { status: 403 });
 
   const { id } = await params;
   const body = await req.json();
@@ -32,12 +20,26 @@ export async function PATCH(
   const allowed: Record<string, unknown> = {};
   if (typeof body.is_published === 'boolean') {
     allowed.is_published = body.is_published;
-    if (body.is_published) allowed.published_at = new Date().toISOString();
+    if (!body.is_published) {
+      allowed.published_at = null;
+    }
   }
   if (typeof body.is_pinned === 'boolean') allowed.is_pinned = body.is_pinned;
   if (typeof body.title === 'string') allowed.title = body.title;
   if (typeof body.content === 'string') allowed.content = sanitizeHtml(body.content);
   if (typeof body.cover_image_url === 'string') allowed.cover_image_url = body.cover_image_url;
+  if (body.cover_image_url === null) allowed.cover_image_url = null;
+  if (typeof body.scheduled_for === 'string') allowed.scheduled_for = body.scheduled_for;
+  if (body.scheduled_for === null) allowed.scheduled_for = null;
+
+  const nextScheduledFor =
+    typeof allowed.scheduled_for === 'string' ? allowed.scheduled_for : body.scheduled_for ?? null;
+  if (allowed.is_published === true) {
+    allowed.published_at =
+      nextScheduledFor && new Date(nextScheduledFor).getTime() > Date.now()
+        ? nextScheduledFor
+        : new Date().toISOString();
+  }
 
   allowed.updated_at = new Date().toISOString();
 
@@ -56,8 +58,8 @@ export async function DELETE(
   _req: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
-  const { supabase, error } = await assertAdmin();
-  if (error || !supabase) return error;
+  const { authError, supabase } = await assertAdmin();
+  if (!supabase) return authError ?? NextResponse.json({ error: 'Forbidden' }, { status: 403 });
 
   const { id } = await params;
 
