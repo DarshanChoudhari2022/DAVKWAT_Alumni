@@ -1,5 +1,5 @@
 import type { Metadata } from 'next';
-import { prisma } from '@/lib/prisma';
+import { getPrisma } from '@/lib/prisma';
 import { Badge } from '@/components/ui/badge';
 import { Card } from '@/components/ui/card';
 import { Avatar } from '@/components/shared/Avatar';
@@ -27,6 +27,7 @@ export default async function ApprovalsPage({
     createdAtFilter = { lt: new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000) };
   }
 
+  const prisma = getPrisma();
   const pending = await prisma.profiles.findMany({
     where: {
       approval_status: 'pending',

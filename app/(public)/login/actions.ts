@@ -3,7 +3,7 @@
 import { redirect } from 'next/navigation';
 import { revalidatePath } from 'next/cache';
 import { createClient } from '@/lib/supabase/server';
-import { prisma } from '@/lib/prisma';
+import { getPrisma } from '@/lib/prisma';
 import { resolveSignedInRedirect } from '@/lib/utils/auth-routing';
 import { loginSchema } from '@/lib/validations/registration';
 
@@ -42,6 +42,7 @@ export async function loginAction(_prev: AuthState, formData: FormData): Promise
   }
 
   // Use Prisma instead of Supabase client for profile query
+  const prisma = getPrisma();
   const profile = await prisma.profiles.findUnique({
     where: { id: user.id },
     select: { role: true, approval_status: true },

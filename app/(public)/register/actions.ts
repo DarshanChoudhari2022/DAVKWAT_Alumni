@@ -3,7 +3,7 @@
 import { redirect } from 'next/navigation';
 import { createClient } from '@/lib/supabase/server';
 import { createAdminClient } from '@/lib/supabase/admin';
-import { prisma } from '@/lib/prisma';
+import { getPrisma } from '@/lib/prisma';
 import {
   accountSchema,
   academicSchema,
@@ -31,6 +31,7 @@ export interface RegisterState {
 async function cleanUpOrphanedUser(email: string): Promise<{ cleaned: boolean; error?: string }> {
   try {
     const admin = createAdminClient();
+    const prisma = getPrisma();
 
     // First check if a profile with this email already exists (Prisma)
     const existingProfile = await prisma.profiles.findFirst({
@@ -93,6 +94,7 @@ async function insertProfile(
   attempt = 1
 ): Promise<{ success: boolean; error?: string }> {
   try {
+    const prisma = getPrisma();
     await prisma.profiles.create({
       data: {
         id: userId,

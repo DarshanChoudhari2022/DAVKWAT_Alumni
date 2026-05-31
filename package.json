@@ -6,6 +6,7 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
+    "postinstall": "prisma generate",
     "lint": "next lint",
     "typecheck": "next typegen && tsc --noEmit --incremental false",
     "db:types": "supabase gen types typescript --project-id $SUPABASE_PROJECT_ID --schema public > types/database.ts"

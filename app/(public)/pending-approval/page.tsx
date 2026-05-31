@@ -5,7 +5,7 @@ import { Card } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { createClient } from '@/lib/supabase/server';
-import { prisma } from '@/lib/prisma';
+import { getPrisma } from '@/lib/prisma';
 import { getDefaultSignedInPath } from '@/lib/utils/auth-routing';
 import { logoutAction } from '../login/actions';
 import { formatDate } from '@/lib/utils/format';
@@ -19,6 +19,7 @@ export default async function PendingApprovalPage() {
   if (!user) redirect('/login');
 
   // Use Prisma for profile query
+  const prisma = getPrisma();
   const profile = await prisma.profiles.findUnique({
     where: { id: user.id },
     select: {
