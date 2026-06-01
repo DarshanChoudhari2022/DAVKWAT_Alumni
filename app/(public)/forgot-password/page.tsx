@@ -5,7 +5,13 @@ import { ForgotForm } from './ForgotForm';
 
 export const metadata: Metadata = { title: 'Reset Password' };
 
-export default function ForgotPasswordPage() {
+export default async function ForgotPasswordPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ error?: string }>;
+}) {
+  const sp = await searchParams;
+
   return (
     <div className="mx-auto flex min-h-[calc(100vh-12rem)] max-w-md items-center px-4 py-12 sm:px-6">
       <Card className="w-full p-8">
@@ -13,6 +19,11 @@ export default function ForgotPasswordPage() {
         <p className="mt-1 text-sm text-slate-500">
           Enter your email and we&apos;ll send you a reset link.
         </p>
+        {sp.error === 'invalid_link' && (
+          <div role="alert" className="mt-4 rounded-lg border border-rose-200 bg-rose-50 p-3 text-sm text-rose-700">
+            That reset link is invalid or expired. Please request a new one.
+          </div>
+        )}
         <ForgotForm />
         <p className="mt-6 text-center text-sm text-slate-600">
           Remembered it?{' '}

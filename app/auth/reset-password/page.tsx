@@ -4,7 +4,13 @@ import { ResetPasswordForm } from './ResetPasswordForm';
 
 export const metadata: Metadata = { title: 'Set New Password — DAVKAWT' };
 
-export default function ResetPasswordPage() {
+export default async function ResetPasswordPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ code?: string }>;
+}) {
+  const sp = await searchParams;
+
   return (
     <div className="mx-auto flex min-h-[60vh] max-w-md items-center px-4 py-16 sm:px-6">
       <Card className="w-full p-8">
@@ -12,7 +18,7 @@ export default function ResetPasswordPage() {
         <p className="mt-1 text-sm text-slate-500">
           Enter your new password below.
         </p>
-        <ResetPasswordForm />
+        <ResetPasswordForm recoveryCode={sp.code} />
       </Card>
     </div>
   );

@@ -15,6 +15,10 @@ export async function GET(request: NextRequest) {
     const supabase = await createClient();
     const { error } = await supabase.auth.exchangeCodeForSession(code);
     if (error) {
+      if (redirectTo === '/auth/reset-password') {
+        return NextResponse.redirect(`${origin}/forgot-password?error=invalid_link`);
+      }
+
       return NextResponse.redirect(`${origin}/login?error=verification_failed`);
     }
 
@@ -22,10 +26,14 @@ export async function GET(request: NextRequest) {
       data: { user },
     } = await supabase.auth.getUser();
     if (user) {
-      await createAdminClient()
-        .from('profiles')
-        .update({ last_seen_at: new Date().toISOString() })
-        .eq('id', user.id);
+      try {
+        await createAdminClient()
+          .from('profiles')
+          .update({ last_seen_at: new Date().toISOString() })
+          .eq('id', user.id);
+      } catch (error) {
+        console.warn('[auth/callback] last_seen_at update skipped:', error);
+      }
     }
   }
 

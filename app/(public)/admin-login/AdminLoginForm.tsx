@@ -6,6 +6,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { FieldError } from '@/components/shared/FieldError';
+import { PasswordInput } from '@/components/shared/PasswordInput';
 import { adminLoginAction, type AdminAuthState } from './actions';
 
 const initialState: AdminAuthState = {};
@@ -53,10 +54,9 @@ export function AdminLoginForm({ redirectTo }: { redirectTo?: string }) {
 
       <div>
         <Label htmlFor="password">Password</Label>
-        <Input
+        <PasswordInput
           id="password"
           name="password"
-          type="password"
           autoComplete="current-password"
           required
           aria-describedby="password-error"

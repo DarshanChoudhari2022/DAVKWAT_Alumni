@@ -7,6 +7,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { FieldError } from '@/components/shared/FieldError';
+import { PasswordInput } from '@/components/shared/PasswordInput';
 import { loginAction, type AuthState } from './actions';
 
 const initialState: AuthState = {};
@@ -65,10 +66,9 @@ export function LoginForm({ redirectTo }: LoginFormProps) {
             Forgot password?
           </Link>
         </div>
-        <Input
+        <PasswordInput
           id="password"
           name="password"
-          type="password"
           autoComplete="current-password"
           required
           aria-describedby="password-error"

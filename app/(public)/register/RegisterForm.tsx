@@ -6,6 +6,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { FieldError } from '@/components/shared/FieldError';
+import { PasswordInput } from '@/components/shared/PasswordInput';
 import { cn } from '@/lib/utils/cn';
 import { registerAction, type RegisterState } from './actions';
 
@@ -241,19 +242,34 @@ interface FieldProps extends React.InputHTMLAttributes<HTMLInputElement> {
 }
 
 function Field({ label, name, hint, error, required, ...rest }: FieldProps) {
+  const { type, ...inputProps } = rest;
+  const isPassword = type === 'password';
+
   return (
     <div>
       <Label htmlFor={name}>
         {label} {required && <span className="text-rose-600">*</span>}
       </Label>
-      <Input
-        id={name}
-        name={name}
-        required={required}
-        aria-describedby={`${name}-error`}
-        className="mt-1.5"
-        {...rest}
-      />
+      {isPassword ? (
+        <PasswordInput
+          id={name}
+          name={name}
+          required={required}
+          aria-describedby={`${name}-error`}
+          className="mt-1.5"
+          {...inputProps}
+        />
+      ) : (
+        <Input
+          id={name}
+          name={name}
+          type={type}
+          required={required}
+          aria-describedby={`${name}-error`}
+          className="mt-1.5"
+          {...inputProps}
+        />
+      )}
       {hint && !error && <p className="mt-1 text-xs text-slate-500">{hint}</p>}
       <FieldError id={`${name}-error`} message={error} />
     </div>
