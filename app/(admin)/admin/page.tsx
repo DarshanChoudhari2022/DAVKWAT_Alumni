@@ -4,7 +4,8 @@ import Link from 'next/link';
 import { CalendarDays, Users, UserCheck, CreditCard, TrendingUp } from 'lucide-react';
 import { Card } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { StatCardSkeleton, TableRowSkeleton } from '@/components/shared/Skeleton';
+import { MobileInfoRow } from '@/components/admin/MobileInfoRow';
+import { CardSkeleton, StatCardSkeleton, TableRowSkeleton } from '@/components/shared/Skeleton';
 import { requireAdminAccess } from '@/lib/auth/admin-access';
 import { formatINR, formatDate } from '@/lib/utils/format';
 
@@ -12,8 +13,8 @@ export const metadata: Metadata = { title: 'Admin Dashboard' };
 
 export default function AdminDashboardPage() {
   return (
-    <div className="mx-auto max-w-6xl px-4 py-8 sm:px-6 lg:px-8">
-      <h1 className="font-display text-3xl font-semibold tracking-tight">Admin Dashboard</h1>
+    <div className="mx-auto max-w-6xl px-3 py-5 sm:px-6 sm:py-8 lg:px-8">
+      <h1 className="font-display text-2xl font-semibold tracking-tight sm:text-3xl">Admin Dashboard</h1>
       <p className="mt-1 text-sm text-slate-500">Overview of the DAVKAWT Alumni Portal.</p>
 
       <Suspense fallback={<StatsGridFallback />}>
@@ -21,7 +22,7 @@ export default function AdminDashboardPage() {
       </Suspense>
 
       <section className="mt-10">
-        <div className="flex items-end justify-between">
+        <div className="flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
           <h2 className="font-display text-xl font-semibold">Recent Registrations</h2>
           <Link href="/admin/approvals" className="text-sm text-[#0F2557] hover:underline">
             View all &rarr;
@@ -113,7 +114,36 @@ async function RecentRegistrationsTable() {
     .limit(8);
 
   return (
-    <div className="mt-4 overflow-x-auto">
+    <>
+    <div className="mt-4 grid gap-3 sm:hidden">
+      {(data ?? []).map((r) => (
+        <Card key={r.id} className="p-4">
+          <div className="flex items-start justify-between gap-3">
+            <div className="min-w-0">
+              <p className="truncate font-medium">{r.full_name}</p>
+              <p className="mt-0.5 text-xs text-slate-500">Registered {formatDate(r.created_at)}</p>
+            </div>
+            <Badge
+              variant={
+                r.approval_status === 'approved'
+                  ? 'success'
+                  : r.approval_status === 'rejected'
+                    ? 'error'
+                    : 'warning'
+              }
+            >
+              {r.approval_status}
+            </Badge>
+          </div>
+          <div className="mt-4 space-y-2 border-t border-slate-100 pt-3">
+            <MobileInfoRow label="Batch">{r.batch_year}</MobileInfoRow>
+            <MobileInfoRow label="Course">{r.course}</MobileInfoRow>
+          </div>
+        </Card>
+      ))}
+    </div>
+
+    <div className="mt-4 hidden overflow-x-auto sm:block">
       <table className="w-full text-sm">
         <thead>
           <tr className="border-b border-slate-200 text-left text-xs uppercase tracking-wide text-slate-500">
@@ -149,6 +179,7 @@ async function RecentRegistrationsTable() {
         </tbody>
       </table>
     </div>
+    </>
   );
 }
 
@@ -164,15 +195,22 @@ function StatsGridFallback() {
 
 function RecentRegistrationsFallback() {
   return (
-    <div className="mt-4 overflow-x-auto">
-      <table className="w-full text-sm">
-        <tbody>
-          {Array.from({ length: 8 }).map((_, index) => (
-            <TableRowSkeleton key={index} cols={5} />
-          ))}
-        </tbody>
-      </table>
-    </div>
+    <>
+      <div className="mt-4 grid gap-3 sm:hidden">
+        {Array.from({ length: 4 }).map((_, index) => (
+          <CardSkeleton key={index} />
+        ))}
+      </div>
+      <div className="mt-4 hidden overflow-x-auto sm:block">
+        <table className="w-full text-sm">
+          <tbody>
+            {Array.from({ length: 8 }).map((_, index) => (
+              <TableRowSkeleton key={index} cols={5} />
+            ))}
+          </tbody>
+        </table>
+      </div>
+    </>
   );
 }
 

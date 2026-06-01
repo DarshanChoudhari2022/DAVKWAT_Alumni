@@ -36,7 +36,7 @@ export function EventActions({ id, slug: _slug, isPublished }: EventActionsProps
   }
 
   return (
-    <div className="flex shrink-0 items-center gap-1">
+    <div className="flex shrink-0 flex-wrap items-center justify-end gap-1">
       <Button
         variant="ghost"
         size="icon"

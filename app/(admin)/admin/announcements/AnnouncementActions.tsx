@@ -47,7 +47,7 @@ export function AnnouncementActions({ id, isPublished, isPinned }: AnnouncementA
   }
 
   return (
-    <div className="flex items-center justify-end gap-1">
+    <div className="flex flex-wrap items-center justify-end gap-1">
       <Button
         variant="ghost"
         size="icon"

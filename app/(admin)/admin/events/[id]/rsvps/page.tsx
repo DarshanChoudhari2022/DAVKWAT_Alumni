@@ -4,6 +4,7 @@ import { ArrowLeft, Download } from 'lucide-react';
 import { notFound } from 'next/navigation';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
+import { MobileInfoRow } from '@/components/admin/MobileInfoRow';
 import { Avatar } from '@/components/shared/Avatar';
 import { requireAdminAccess } from '@/lib/auth/admin-access';
 import { formatDate, formatDateTime } from '@/lib/utils/format';
@@ -34,7 +35,7 @@ export default async function EventRsvpsPage({
     .order('registered_at', { ascending: false });
 
   return (
-    <div className="mx-auto max-w-4xl px-4 py-8 sm:px-6 lg:px-8">
+    <div className="mx-auto max-w-4xl px-3 py-5 sm:px-6 sm:py-8 lg:px-8">
       <Link
         href="/admin/events"
         className="inline-flex items-center gap-1 text-sm text-slate-500 hover:text-[#0F2557]"
@@ -42,24 +43,62 @@ export default async function EventRsvpsPage({
         <ArrowLeft className="h-3.5 w-3.5" /> Back to Events
       </Link>
 
-      <header className="mt-4 flex flex-wrap items-end justify-between gap-4">
+      <header className="mt-4 flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
         <div>
           <h1 className="font-display text-2xl font-semibold tracking-tight">{event.title}</h1>
           <p className="mt-1 text-sm text-slate-500">
             {formatDateTime(event.starts_at)} - {rsvps?.length ?? 0} RSVPs
           </p>
         </div>
-        <Button asChild variant="outline" size="sm">
-          <a href={`/api/admin/export?type=rsvps&eventId=${id}`}>
-            <Download className="h-4 w-4" />
-            Export CSV
-          </a>
-        </Button>
-        <EventReminderButton eventId={id} />
+        <div className="grid gap-2 sm:flex">
+          <Button asChild variant="outline" size="sm" className="w-full sm:w-auto">
+            <a href={`/api/admin/export?type=rsvps&eventId=${id}`}>
+              <Download className="h-4 w-4" />
+              Export CSV
+            </a>
+          </Button>
+          <EventReminderButton eventId={id} />
+        </div>
       </header>
 
-      <div className="mt-6 overflow-x-auto">
-        <table className="w-full text-sm">
+      <div className="mt-6 grid gap-3 sm:hidden">
+        {(rsvps ?? []).map((r) => {
+          const p =
+            r.profiles && !Array.isArray(r.profiles)
+              ? (r.profiles as {
+                  id: string;
+                  full_name: string;
+                  email: string;
+                  batch_year: number;
+                  current_city: string | null;
+                  avatar_url: string | null;
+                })
+              : null;
+          if (!p) return null;
+          return (
+            <Card key={r.id} className="p-4">
+              <div className="flex items-start gap-3">
+                <Avatar src={p.avatar_url} name={p.full_name} size="md" />
+                <div className="min-w-0">
+                  <p className="truncate font-medium">{p.full_name}</p>
+                  <p className="break-all text-xs text-slate-500">{p.email}</p>
+                </div>
+              </div>
+              <div className="mt-4 space-y-2 border-t border-slate-100 pt-3">
+                <MobileInfoRow label="Batch">{p.batch_year}</MobileInfoRow>
+                <MobileInfoRow label="City">{p.current_city ?? '-'}</MobileInfoRow>
+                <MobileInfoRow label="Registered">{formatDate(r.registered_at)}</MobileInfoRow>
+              </div>
+            </Card>
+          );
+        })}
+        {(rsvps ?? []).length === 0 && (
+          <Card className="text-center text-sm text-slate-500">No RSVPs yet.</Card>
+        )}
+      </div>
+
+      <div className="mt-6 hidden overflow-x-auto rounded-2xl border border-slate-200 bg-white sm:block">
+        <table className="w-full min-w-[680px] text-sm">
           <thead>
             <tr className="border-b border-slate-200 text-left text-xs uppercase tracking-wide text-slate-500">
               <th className="pb-2 pr-3">Alumni</th>
@@ -101,9 +140,6 @@ export default async function EventRsvpsPage({
             })}
           </tbody>
         </table>
-        {(rsvps ?? []).length === 0 && (
-          <Card className="mt-4 text-center text-sm text-slate-500">No RSVPs yet.</Card>
-        )}
       </div>
     </div>
   );

@@ -4,6 +4,7 @@ import { notFound } from 'next/navigation';
 import { ArrowLeft, Mail, Phone, MapPin, Briefcase, GraduationCap, Calendar } from 'lucide-react';
 import { Card } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
+import { MobileInfoRow } from '@/components/admin/MobileInfoRow';
 import { Avatar } from '@/components/shared/Avatar';
 import { requireAdminAccess } from '@/lib/auth/admin-access';
 import { formatDate, formatINR } from '@/lib/utils/format';
@@ -37,7 +38,7 @@ export default async function AdminAlumniDetailPage({
     .limit(10);
 
   return (
-    <div className="mx-auto max-w-4xl px-4 py-8 sm:px-6 lg:px-8">
+    <div className="mx-auto max-w-4xl px-3 py-5 sm:px-6 sm:py-8 lg:px-8">
       <Link
         href="/admin/alumni"
         className="inline-flex items-center gap-1.5 text-sm text-slate-500 hover:text-[#0F2557]"
@@ -47,12 +48,12 @@ export default async function AdminAlumniDetailPage({
       </Link>
 
       {/* Header Card */}
-      <Card className="mt-4">
+      <Card className="mt-4 p-4 sm:p-5">
         <div className="flex flex-col gap-6 sm:flex-row sm:items-start sm:justify-between">
           <div className="flex items-start gap-4">
             <Avatar src={alumni.avatar_url} name={alumni.full_name} size="lg" />
-            <div>
-              <h1 className="font-display text-2xl font-semibold">{alumni.full_name}</h1>
+            <div className="min-w-0">
+              <h1 className="break-words font-display text-2xl font-semibold">{alumni.full_name}</h1>
               {alumni.display_name && (
                 <p className="text-sm text-slate-500">aka {alumni.display_name}</p>
               )}
@@ -195,8 +196,31 @@ export default async function AdminAlumniDetailPage({
         {(payments ?? []).length === 0 ? (
           <p className="mt-3 text-sm text-slate-500">No payments recorded.</p>
         ) : (
-          <div className="mt-4 overflow-x-auto">
-            <table className="w-full text-sm">
+          <>
+          <div className="mt-4 grid gap-3 sm:hidden">
+            {(payments ?? []).map((p: { id: string; txnid: string; amount: number; status: string; payment_mode: string | null; created_at: string }) => (
+              <div key={p.id} className="rounded-xl border border-slate-100 bg-slate-50 p-3">
+                <div className="flex items-start justify-between gap-3">
+                  <code className="break-all font-mono text-xs">{p.txnid}</code>
+                  <Badge
+                    variant={
+                      p.status === 'success' ? 'success' : p.status === 'failed' ? 'error' : 'warning'
+                    }
+                  >
+                    {p.status}
+                  </Badge>
+                </div>
+                <div className="mt-3 space-y-2">
+                  <MobileInfoRow label="Amount">{formatINR(Number(p.amount))}</MobileInfoRow>
+                  <MobileInfoRow label="Mode"><span className="capitalize">{p.payment_mode ?? '-'}</span></MobileInfoRow>
+                  <MobileInfoRow label="Date">{formatDate(p.created_at)}</MobileInfoRow>
+                </div>
+              </div>
+            ))}
+          </div>
+
+          <div className="mt-4 hidden overflow-x-auto rounded-2xl border border-slate-200 sm:block">
+            <table className="w-full min-w-[640px] text-sm">
               <thead>
                 <tr className="border-b border-slate-200 text-left text-xs uppercase tracking-wide text-slate-500">
                   <th className="pb-2 pr-3">Txn ID</th>
@@ -229,6 +253,7 @@ export default async function AdminAlumniDetailPage({
               </tbody>
             </table>
           </div>
+          </>
         )}
       </Card>
 

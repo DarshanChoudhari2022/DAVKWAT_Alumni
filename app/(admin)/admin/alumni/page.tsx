@@ -4,6 +4,7 @@ import { Search, Download } from 'lucide-react';
 import { Card } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
+import { MobileInfoRow } from '@/components/admin/MobileInfoRow';
 import { Avatar } from '@/components/shared/Avatar';
 import { Pagination } from '@/components/shared/Pagination';
 import { requireAdminAccess } from '@/lib/auth/admin-access';
@@ -59,13 +60,13 @@ export default async function AdminAlumniPage({
   const totalPages = Math.max(1, Math.ceil((count ?? 0) / PAGE_SIZE));
 
   return (
-    <div className="mx-auto max-w-6xl px-4 py-8 sm:px-6 lg:px-8">
-      <header className="flex flex-wrap items-end justify-between gap-4">
+    <div className="mx-auto max-w-6xl px-3 py-5 sm:px-6 sm:py-8 lg:px-8">
+      <header className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
         <div>
-          <h1 className="font-display text-3xl font-semibold tracking-tight">Alumni Management</h1>
+          <h1 className="font-display text-2xl font-semibold tracking-tight sm:text-3xl">Alumni Management</h1>
           <p className="mt-1 text-sm text-slate-500">{count ?? 0} total records.</p>
         </div>
-        <Button asChild variant="outline" size="sm">
+        <Button asChild variant="outline" size="sm" className="w-full sm:w-auto">
           <a
             href={`/api/admin/export?type=alumni&status=${sp.status ?? ''}&membership=${sp.membership ?? ''}&q=${sp.q ?? ''}`}
           >
@@ -109,22 +110,62 @@ export default async function AdminAlumniPage({
           <option value="paid">Paid</option>
           <option value="free">Free</option>
         </select>
-        <div className="lg:col-span-4 flex gap-2">
+        <div className="flex flex-col gap-2 sm:flex-row lg:col-span-4">
           <button
             type="submit"
-            className="inline-flex h-10 items-center rounded-lg bg-[#0F2557] px-5 text-sm font-medium text-white hover:bg-[#0F2557]/90"
+            className="inline-flex h-10 items-center justify-center rounded-lg bg-[#0F2557] px-5 text-sm font-medium text-white hover:bg-[#0F2557]/90"
           >
             Apply
           </button>
-          <Link href="/admin/alumni" className="flex items-center text-sm text-slate-500 hover:text-[#0F2557]">
+          <Link href="/admin/alumni" className="flex h-10 items-center justify-center text-sm text-slate-500 hover:text-[#0F2557] sm:h-auto">
             Clear
           </Link>
         </div>
       </form>
 
-      {/* Table */}
-      <div className="mt-6 overflow-x-auto">
-        <table className="w-full text-sm">
+      <div className="mt-6 grid gap-3 sm:hidden">
+        {(alumni ?? []).map((a) => (
+          <Link key={a.id} href={`/admin/alumni/${a.id}`}>
+            <Card className="p-4 transition-all active:scale-[0.99]">
+              <div className="flex items-start gap-3">
+                <Avatar src={a.avatar_url} name={a.full_name} size="md" />
+                <div className="min-w-0 flex-1">
+                  <p className="truncate font-medium">{a.full_name}</p>
+                  <p className="truncate text-xs text-slate-500">{a.email}</p>
+                  <div className="mt-2 flex flex-wrap gap-1.5">
+                    <Badge
+                      variant={
+                        a.approval_status === 'approved'
+                          ? 'success'
+                          : a.approval_status === 'rejected'
+                            ? 'error'
+                            : 'warning'
+                      }
+                    >
+                      {a.approval_status}
+                    </Badge>
+                    <Badge variant={a.is_paid_member ? 'success' : 'default'}>
+                      {a.is_paid_member ? 'Paid' : 'Free'}
+                    </Badge>
+                  </div>
+                </div>
+              </div>
+              <div className="mt-4 space-y-2 border-t border-slate-100 pt-3">
+                <MobileInfoRow label="Batch">{a.batch_year}</MobileInfoRow>
+                <MobileInfoRow label="Course">{a.course}</MobileInfoRow>
+                <MobileInfoRow label="Role"><span className="capitalize">{a.role}</span></MobileInfoRow>
+                <MobileInfoRow label="Joined">{formatDate(a.created_at)}</MobileInfoRow>
+              </div>
+            </Card>
+          </Link>
+        ))}
+        {(alumni ?? []).length === 0 && (
+          <Card className="text-center text-sm text-slate-500">No alumni match your filters.</Card>
+        )}
+      </div>
+
+      <div className="mt-6 hidden overflow-x-auto rounded-2xl border border-slate-200 bg-white sm:block">
+        <table className="w-full min-w-[760px] text-sm">
           <thead>
             <tr className="border-b border-slate-200 text-left text-xs uppercase tracking-wide text-slate-500">
               <th className="pb-2 pr-3">Alumni</th>
@@ -175,9 +216,6 @@ export default async function AdminAlumniPage({
             ))}
           </tbody>
         </table>
-        {(alumni ?? []).length === 0 && (
-          <Card className="mt-4 text-center text-sm text-slate-500">No alumni match your filters.</Card>
-        )}
       </div>
 
       <Pagination

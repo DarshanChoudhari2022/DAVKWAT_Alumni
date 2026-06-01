@@ -2,7 +2,7 @@ import { PageHeaderSkeleton, Skeleton, TableRowSkeleton } from '@/components/sha
 
 export default function AdminAnnouncementsLoading() {
   return (
-    <div className="mx-auto max-w-5xl px-4 py-8 sm:px-6 lg:px-8">
+    <div className="mx-auto max-w-5xl px-3 py-5 sm:px-6 sm:py-8 lg:px-8">
       <PageHeaderSkeleton />
       <Skeleton className="mb-4 h-10 w-64" />
       <table className="w-full text-sm">

@@ -37,11 +37,11 @@ export function SettingsActions({ planId, isActive }: SettingsActionsProps) {
   }
 
   return (
-    <div className="flex gap-2">
-      <Button size="sm" variant="outline" onClick={handleToggle} disabled={isPending}>
+    <div className="grid w-full gap-2 sm:flex sm:w-auto">
+      <Button size="sm" variant="outline" onClick={handleToggle} disabled={isPending} className="w-full sm:w-auto">
         {isActive ? 'Deactivate' : 'Activate'}
       </Button>
-      <Button size="sm" variant="destructive" onClick={handleDelete} disabled={isPending}>
+      <Button size="sm" variant="destructive" onClick={handleDelete} disabled={isPending} className="w-full sm:w-auto">
         Delete
       </Button>
     </div>

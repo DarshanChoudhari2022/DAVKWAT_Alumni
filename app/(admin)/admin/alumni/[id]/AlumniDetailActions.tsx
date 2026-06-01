@@ -54,17 +54,17 @@ export function AlumniDetailActions({ alumniId, currentRole, isActive }: AlumniD
   }
 
   return (
-    <div className="flex flex-col items-end gap-3">
+    <div className="flex w-full flex-col gap-3 sm:w-auto sm:items-end">
       {error && <p className="text-sm text-rose-600">{error}</p>}
 
       {/* Role selector */}
-      <div className="flex items-center gap-2">
+      <div className="flex w-full items-center gap-2 sm:w-auto">
         <Shield className="h-4 w-4 text-slate-400" />
         <select
           value={role}
           onChange={(e) => handleRoleChange(e.target.value)}
           disabled={isPending}
-          className="h-9 rounded-lg border border-slate-200 bg-white px-3 text-sm focus:outline-none focus:ring-2 focus:ring-[#0F2557]"
+          className="h-9 min-w-0 flex-1 rounded-lg border border-slate-200 bg-white px-3 text-sm focus:outline-none focus:ring-2 focus:ring-[#0F2557] sm:flex-none"
         >
           <option value="pending">Pending</option>
           <option value="alumni">Alumni</option>
@@ -79,6 +79,7 @@ export function AlumniDetailActions({ alumniId, currentRole, isActive }: AlumniD
         variant={isActive ? 'destructive' : 'primary'}
         onClick={handleToggleActive}
         disabled={isPending}
+        className="w-full sm:w-auto"
       >
         {isActive ? (
           <>

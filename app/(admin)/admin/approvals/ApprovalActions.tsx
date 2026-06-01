@@ -69,7 +69,7 @@ export function ApprovalActions({ alumniId, alumniName }: ApprovalActionsProps) 
           rows={2}
           className="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#0F2557]"
         />
-        <div className="flex gap-2">
+        <div className="grid gap-2 sm:flex">
           <Button
             size="sm"
             variant="destructive"
@@ -94,10 +94,10 @@ export function ApprovalActions({ alumniId, alumniName }: ApprovalActionsProps) 
   }
 
   return (
-    <div className="flex shrink-0 flex-col items-end gap-2">
+    <div className="flex w-full shrink-0 flex-col gap-2 sm:w-auto sm:items-end">
       {error && <p className="text-sm text-rose-600">{error}</p>}
-      <div className="flex gap-2">
-        <Button size="sm" onClick={handleApprove} disabled={isPending}>
+      <div className="grid gap-2 sm:flex">
+        <Button size="sm" onClick={handleApprove} disabled={isPending} className="w-full sm:w-auto">
           <Check className="h-4 w-4" />
           {isPending ? 'Approving…' : 'Approve'}
         </Button>
@@ -106,6 +106,7 @@ export function ApprovalActions({ alumniId, alumniName }: ApprovalActionsProps) 
           variant="destructive"
           onClick={() => setShowReject(true)}
           disabled={isPending}
+          className="w-full sm:w-auto"
         >
           <X className="h-4 w-4" />
           Reject

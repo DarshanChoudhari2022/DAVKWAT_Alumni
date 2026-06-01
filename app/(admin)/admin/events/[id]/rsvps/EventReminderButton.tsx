@@ -29,8 +29,8 @@ export function EventReminderButton({ eventId }: { eventId: string }) {
   }
 
   return (
-    <div className="flex flex-col items-end gap-2">
-      <Button type="button" variant="outline" size="sm" onClick={handleSend} disabled={isPending}>
+    <div className="flex flex-col gap-2 sm:items-end">
+      <Button type="button" variant="outline" size="sm" onClick={handleSend} disabled={isPending} className="w-full sm:w-auto">
         {isPending ? 'Sending reminders...' : 'Send Reminder Emails'}
       </Button>
       {message && <p className="text-xs text-emerald-600">{message}</p>}

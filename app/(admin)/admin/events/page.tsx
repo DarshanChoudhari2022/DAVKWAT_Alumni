@@ -56,13 +56,13 @@ export default async function AdminEventsPage({
   const totalPages = Math.max(1, Math.ceil((count ?? 0) / PAGE_SIZE));
 
   return (
-    <div className="mx-auto max-w-5xl px-4 py-8 sm:px-6 lg:px-8">
-      <header className="flex flex-wrap items-end justify-between gap-4">
+    <div className="mx-auto max-w-5xl px-3 py-5 sm:px-6 sm:py-8 lg:px-8">
+      <header className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
         <div>
-          <h1 className="font-display text-3xl font-semibold tracking-tight">Events</h1>
+          <h1 className="font-display text-2xl font-semibold tracking-tight sm:text-3xl">Events</h1>
           <p className="mt-1 text-sm text-slate-500">{count ?? 0} total events.</p>
         </div>
-        <Button asChild size="sm">
+        <Button asChild size="sm" className="w-full sm:w-auto">
           <Link href="/admin/events/new">
             <Plus className="h-4 w-4" />
             New Event
@@ -70,7 +70,7 @@ export default async function AdminEventsPage({
         </Button>
       </header>
 
-      <nav className="mt-6 inline-flex rounded-lg border border-slate-200 bg-white p-1" aria-label="Filter">
+      <nav className="mt-6 flex overflow-x-auto rounded-lg border border-slate-200 bg-white p-1" aria-label="Filter">
         {[
           { label: 'All', value: 'all' },
           { label: 'Upcoming', value: 'upcoming' },
@@ -80,7 +80,7 @@ export default async function AdminEventsPage({
           <Link
             key={f.value}
             href={`/admin/events?filter=${f.value}`}
-            className={`rounded-md px-3 py-1.5 text-sm font-medium ${
+            className={`shrink-0 rounded-md px-3 py-1.5 text-sm font-medium ${
               filter === f.value ? 'bg-[#0F2557] text-white' : 'text-slate-600 hover:bg-slate-50'
             }`}
           >
@@ -95,7 +95,7 @@ export default async function AdminEventsPage({
           const isPast = new Date(e.starts_at) < new Date();
           return (
             <li key={e.id}>
-              <Card>
+              <Card className="p-4 sm:p-5">
                 <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
                   <div className="min-w-0 flex-1">
                     <div className="flex flex-wrap items-center gap-2">
@@ -122,11 +122,13 @@ export default async function AdminEventsPage({
                       </span>
                     </div>
                   </div>
-                  <EventActions
-                    id={e.id}
-                    slug={e.slug}
-                    isPublished={e.is_published}
-                  />
+                  <div className="flex justify-end sm:block">
+                    <EventActions
+                      id={e.id}
+                      slug={e.slug}
+                      isPublished={e.is_published}
+                    />
+                  </div>
                 </div>
               </Card>
             </li>

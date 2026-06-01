@@ -2,6 +2,7 @@ import type { Metadata } from 'next';
 import { requireAdminAccess } from '@/lib/auth/admin-access';
 import { Card } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
+import { MobileInfoRow } from '@/components/admin/MobileInfoRow';
 import { mapSiteSettings } from '@/lib/site-settings';
 import { formatINR } from '@/lib/utils/format';
 import { MembershipPlanForm } from './MembershipPlanForm';
@@ -36,8 +37,8 @@ export default async function AdminSettingsPage() {
   const siteSettings = mapSiteSettings(siteSettingsRows);
 
   return (
-    <div className="mx-auto max-w-4xl px-4 py-8 sm:px-6 lg:px-8">
-      <h1 className="font-display text-3xl font-semibold tracking-tight">Settings</h1>
+    <div className="mx-auto max-w-4xl px-3 py-5 sm:px-6 sm:py-8 lg:px-8">
+      <h1 className="font-display text-2xl font-semibold tracking-tight sm:text-3xl">Settings</h1>
       <p className="mt-1 text-sm text-slate-500">Manage membership plans and site configuration.</p>
 
       <section className="mt-8">
@@ -51,7 +52,7 @@ export default async function AdminSettingsPage() {
       </section>
 
       <section className="mt-8">
-        <div className="flex items-end justify-between">
+        <div className="flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
           <h2 className="font-display text-xl font-semibold">Membership Plans</h2>
         </div>
 
@@ -61,7 +62,7 @@ export default async function AdminSettingsPage() {
               <Card>
                 <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
                   <div>
-                    <div className="flex items-center gap-2">
+                    <div className="flex flex-wrap items-center gap-2">
                       <h3 className="font-medium">{plan.name}</h3>
                       <Badge variant={plan.is_active ? 'success' : 'default'}>
                         {plan.is_active ? 'Active' : 'Inactive'}
@@ -82,7 +83,9 @@ export default async function AdminSettingsPage() {
                       )}
                     </p>
                   </div>
-                  <SettingsActions planId={plan.id} isActive={plan.is_active} />
+                  <div className="flex justify-end">
+                    <SettingsActions planId={plan.id} isActive={plan.is_active} />
+                  </div>
                 </div>
               </Card>
             </li>
@@ -139,8 +142,25 @@ async function AdminUsersList() {
     .order('full_name');
 
   return (
-    <div className="mt-4 overflow-x-auto">
-      <table className="w-full text-sm">
+    <>
+    <div className="mt-4 grid gap-3 sm:hidden">
+      {(admins ?? []).map((a: { id: string; full_name: string; email: string; role: string }) => (
+        <Card key={a.id} className="p-4">
+          <p className="font-medium">{a.full_name}</p>
+          <div className="mt-3 space-y-2 border-t border-slate-100 pt-3">
+            <MobileInfoRow label="Email"><span className="break-all">{a.email}</span></MobileInfoRow>
+            <MobileInfoRow label="Role">
+              <Badge variant="primary" className="capitalize">
+                {a.role}
+              </Badge>
+            </MobileInfoRow>
+          </div>
+        </Card>
+      ))}
+    </div>
+
+    <div className="mt-4 hidden overflow-x-auto rounded-2xl border border-slate-200 bg-white sm:block">
+      <table className="w-full min-w-[520px] text-sm">
         <thead>
           <tr className="border-b border-slate-200 text-left text-xs uppercase tracking-wide text-slate-500">
             <th className="pb-2 pr-3">Name</th>
@@ -163,5 +183,6 @@ async function AdminUsersList() {
         </tbody>
       </table>
     </div>
+    </>
   );
 }

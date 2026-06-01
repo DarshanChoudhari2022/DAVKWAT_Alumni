@@ -4,6 +4,7 @@ import { Download } from 'lucide-react';
 import { Card } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
+import { MobileInfoRow } from '@/components/admin/MobileInfoRow';
 import { Pagination } from '@/components/shared/Pagination';
 import { requireAdminAccess } from '@/lib/auth/admin-access';
 import { formatINR, formatDateTime } from '@/lib/utils/format';
@@ -95,15 +96,15 @@ export default async function AdminPaymentsPage({
   const totalRevenue = Number(totalRevenueRow?.total ?? 0);
 
   return (
-    <div className="mx-auto max-w-6xl px-4 py-8 sm:px-6 lg:px-8">
-      <header className="flex flex-wrap items-end justify-between gap-4">
+    <div className="mx-auto max-w-6xl px-3 py-5 sm:px-6 sm:py-8 lg:px-8">
+      <header className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
         <div>
-          <h1 className="font-display text-3xl font-semibold tracking-tight">Payments</h1>
+          <h1 className="font-display text-2xl font-semibold tracking-tight sm:text-3xl">Payments</h1>
           <p className="mt-1 text-sm text-slate-500">
             {count ?? 0} total transactions, including manual membership requests awaiting review.
           </p>
         </div>
-        <Button asChild variant="outline" size="sm">
+        <Button asChild variant="outline" size="sm" className="w-full sm:w-auto">
           <a href={`/api/admin/export?type=payments&status=${sp.status ?? ''}&q=${sp.q ?? ''}`}>
             <Download className="h-4 w-4" />
             Export CSV
@@ -128,18 +129,18 @@ export default async function AdminPaymentsPage({
       </div>
 
       {/* Filters */}
-      <form className="mt-6 flex flex-wrap gap-3" role="search">
+      <form className="mt-6 grid gap-3 sm:grid-cols-2 lg:grid-cols-6" role="search">
         <input
           type="search"
           name="q"
           defaultValue={sp.q ?? ''}
           placeholder="Search by txnid or name…"
-          className="h-10 w-full max-w-xs rounded-lg border border-slate-200 bg-white px-3 text-sm focus:outline-none focus:ring-2 focus:ring-[#0F2557]"
+          className="h-10 w-full rounded-lg border border-slate-200 bg-white px-3 text-sm focus:outline-none focus:ring-2 focus:ring-[#0F2557] sm:col-span-2 lg:col-span-2"
         />
         <select
           name="status"
           defaultValue={sp.status ?? ''}
-          className="h-10 rounded-lg border border-slate-200 bg-white px-3 text-sm"
+          className="h-10 w-full rounded-lg border border-slate-200 bg-white px-3 text-sm"
         >
           <option value="">All statuses</option>
           <option value="success">Success</option>
@@ -150,7 +151,7 @@ export default async function AdminPaymentsPage({
         <select
           name="plan"
           defaultValue={sp.plan ?? ''}
-          className="h-10 rounded-lg border border-slate-200 bg-white px-3 text-sm"
+          className="h-10 w-full rounded-lg border border-slate-200 bg-white px-3 text-sm"
         >
           <option value="">All plans</option>
           {(plans ?? []).map((plan) => (
@@ -163,28 +164,71 @@ export default async function AdminPaymentsPage({
           type="date"
           name="date_from"
           defaultValue={sp.date_from ?? ''}
-          className="h-10 rounded-lg border border-slate-200 bg-white px-3 text-sm"
+          className="h-10 w-full rounded-lg border border-slate-200 bg-white px-3 text-sm"
         />
         <input
           type="date"
           name="date_to"
           defaultValue={sp.date_to ?? ''}
-          className="h-10 rounded-lg border border-slate-200 bg-white px-3 text-sm"
+          className="h-10 w-full rounded-lg border border-slate-200 bg-white px-3 text-sm"
         />
         <button
           type="submit"
-          className="inline-flex h-10 items-center rounded-lg bg-[#0F2557] px-5 text-sm font-medium text-white hover:bg-[#0F2557]/90"
+          className="inline-flex h-10 items-center justify-center rounded-lg bg-[#0F2557] px-5 text-sm font-medium text-white hover:bg-[#0F2557]/90"
         >
           Apply
         </button>
-        <Link href="/admin/payments" className="flex items-center text-sm text-slate-500 hover:text-[#0F2557]">
+        <Link href="/admin/payments" className="flex h-10 items-center justify-center text-sm text-slate-500 hover:text-[#0F2557]">
           Clear
         </Link>
       </form>
 
-      {/* Table */}
-      <div className="mt-6 overflow-x-auto">
-        <table className="w-full text-sm">
+      <div className="mt-6 grid gap-3 sm:hidden">
+        {((payments ?? []) as unknown as PaymentRow[]).map((p) => {
+          const profile = p.profiles;
+          return (
+            <Card key={p.id} className="p-4">
+              <div className="flex items-start justify-between gap-3">
+                <div className="min-w-0">
+                  <Link href={`/admin/alumni/${p.alumni_id}`} className="hover:text-[#0F2557]">
+                    <p className="truncate font-medium">{profile?.full_name ?? '-'}</p>
+                    <p className="truncate text-xs text-slate-500">{profile?.email ?? ''}</p>
+                  </Link>
+                </div>
+                <Badge
+                  variant={
+                    p.status === 'success'
+                      ? 'success'
+                      : p.status === 'failed'
+                        ? 'error'
+                        : p.status === 'refunded'
+                          ? 'default'
+                          : 'warning'
+                  }
+                >
+                  {p.status}
+                </Badge>
+              </div>
+              <div className="mt-4 space-y-2 border-t border-slate-100 pt-3">
+                <MobileInfoRow label="Txn">
+                  <code className="rounded bg-slate-100 px-1.5 py-0.5 font-mono text-xs">
+                    {p.txnid}
+                  </code>
+                </MobileInfoRow>
+                <MobileInfoRow label="Amount">{formatINR(Number(p.amount))}</MobileInfoRow>
+                <MobileInfoRow label="Mode"><span className="capitalize">{p.payment_mode ?? '-'}</span></MobileInfoRow>
+                <MobileInfoRow label="Date">{formatDateTime(p.created_at)}</MobileInfoRow>
+              </div>
+            </Card>
+          );
+        })}
+        {(payments ?? []).length === 0 && (
+          <Card className="text-center text-sm text-slate-500">No payments found.</Card>
+        )}
+      </div>
+
+      <div className="mt-6 hidden overflow-x-auto rounded-2xl border border-slate-200 bg-white sm:block">
+        <table className="w-full min-w-[820px] text-sm">
           <thead>
             <tr className="border-b border-slate-200 text-left text-xs uppercase tracking-wide text-slate-500">
               <th className="pb-2 pr-3">Txn ID</th>
@@ -234,9 +278,6 @@ export default async function AdminPaymentsPage({
             })}
           </tbody>
         </table>
-        {(payments ?? []).length === 0 && (
-          <Card className="mt-4 text-center text-sm text-slate-500">No payments found.</Card>
-        )}
       </div>
 
       <Pagination

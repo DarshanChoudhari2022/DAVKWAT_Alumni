@@ -42,7 +42,7 @@ export function ForumActions({ type, id, isActive, isPinned, isLocked }: ForumAc
 
   if (type === 'category') {
     return (
-      <div className="flex shrink-0 items-center gap-1">
+      <div className="flex shrink-0 flex-wrap items-center justify-end gap-1">
         <Button
           variant="ghost"
           size="icon"
@@ -68,7 +68,7 @@ export function ForumActions({ type, id, isActive, isPinned, isLocked }: ForumAc
   }
 
   return (
-    <div className="flex shrink-0 items-center gap-1">
+    <div className="flex shrink-0 flex-wrap items-center justify-end gap-1">
       <Button variant="ghost" size="icon" asChild className="h-8 w-8" title="Moderate">
         <Link href={`/admin/forum/threads/${id}`}>
           <Pencil className="h-3.5 w-3.5" />

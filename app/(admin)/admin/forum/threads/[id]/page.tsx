@@ -57,7 +57,7 @@ export default async function AdminForumThreadPage({
     thread.forum_categories && !Array.isArray(thread.forum_categories) ? thread.forum_categories : null;
 
   return (
-    <div className="mx-auto max-w-5xl px-4 py-8 sm:px-6 lg:px-8">
+    <div className="mx-auto max-w-5xl px-3 py-5 sm:px-6 sm:py-8 lg:px-8">
       <Link href="/admin/forum" className="inline-flex items-center gap-1 text-sm text-slate-500 hover:text-[#0F2557]">
         <ArrowLeft className="h-3.5 w-3.5" />
         Back to Forum Management
@@ -79,8 +79,8 @@ export default async function AdminForumThreadPage({
             </Badge>
           )}
         </div>
-        <h1 className="mt-3 font-display text-3xl font-semibold tracking-tight">{thread.title}</h1>
-        <div className="mt-4 flex items-center gap-3 text-sm text-slate-500">
+        <h1 className="mt-3 break-words font-display text-2xl font-semibold tracking-tight sm:text-3xl">{thread.title}</h1>
+        <div className="mt-4 flex flex-wrap items-center gap-3 text-sm text-slate-500">
           <Avatar src={author?.avatar_url ?? null} name={author?.full_name ?? 'Unknown'} size="sm" />
           <span>{author?.full_name ?? 'Unknown'}</span>
           <span>{formatDateTime(thread.created_at)}</span>
@@ -107,7 +107,7 @@ export default async function AdminForumThreadPage({
             const replyAuthor = replyAuthorsById.get(reply.author_id) ?? null;
             return (
               <li key={reply.id}>
-                <Card>
+                <Card className="p-4 sm:p-5">
                   <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
                     <div className="min-w-0 flex-1">
                       <div className="flex items-center gap-3">

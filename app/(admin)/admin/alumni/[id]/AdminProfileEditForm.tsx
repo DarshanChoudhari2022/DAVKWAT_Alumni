@@ -192,7 +192,7 @@ export function AdminProfileEditForm({ alumniId, initial }: AdminProfileEditForm
       </div>
 
       <div className="flex justify-end">
-        <Button type="submit" disabled={isPending}>
+        <Button type="submit" disabled={isPending} className="w-full sm:w-auto">
           {isPending ? 'Saving...' : 'Save Changes'}
         </Button>
       </div>

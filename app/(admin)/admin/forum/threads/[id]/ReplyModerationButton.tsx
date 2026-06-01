@@ -36,8 +36,8 @@ export function ReplyModerationButton({
   }
 
   return (
-    <div className="flex flex-col items-end gap-2">
-      <Button type="button" variant={isDeleted ? 'outline' : 'destructive'} size="sm" onClick={handleClick} disabled={isPending}>
+    <div className="flex flex-col gap-2 sm:items-end">
+      <Button type="button" variant={isDeleted ? 'outline' : 'destructive'} size="sm" onClick={handleClick} disabled={isPending} className="w-full sm:w-auto">
         {isPending ? 'Saving...' : isDeleted ? 'Restore reply' : 'Remove reply'}
       </Button>
       {error && <p className="text-xs text-rose-600">{error}</p>}

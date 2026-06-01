@@ -33,7 +33,7 @@ export default async function AdminLayout({ children }: { children: React.ReactN
   const adminAccess = await requireAdminAccess();
 
   return (
-    <div className="flex min-h-dvh">
+    <div className="flex min-h-dvh min-w-0">
       {/* Sidebar */}
       <aside className="hidden w-64 flex-col border-r border-slate-200 bg-white lg:flex">
         <div className="flex h-16 items-center gap-2 px-6">
@@ -71,8 +71,8 @@ export default async function AdminLayout({ children }: { children: React.ReactN
       </aside>
 
       {/* Mobile header */}
-      <div className="flex flex-1 flex-col">
-        <header className="sticky top-0 z-30 flex h-14 items-center justify-between border-b border-slate-200 bg-white px-4 lg:hidden">
+      <div className="flex min-w-0 flex-1 flex-col">
+        <header className="sticky top-0 z-30 flex h-14 items-center justify-between border-b border-slate-200 bg-white/95 px-3 backdrop-blur sm:px-4 lg:hidden">
           <div className="flex items-center gap-2">
             <Logo />
             <Badge variant="primary" className="text-[10px]">Admin</Badge>
@@ -83,12 +83,15 @@ export default async function AdminLayout({ children }: { children: React.ReactN
         </header>
 
         {/* Mobile nav */}
-        <nav className="flex overflow-x-auto border-b border-slate-200 bg-white px-2 lg:hidden" aria-label="Admin navigation">
+        <nav
+          className="sticky top-14 z-20 flex snap-x gap-1 overflow-x-auto border-b border-slate-200 bg-white/95 px-2 py-2 backdrop-blur lg:hidden"
+          aria-label="Admin navigation"
+        >
           {ADMIN_NAV.map((item) => (
             <Link
               key={item.href}
               href={item.href}
-              className="flex shrink-0 items-center gap-1.5 px-3 py-2.5 text-xs font-medium text-slate-600 hover:text-[#0F2557]"
+              className="flex min-h-11 shrink-0 snap-start items-center gap-1.5 rounded-xl border border-slate-100 bg-slate-50 px-3 text-xs font-medium text-slate-700 shadow-sm hover:border-[#0F2557]/20 hover:text-[#0F2557]"
             >
               <item.icon className="h-3.5 w-3.5" />
               {item.label}
@@ -96,7 +99,7 @@ export default async function AdminLayout({ children }: { children: React.ReactN
           ))}
         </nav>
 
-        <main id="main" className="flex-1 bg-slate-50">
+        <main id="main" className="min-w-0 flex-1 overflow-x-hidden bg-slate-50">
           {children}
         </main>
       </div>

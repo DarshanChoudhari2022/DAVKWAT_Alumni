@@ -104,11 +104,11 @@ export function CategoryForm() {
           />
         </div>
 
-        <div className="flex gap-3">
-          <Button type="submit" disabled={isPending}>
+        <div className="grid gap-3 sm:flex">
+          <Button type="submit" disabled={isPending} className="w-full sm:w-auto">
             {isPending ? 'Creating…' : 'Create Category'}
           </Button>
-          <Button type="button" variant="outline" onClick={() => router.push('/admin/forum')}>
+          <Button type="button" variant="outline" onClick={() => router.push('/admin/forum')} className="w-full sm:w-auto">
             Cancel
           </Button>
         </div>

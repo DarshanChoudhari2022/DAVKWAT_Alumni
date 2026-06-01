@@ -49,16 +49,16 @@ export default async function ApprovalsPage({
   }
 
   return (
-    <div className="mx-auto max-w-5xl px-4 py-8 sm:px-6 lg:px-8">
-      <header className="flex flex-wrap items-end justify-between gap-4">
+    <div className="mx-auto max-w-5xl px-3 py-5 sm:px-6 sm:py-8 lg:px-8">
+      <header className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
         <div>
-          <h1 className="font-display text-3xl font-semibold tracking-tight">Pending Approvals</h1>
+          <h1 className="font-display text-2xl font-semibold tracking-tight sm:text-3xl">Pending Approvals</h1>
           <p className="mt-1 text-sm text-slate-500">
             {count ?? 0} alumni waiting for approval.
           </p>
         </div>
         <nav
-          className="inline-flex rounded-lg border border-slate-200 bg-white p-1"
+          className="flex overflow-x-auto rounded-lg border border-slate-200 bg-white p-1"
           aria-label="Filter"
         >
           {[
@@ -72,7 +72,7 @@ export default async function ApprovalsPage({
               href={
                 filter.value ? `/admin/approvals?filter=${filter.value}` : '/admin/approvals'
               }
-              className={`rounded-md px-3 py-1.5 text-sm font-medium ${
+              className={`shrink-0 rounded-md px-3 py-1.5 text-sm font-medium ${
                 (sp.filter ?? '') === filter.value
                   ? 'bg-[#0F2557] text-white'
                   : 'text-slate-600 hover:bg-slate-50'
@@ -94,13 +94,13 @@ export default async function ApprovalsPage({
         )}
         {pendingProfiles.map((profile) => (
           <li key={profile.id}>
-            <Card>
+            <Card className="p-4 sm:p-5">
               <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-                <div className="flex items-start gap-3">
+                <div className="flex min-w-0 items-start gap-3">
                   <Avatar src={profile.avatar_url} name={profile.full_name} size="md" />
                   <div className="min-w-0">
                     <h3 className="font-medium">{profile.full_name}</h3>
-                    <p className="text-sm text-slate-500">{profile.email}</p>
+                    <p className="break-all text-sm text-slate-500 sm:break-normal">{profile.email}</p>
                     <div className="mt-1 flex flex-wrap gap-1.5">
                       <Badge variant="primary">Batch {profile.batch_year}</Badge>
                       <Badge variant="default">{profile.course}</Badge>

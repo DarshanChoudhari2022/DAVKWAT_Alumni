@@ -30,7 +30,7 @@ export function ReportsCharts({
     <div className="mt-8 grid gap-6 lg:grid-cols-2">
       <Card>
         <h3 className="font-display text-base font-semibold">Registrations Over Time</h3>
-        <div className="mt-4 h-64">
+        <div className="mt-4 h-56 sm:h-64">
           {registrationData.length > 0 ? (
             <ResponsiveContainer width="100%" height="100%">
               <LineChart data={registrationData}>
@@ -57,7 +57,7 @@ export function ReportsCharts({
 
       <Card>
         <h3 className="font-display text-base font-semibold">Alumni by Batch Year</h3>
-        <div className="mt-4 h-64">
+        <div className="mt-4 h-56 sm:h-64">
           {batchData.length > 0 ? (
             <ResponsiveContainer width="100%" height="100%">
               <BarChart data={batchData}>
@@ -78,13 +78,13 @@ export function ReportsCharts({
 
       <Card>
         <h3 className="font-display text-base font-semibold">Alumni by State (Top 10)</h3>
-        <div className="mt-4 h-64">
+        <div className="mt-4 h-56 sm:h-64">
           {stateData.length > 0 ? (
             <ResponsiveContainer width="100%" height="100%">
               <BarChart data={stateData} layout="vertical">
                 <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" />
                 <XAxis type="number" tick={{ fontSize: 11 }} />
-                <YAxis dataKey="state" type="category" tick={{ fontSize: 11 }} width={90} />
+                <YAxis dataKey="state" type="category" tick={{ fontSize: 10 }} width={70} />
                 <Tooltip />
                 <Bar dataKey="count" fill="#F59E0B" radius={[0, 4, 4, 0]} />
               </BarChart>
@@ -99,7 +99,7 @@ export function ReportsCharts({
 
       <Card>
         <h3 className="font-display text-base font-semibold">Monthly Revenue</h3>
-        <div className="mt-4 h-64">
+        <div className="mt-4 h-56 sm:h-64">
           {paymentData.length > 0 ? (
             <ResponsiveContainer width="100%" height="100%">
               <LineChart data={paymentData}>

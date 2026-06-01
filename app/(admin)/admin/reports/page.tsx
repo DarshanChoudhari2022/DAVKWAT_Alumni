@@ -102,8 +102,8 @@ export default async function AdminReportsPage() {
   const conversionRate = totalAlumni > 0 ? ((paidAlumni / totalAlumni) * 100).toFixed(1) : '0';
 
   return (
-    <div className="mx-auto max-w-6xl px-4 py-8 sm:px-6 lg:px-8">
-      <h1 className="font-display text-3xl font-semibold tracking-tight">Reports & Exports</h1>
+    <div className="mx-auto max-w-6xl px-3 py-5 sm:px-6 sm:py-8 lg:px-8">
+      <h1 className="font-display text-2xl font-semibold tracking-tight sm:text-3xl">Reports & Exports</h1>
       <p className="mt-1 text-sm text-slate-500">Analytics and data exports for the portal.</p>
 
       <div className="mt-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-5">
@@ -205,14 +205,14 @@ function ExportCard({
         {note && <p className="mt-2 text-xs italic text-slate-400">{note}</p>}
       </div>
       {!note && (
-        <div className="mt-4 flex gap-2">
-          <Button asChild variant="outline" size="sm">
+        <div className="mt-4 grid gap-2 sm:flex">
+          <Button asChild variant="outline" size="sm" className="w-full sm:w-auto">
             <a href={href}>
               <Download className="h-4 w-4" />
               CSV
             </a>
           </Button>
-          <Button asChild variant="outline" size="sm">
+          <Button asChild variant="outline" size="sm" className="w-full sm:w-auto">
             <a href={`${href}&format=xlsx`}>
               <Download className="h-4 w-4" />
               Excel

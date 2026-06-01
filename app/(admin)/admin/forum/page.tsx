@@ -4,6 +4,7 @@ import { Plus, MessageSquare, Lock, Pin } from 'lucide-react';
 import { Card } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
+import { MobileInfoRow } from '@/components/admin/MobileInfoRow';
 import { requireAdminAccess } from '@/lib/auth/admin-access';
 import { formatRelative } from '@/lib/utils/format';
 import { ForumActions } from './ForumActions';
@@ -26,13 +27,13 @@ export default async function AdminForumPage() {
     .limit(20);
 
   return (
-    <div className="mx-auto max-w-5xl px-4 py-8 sm:px-6 lg:px-8">
-      <header className="flex flex-wrap items-end justify-between gap-4">
+    <div className="mx-auto max-w-5xl px-3 py-5 sm:px-6 sm:py-8 lg:px-8">
+      <header className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
         <div>
-          <h1 className="font-display text-3xl font-semibold tracking-tight">Forum Management</h1>
+          <h1 className="font-display text-2xl font-semibold tracking-tight sm:text-3xl">Forum Management</h1>
           <p className="mt-1 text-sm text-slate-500">Manage categories and moderate threads.</p>
         </div>
-        <Button asChild size="sm">
+        <Button asChild size="sm" className="w-full sm:w-auto">
           <Link href="/admin/forum/categories/new">
             <Plus className="h-4 w-4" />
             New Category
@@ -46,7 +47,7 @@ export default async function AdminForumPage() {
         <ul className="mt-4 space-y-2">
           {(categories ?? []).map((cat) => (
             <li key={cat.id}>
-              <Card className="flex items-center justify-between gap-4">
+              <Card className="flex flex-col gap-4 p-4 sm:flex-row sm:items-center sm:justify-between sm:p-5">
                 <div className="min-w-0 flex-1">
                   <div className="flex items-center gap-2">
                     <MessageSquare className="h-4 w-4 text-slate-400" />
@@ -58,7 +59,9 @@ export default async function AdminForumPage() {
                     <p className="mt-0.5 text-sm text-slate-500">{cat.description}</p>
                   )}
                 </div>
-                <ForumActions type="category" id={cat.id} isActive={cat.is_active} />
+                <div className="flex justify-end">
+                  <ForumActions type="category" id={cat.id} isActive={cat.is_active} />
+                </div>
               </Card>
             </li>
           ))}
@@ -71,8 +74,48 @@ export default async function AdminForumPage() {
       {/* Recent threads */}
       <section className="mt-10">
         <h2 className="font-display text-xl font-semibold">Recent Threads</h2>
-        <div className="mt-4 overflow-x-auto">
-          <table className="w-full text-sm">
+        <div className="mt-4 grid gap-3 sm:hidden">
+          {(threads ?? []).map((t) => {
+            const authorName =
+              t.profiles && !Array.isArray(t.profiles)
+                ? (t.profiles as { full_name: string }).full_name
+                : 'Unknown';
+            return (
+              <Card key={t.id} className="p-4">
+                <div className="flex items-start justify-between gap-3">
+                  <div className="min-w-0">
+                    <div className="flex items-center gap-2">
+                      {t.is_pinned && <Pin className="h-3 w-3 shrink-0 text-amber-500" />}
+                      {t.is_locked && <Lock className="h-3 w-3 shrink-0 text-slate-400" />}
+                      <Link href={`/admin/forum/threads/${t.id}`} className="line-clamp-2 font-medium hover:text-[#0F2557]">
+                        {t.title}
+                      </Link>
+                    </div>
+                    <p className="mt-1 text-xs text-slate-400">{formatRelative(t.created_at)}</p>
+                  </div>
+                  <div className="flex shrink-0 gap-1">
+                    {t.is_pinned && <Badge variant="warning">Pinned</Badge>}
+                    {t.is_locked && <Badge variant="default">Locked</Badge>}
+                    {!t.is_pinned && !t.is_locked && <Badge variant="success">Open</Badge>}
+                  </div>
+                </div>
+                <div className="mt-4 space-y-3 border-t border-slate-100 pt-3">
+                  <MobileInfoRow label="Author">{authorName}</MobileInfoRow>
+                  <MobileInfoRow label="Replies">{t.reply_count}</MobileInfoRow>
+                  <div className="flex justify-end">
+                    <ForumActions type="thread" id={t.id} isPinned={t.is_pinned} isLocked={t.is_locked} />
+                  </div>
+                </div>
+              </Card>
+            );
+          })}
+          {(threads ?? []).length === 0 && (
+            <Card className="text-center text-sm text-slate-500">No threads yet.</Card>
+          )}
+        </div>
+
+        <div className="mt-4 hidden overflow-x-auto rounded-2xl border border-slate-200 bg-white sm:block">
+          <table className="w-full min-w-[760px] text-sm">
             <thead>
               <tr className="border-b border-slate-200 text-left text-xs uppercase tracking-wide text-slate-500">
                 <th className="pb-2 pr-3">Thread</th>
@@ -122,9 +165,6 @@ export default async function AdminForumPage() {
               })}
             </tbody>
           </table>
-          {(threads ?? []).length === 0 && (
-            <Card className="mt-4 text-center text-sm text-slate-500">No threads yet.</Card>
-          )}
         </div>
       </section>
     </div>
