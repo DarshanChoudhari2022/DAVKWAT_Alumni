@@ -94,10 +94,10 @@ export function Navbar() {
           <Link
             href="/register"
             className={cn(
-              'inline-flex h-9 items-center rounded-full border px-5 font-sans text-[15px] font-medium leading-none transition-colors',
+              'inline-flex h-9 items-center rounded-full px-5 font-sans text-[15px] font-medium leading-none transition-colors',
               isTopDark
-                ? 'border-white/35 bg-white text-[#111827] hover:bg-slate-100'
-                : 'border-[#111827] bg-white text-[#111827] hover:bg-slate-50',
+                ? 'bg-gradient-to-r from-amber-500 to-orange-500 text-white hover:from-amber-400 hover:to-orange-400 shadow-sm shadow-amber-500/30'
+                : 'bg-gradient-to-r from-amber-500 to-orange-500 text-white hover:from-amber-400 hover:to-orange-400 shadow-sm shadow-orange-200',
             )}
           >
             Join now

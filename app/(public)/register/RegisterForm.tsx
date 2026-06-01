@@ -18,7 +18,7 @@ const STEPS = ['Account', 'Academic', 'Personal', 'Professional'] as const;
 function SubmitButton() {
   const { pending } = useFormStatus();
   return (
-    <Button type="submit" disabled={pending}>
+    <Button type="submit" variant="accent" disabled={pending}>
       {pending ? 'Submitting…' : 'Submit registration'}
     </Button>
   );
