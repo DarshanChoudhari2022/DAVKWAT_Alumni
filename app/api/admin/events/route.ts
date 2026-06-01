@@ -3,6 +3,7 @@ import {
   getAdminActorProfileErrorResponse,
   requireAdminApiAccess,
 } from '@/lib/auth/admin-api';
+import { revalidateEventContent } from '@/lib/utils/revalidate-content';
 
 export async function POST(req: NextRequest) {
   try {
@@ -53,7 +54,7 @@ export async function POST(req: NextRequest) {
         created_at: now,
         updated_at: now,
       })
-      .select('id')
+      .select('id, slug')
       .single();
 
     if (insertError || !data) {
@@ -62,6 +63,7 @@ export async function POST(req: NextRequest) {
         { status: 500 }
       );
     }
+    revalidateEventContent(data.slug);
     return NextResponse.json({ ok: true, id: data.id });
   } catch (error) {
     console.error('[admin/events] create failed:', error);

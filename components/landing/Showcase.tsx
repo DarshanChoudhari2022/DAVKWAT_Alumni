@@ -10,6 +10,7 @@ interface ShowcaseEvent {
   starts_at: string;
   venue: string | null;
   event_type: string;
+  created_at?: string;
 }
 
 interface ShowcaseAnnouncement {
@@ -17,6 +18,7 @@ interface ShowcaseAnnouncement {
   title: string;
   slug: string;
   published_at: string | null;
+  created_at?: string;
 }
 
 interface ShowcaseProps {
@@ -41,7 +43,7 @@ export function Showcase({ events, announcements }: ShowcaseProps) {
               Latest from the community
             </h2>
             <p className="mt-3 text-[17px] leading-relaxed text-slate-600">
-              Real-time updates on upcoming events, reunions, and official Trust circulars.
+              Real-time updates on events, reunions, and official Trust circulars.
             </p>
           </div>
         </Reveal>
@@ -57,16 +59,16 @@ export function Showcase({ events, announcements }: ShowcaseProps) {
                   <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-blue-50">
                     <Calendar className="h-5 w-5 text-blue-600" />
                   </div>
-                  <h3 className="text-xl font-bold text-slate-900">Upcoming Events</h3>
+                  <h3 className="text-xl font-bold text-slate-900">Trust Events</h3>
                 </div>
                 <Link href="/events" className="text-sm font-semibold text-blue-600 hover:text-blue-700 transition-colors">
                   View all
                 </Link>
               </div>
               
-              <div className="mt-8 flex-1 space-y-4">
+              <div className="mt-8 max-h-[34rem] flex-1 space-y-4 overflow-y-auto pr-1">
                 {events.length > 0 ? (
-                  events.slice(0, 3).map((e) => (
+                  events.map((e) => (
                     <Link
                       key={e.id}
                       href={`/events/${e.slug}`}
@@ -94,7 +96,7 @@ export function Showcase({ events, announcements }: ShowcaseProps) {
                 ) : (
                   <div className="flex h-full flex-col items-center justify-center text-center text-slate-500 py-8">
                     <Calendar className="h-10 w-10 opacity-20 mb-3" />
-                    <p>No upcoming events currently scheduled.</p>
+                    <p>No published events yet.</p>
                   </div>
                 )}
               </div>
@@ -118,9 +120,9 @@ export function Showcase({ events, announcements }: ShowcaseProps) {
                 </Link>
               </div>
 
-              <div className="mt-8 flex-1 space-y-4">
+              <div className="mt-8 max-h-[34rem] flex-1 space-y-4 overflow-y-auto pr-1">
                 {announcements.length > 0 ? (
-                  announcements.slice(0, 3).map((a) => (
+                  announcements.map((a) => (
                     <Link
                       key={a.id}
                       href={`/announcements/${a.slug}`}
@@ -134,7 +136,9 @@ export function Showcase({ events, announcements }: ShowcaseProps) {
                           {a.title}
                         </p>
                         <p className="mt-2 text-xs text-slate-500">
-                          {a.published_at ? formatDate(a.published_at) : ''}
+                          {a.published_at || a.created_at
+                            ? formatDate(a.published_at ?? a.created_at ?? '')
+                            : ''}
                         </p>
                       </div>
                       <ArrowRight className="h-5 w-5 flex-none self-center text-slate-300 transition-transform group-hover:-rotate-45 group-hover:text-blue-500" />

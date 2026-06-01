@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { requireAdminApiAccess } from '@/lib/auth/admin-api';
+import { revalidateEventContent } from '@/lib/utils/revalidate-content';
 
 async function assertAdmin() {
   const { adminAccess, error: authError } = await requireAdminApiAccess();
@@ -44,12 +45,15 @@ export async function PATCH(
 
     allowed.updated_at = new Date().toISOString();
 
-    const { error: updateError } = await supabase
+    const { data: updated, error: updateError } = await supabase
       .from('events')
       .update(allowed)
-      .eq('id', id);
+      .eq('id', id)
+      .select('slug')
+      .maybeSingle();
 
     if (updateError) return NextResponse.json({ error: updateError.message }, { status: 500 });
+    revalidateEventContent(updated?.slug);
     return NextResponse.json({ ok: true });
   } catch (error) {
     console.error('[admin/events] update failed:', error);
@@ -66,7 +70,13 @@ export async function DELETE(
 
   const { id } = await params;
 
-  const { error: deleteError } = await supabase.from('events').delete().eq('id', id);
+  const { data: deleted, error: deleteError } = await supabase
+    .from('events')
+    .delete()
+    .eq('id', id)
+    .select('slug')
+    .maybeSingle();
   if (deleteError) return NextResponse.json({ error: deleteError.message }, { status: 500 });
+  revalidateEventContent(deleted?.slug);
   return NextResponse.json({ ok: true });
 }
