@@ -11,6 +11,9 @@ export const metadata: Metadata = { title: 'Reports & Exports - Admin' };
 export default async function AdminReportsPage() {
   const { database: supabase } = await requireAdminAccess();
   const activeSince = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString();
+  const chartSince = new Date();
+  chartSince.setMonth(chartSince.getMonth() - 12);
+  const chartSinceIso = chartSince.toISOString();
 
   const [
     totalRes,
@@ -25,7 +28,7 @@ export default async function AdminReportsPage() {
   ] = await Promise.all([
     supabase.from('profiles').select('id', { count: 'exact', head: true }).eq('approval_status', 'approved'),
     supabase.from('profiles').select('id', { count: 'exact', head: true }).eq('is_paid_member', true),
-    supabase.from('payments').select('amount').eq('status', 'success'),
+    supabase.from('payments').select('total:amount.sum()').eq('status', 'success'),
     supabase.from('profiles').select('id', { count: 'exact', head: true }).gte('last_seen_at', activeSince),
     supabase
       .from('profiles')
@@ -33,11 +36,16 @@ export default async function AdminReportsPage() {
       .eq('approval_status', 'approved')
       .order('batch_year', { ascending: true }),
     supabase.from('profiles').select('current_state').eq('approval_status', 'approved'),
-    supabase.from('profiles').select('created_at').order('created_at', { ascending: true }),
+    supabase
+      .from('profiles')
+      .select('created_at')
+      .gte('created_at', chartSinceIso)
+      .order('created_at', { ascending: true }),
     supabase
       .from('payments')
       .select('amount, created_at')
       .eq('status', 'success')
+      .gte('created_at', chartSinceIso)
       .order('created_at', { ascending: true }),
     supabase
       .from('forum_threads')
@@ -47,10 +55,8 @@ export default async function AdminReportsPage() {
       .limit(5),
   ]);
 
-  const totalRevenue = (revenueRes.data ?? []).reduce(
-    (sum: number, payment: { amount: number }) => sum + Number(payment.amount),
-    0
-  );
+  const revenueRow = (revenueRes.data as { total: number | string | null }[] | null)?.[0];
+  const totalRevenue = Number(revenueRow?.total ?? 0);
 
   const batchMap = new Map<number, number>();
   for (const row of alumniByBatch.data ?? []) {

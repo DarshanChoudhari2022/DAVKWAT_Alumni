@@ -3,6 +3,7 @@
 import { useState, useTransition } from 'react';
 import { useRouter } from 'next/navigation';
 import { Button } from '@/components/ui/button';
+import { readApiResponse } from '@/lib/utils/api-client';
 
 export function MembershipPlanForm() {
   const [isPending, startTransition] = useTransition();
@@ -32,8 +33,8 @@ export function MembershipPlanForm() {
         body: JSON.stringify(payload),
       });
 
+      const data = await readApiResponse<{ error?: string }>(res);
       if (!res.ok) {
-        const data = await res.json();
         setError(data.error ?? 'Failed to create plan.');
       } else {
         setSuccess(true);

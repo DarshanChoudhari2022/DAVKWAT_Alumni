@@ -2,6 +2,7 @@
 
 import { useState, useTransition } from 'react';
 import { Button } from '@/components/ui/button';
+import { readApiResponse } from '@/lib/utils/api-client';
 
 type DeliverySegment =
   | 'all'
@@ -46,14 +47,14 @@ export function AnnouncementDeliveryPanel({
           segmentValue: needsValue ? segmentValue : '',
         }),
       });
-      const data = await response.json();
+      const data = await readApiResponse<{ error?: string; sent?: number; failed?: number }>(response);
 
       if (!response.ok) {
         setError(data.error ?? 'Could not send the announcement email.');
         return;
       }
 
-      setResult(`Sent ${data.sent} emails${data.failed ? `, ${data.failed} failed` : ''}.`);
+      setResult(`Sent ${data.sent ?? 0} emails${data.failed ? `, ${data.failed} failed` : ''}.`);
     });
   }
 

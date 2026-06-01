@@ -4,6 +4,7 @@ import { useState, useTransition } from 'react';
 import { useRouter } from 'next/navigation';
 import { Shield, UserX, UserCheck } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { readApiResponse } from '@/lib/utils/api-client';
 
 interface AlumniDetailActionsProps {
   alumniId: string;
@@ -25,8 +26,8 @@ export function AlumniDetailActions({ alumniId, currentRole, isActive }: AlumniD
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ alumniId, role: newRole }),
       });
+      const data = await readApiResponse<{ error?: string }>(res);
       if (!res.ok) {
-        const data = await res.json();
         setError(data.error ?? 'Failed to change role.');
       } else {
         setRole(newRole);
@@ -43,8 +44,8 @@ export function AlumniDetailActions({ alumniId, currentRole, isActive }: AlumniD
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ alumniId, is_active: !isActive }),
       });
+      const data = await readApiResponse<{ error?: string }>(res);
       if (!res.ok) {
-        const data = await res.json();
         setError(data.error ?? 'Failed to update status.');
       } else {
         router.refresh();

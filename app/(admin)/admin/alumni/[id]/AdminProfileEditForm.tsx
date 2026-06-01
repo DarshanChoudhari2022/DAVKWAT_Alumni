@@ -3,6 +3,7 @@
 import { useState, useTransition } from 'react';
 import { useRouter } from 'next/navigation';
 import { Button } from '@/components/ui/button';
+import { readApiResponse } from '@/lib/utils/api-client';
 
 interface AdminProfileEditFormProps {
   alumniId: string;
@@ -66,7 +67,7 @@ export function AdminProfileEditForm({ alumniId, initial }: AdminProfileEditForm
         body: JSON.stringify(payload),
       });
 
-      const data = await res.json();
+      const data = await readApiResponse<{ error?: string }>(res);
       if (!res.ok) {
         setError(data.error ?? 'Could not update this alumni profile.');
         return;

@@ -4,6 +4,7 @@ import { useState, useTransition } from 'react';
 import { useRouter } from 'next/navigation';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
+import { readApiResponse } from '@/lib/utils/api-client';
 
 const EVENT_TYPES = ['in_person', 'online', 'hybrid'] as const;
 
@@ -88,8 +89,8 @@ export function EventForm({ initial }: EventFormProps) {
         body: JSON.stringify(payload),
       });
 
+      const data = await readApiResponse<{ error?: string }>(res);
       if (!res.ok) {
-        const data = await res.json();
         setError(data.error ?? 'Something went wrong.');
         return;
       }

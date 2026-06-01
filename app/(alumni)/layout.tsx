@@ -16,6 +16,8 @@ const NAV = [
   { href: '/profile', label: 'Profile', icon: User },
 ];
 
+export const dynamic = 'force-dynamic';
+
 export default async function AlumniLayout({ children }: { children: React.ReactNode }) {
   try {
     const supabase = await createClient();

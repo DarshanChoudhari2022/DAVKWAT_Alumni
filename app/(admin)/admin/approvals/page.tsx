@@ -2,18 +2,22 @@ import type { Metadata } from 'next';
 import { Avatar } from '@/components/shared/Avatar';
 import { Badge } from '@/components/ui/badge';
 import { Card } from '@/components/ui/card';
+import { Pagination } from '@/components/shared/Pagination';
 import { requireAdminAccess } from '@/lib/auth/admin-access';
 import { formatDate } from '@/lib/utils/format';
 import { ApprovalActions } from './ApprovalActions';
 
 export const metadata: Metadata = { title: 'Pending Approvals - Admin' };
+const PAGE_SIZE = 20;
 
 export default async function ApprovalsPage({
   searchParams,
 }: {
-  searchParams: Promise<{ filter?: string }>;
+  searchParams: Promise<{ filter?: string; page?: string }>;
 }) {
   const sp = await searchParams;
+  const page = Math.max(1, parseInt(sp.page ?? '1', 10) || 1);
+  const offset = (page - 1) * PAGE_SIZE;
   const now = new Date();
   const startOfToday = new Date(now.getFullYear(), now.getMonth(), now.getDate()).toISOString();
   const oneWeekAgo = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000).toISOString();
@@ -22,7 +26,8 @@ export default async function ApprovalsPage({
   let query = supabase
     .from('profiles')
     .select(
-      'id, full_name, email, batch_year, course, current_city, phone, created_at, avatar_url'
+      'id, full_name, email, batch_year, course, current_city, phone, created_at, avatar_url',
+      { count: 'exact' }
     )
     .eq('approval_status', 'pending')
     .order('created_at', { ascending: true });
@@ -35,8 +40,9 @@ export default async function ApprovalsPage({
     query = query.lt('created_at', oneWeekAgo);
   }
 
-  const { data: pending, error } = await query;
+  const { data: pending, count, error } = await query.range(offset, offset + PAGE_SIZE - 1);
   const pendingProfiles = pending ?? [];
+  const totalPages = Math.max(1, Math.ceil((count ?? 0) / PAGE_SIZE));
 
   if (error) {
     console.error('[admin/approvals] failed to load pending registrations:', error);
@@ -48,7 +54,7 @@ export default async function ApprovalsPage({
         <div>
           <h1 className="font-display text-3xl font-semibold tracking-tight">Pending Approvals</h1>
           <p className="mt-1 text-sm text-slate-500">
-            {pendingProfiles.length} alumni waiting for approval.
+            {count ?? 0} alumni waiting for approval.
           </p>
         </div>
         <nav
@@ -120,6 +126,13 @@ export default async function ApprovalsPage({
           </li>
         )}
       </ul>
+
+      <Pagination
+        page={page}
+        totalPages={totalPages}
+        basePath="/admin/approvals"
+        searchParams={{ filter: sp.filter }}
+      />
     </div>
   );
 }

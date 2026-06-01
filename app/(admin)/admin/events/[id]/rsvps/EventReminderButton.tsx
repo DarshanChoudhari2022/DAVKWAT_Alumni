@@ -2,6 +2,7 @@
 
 import { useState, useTransition } from 'react';
 import { Button } from '@/components/ui/button';
+import { readApiResponse } from '@/lib/utils/api-client';
 
 export function EventReminderButton({ eventId }: { eventId: string }) {
   const [message, setMessage] = useState<string | null>(null);
@@ -16,14 +17,14 @@ export function EventReminderButton({ eventId }: { eventId: string }) {
       const res = await fetch(`/api/admin/events/${eventId}/reminders`, {
         method: 'POST',
       });
-      const data = await res.json();
+      const data = await readApiResponse<{ error?: string; sent?: number; failed?: number }>(res);
 
       if (!res.ok) {
         setError(data.error ?? 'Could not send reminders.');
         return;
       }
 
-      setMessage(`Sent ${data.sent} reminder email(s).${data.failed ? ` ${data.failed} failed.` : ''}`);
+      setMessage(`Sent ${data.sent ?? 0} reminder email(s).${data.failed ? ` ${data.failed} failed.` : ''}`);
     });
   }
 

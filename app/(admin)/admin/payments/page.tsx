@@ -82,11 +82,12 @@ export default async function AdminPaymentsPage({
   // Stats
   const [successRes, totalAmtRes, pendingRes] = await Promise.all([
     supabase.from('payments').select('id', { count: 'exact', head: true }).eq('status', 'success'),
-    supabase.from('payments').select('amount').eq('status', 'success'),
+    supabase.from('payments').select('total:amount.sum()').eq('status', 'success'),
     supabase.from('payments').select('id', { count: 'exact', head: true }).eq('status', 'pending'),
   ]);
 
-  const totalRevenue = (totalAmtRes.data ?? []).reduce((s: number, p: { amount: number }) => s + Number(p.amount), 0);
+  const totalRevenueRow = (totalAmtRes.data as { total: number | string | null }[] | null)?.[0];
+  const totalRevenue = Number(totalRevenueRow?.total ?? 0);
 
   return (
     <div className="mx-auto max-w-6xl px-4 py-8 sm:px-6 lg:px-8">

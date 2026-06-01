@@ -2,6 +2,7 @@
 
 import { useState, useTransition } from 'react';
 import { Button } from '@/components/ui/button';
+import { readApiResponse } from '@/lib/utils/api-client';
 
 interface ThreadModerationFormProps {
   thread: {
@@ -35,7 +36,7 @@ export function ThreadModerationForm({ thread }: ThreadModerationFormProps) {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(payload),
       });
-      const data = await response.json();
+      const data = await readApiResponse<{ error?: string }>(response);
 
       if (!response.ok) {
         setError(data.error ?? 'Could not update the thread.');

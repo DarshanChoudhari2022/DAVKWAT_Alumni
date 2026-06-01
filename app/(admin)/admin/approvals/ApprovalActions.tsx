@@ -4,6 +4,7 @@ import { useState, useTransition } from 'react';
 import { useRouter } from 'next/navigation';
 import { Check, X } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { readApiResponse } from '@/lib/utils/api-client';
 
 interface ApprovalActionsProps {
   alumniId: string;
@@ -25,7 +26,7 @@ export function ApprovalActions({ alumniId, alumniName }: ApprovalActionsProps) 
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ alumniId }),
       });
-      const data = await res.json();
+      const data = await readApiResponse<{ error?: string }>(res);
       if (!res.ok) {
         setError(data.error ?? 'Failed to approve.');
       } else {
@@ -46,7 +47,7 @@ export function ApprovalActions({ alumniId, alumniName }: ApprovalActionsProps) 
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ alumniId, reason: reason.trim() }),
       });
-      const data = await res.json();
+      const data = await readApiResponse<{ error?: string }>(res);
       if (!res.ok) {
         setError(data.error ?? 'Failed to reject.');
       } else {

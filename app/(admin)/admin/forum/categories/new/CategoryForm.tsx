@@ -4,6 +4,7 @@ import { useState, useTransition } from 'react';
 import { useRouter } from 'next/navigation';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
+import { readApiResponse } from '@/lib/utils/api-client';
 
 export function CategoryForm() {
   const [name, setName] = useState('');
@@ -39,8 +40,8 @@ export function CategoryForm() {
         }),
       });
 
+      const data = await readApiResponse<{ error?: string }>(res);
       if (!res.ok) {
-        const data = await res.json();
         setError(data.error ?? 'Failed to create category.');
         return;
       }

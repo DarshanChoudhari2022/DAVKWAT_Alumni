@@ -3,6 +3,7 @@
 import { useState, useTransition } from 'react';
 import { useRouter } from 'next/navigation';
 import { Button } from '@/components/ui/button';
+import { readApiResponse } from '@/lib/utils/api-client';
 
 export function ReplyModerationButton({
   replyId,
@@ -23,7 +24,7 @@ export function ReplyModerationButton({
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ is_deleted: !isDeleted }),
       });
-      const data = await response.json();
+      const data = await readApiResponse<{ error?: string }>(response);
 
       if (!response.ok) {
         setError(data.error ?? 'Could not update the reply.');

@@ -28,7 +28,7 @@ export default async function AdminDashboardPage() {
         .eq('is_paid_member', true),
       supabase
         .from('payments')
-        .select('amount')
+        .select('total:amount.sum()')
         .eq('status', 'success'),
       supabase
         .from('events')
@@ -42,10 +42,8 @@ export default async function AdminDashboardPage() {
         .limit(8),
     ]);
 
-  const revenue = (totalRevenue.data ?? []).reduce(
-    (sum, p) => sum + Number(p.amount),
-    0
-  );
+  const revenueRow = (totalRevenue.data as { total: number | string | null }[] | null)?.[0];
+  const revenue = Number(revenueRow?.total ?? 0);
 
   return (
     <div className="mx-auto max-w-6xl px-4 py-8 sm:px-6 lg:px-8">
