@@ -1,7 +1,14 @@
 export { Reveal } from './Reveal';
 export { Hero } from './Hero';
-export { FeatureTabs } from './FeatureTabs';
+export { TrustBand } from './TrustBand';
+export { WhyRegister } from './WhyRegister';
+export { MembershipSection } from './MembershipSection';
+export { MembershipTeaser } from './MembershipTeaser';
 export { Showcase } from './Showcase';
-export { FeatureList } from './FeatureList';
-export { FinalCTA } from './FinalCTA';
+export { MemberJourney } from './MemberJourney';
 export { ManageEngage } from './ManageEngage';
+export { DirectoryPreview } from './DirectoryPreview';
+export { PrivacyData } from './PrivacyData';
+export { FinalCTA } from './FinalCTA';
+export { FeatureList } from './FeatureList';
+export { FeatureTabs } from './FeatureTabs';

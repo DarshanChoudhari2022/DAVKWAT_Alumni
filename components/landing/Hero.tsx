@@ -1,7 +1,7 @@
 'use client';
 
 import Link from 'next/link';
-import { ArrowRight, Sparkles, Users, Calendar, MessageCircle } from 'lucide-react';
+import { ArrowRight, ShieldCheck, Users, Sparkles, Calendar, MessageCircle } from 'lucide-react';
 import { Reveal } from './Reveal';
 import { BatchMarquee } from './StatsStrip';
 
@@ -12,7 +12,8 @@ interface HeroProps {
 }
 
 export function Hero({ alumniCount }: HeroProps) {
-  const alumniDisplay = alumniCount > 0 ? `${alumniCount.toLocaleString('en-IN')}+` : '10,000+';
+  const hasRealCount = alumniCount > 0;
+  const alumniDisplay = alumniCount.toLocaleString('en-IN');
   const slowOffset = useScrollParallax(0.05);
   const cardOffset = useScrollParallax(0.035);
 
@@ -24,12 +25,12 @@ export function Hero({ alumniCount }: HeroProps) {
       />
       <div
         aria-hidden
-        className="animate-aurora absolute -left-40 top-20 h-[460px] w-[460px] rounded-[42%_58%_64%_36%/48%_38%_62%_52%] bg-[radial-gradient(circle_at_30%_30%,rgba(59,130,246,0.55),transparent_65%)] blur-3xl"
+        className="animate-aurora absolute -left-40 top-20 h-[460px] w-[460px] rounded-[42%_58%_64%_36%/48%_38%_62%_52%] bg-[radial-gradient(circle_at_30%_30%,rgba(59,130,246,0.45),transparent_65%)] blur-3xl"
         style={{ transform: `translate3d(0, ${slowOffset}px, 0)` }}
       />
       <div
         aria-hidden
-        className="animate-aurora absolute -right-32 top-44 h-[420px] w-[520px] rounded-[58%_42%_36%_64%/52%_60%_40%_48%] bg-[radial-gradient(circle_at_70%_40%,rgba(59,130,246,0.22),transparent_65%)] blur-3xl [animation-delay:-6s]"
+        className="animate-aurora absolute -right-32 top-44 h-[420px] w-[520px] rounded-[58%_42%_36%_64%/52%_60%_40%_48%] bg-[radial-gradient(circle_at_70%_40%,rgba(59,130,246,0.18),transparent_65%)] blur-3xl [animation-delay:-6s]"
         style={{ transform: `translate3d(0, ${slowOffset * -0.7}px, 0)` }}
       />
       <div
@@ -38,28 +39,30 @@ export function Hero({ alumniCount }: HeroProps) {
       />
 
       <div className="relative mx-auto max-w-7xl px-4 pb-14 pt-10 sm:px-6 sm:pt-20 md:pb-20 lg:px-8 lg:pb-28 lg:pt-24">
-        <div className="grid items-center gap-12 lg:grid-cols-[1fr_0.95fr] lg:gap-14">
+        <div className="grid items-center gap-12 lg:grid-cols-[1fr_0.9fr] lg:gap-14">
           <div className="max-w-2xl">
             <Reveal direction="zoom">
               <div className="inline-flex items-center gap-2 rounded-full border border-white/15 bg-white/[0.06] px-3.5 py-1.5 backdrop-blur">
-                <span className="text-xs font-semibold tracking-wide text-white/80 flex items-center gap-1.5">
-                  🛡️ Official Trust-Led Portal · Fully Verified & Secure
+                <ShieldCheck className="h-3.5 w-3.5 text-sky-300" />
+                <span className="text-xs font-semibold tracking-wide text-white/80">
+                  The official alumni portal of the DAV Khagaul Alumni Welfare Trust
                 </span>
               </div>
             </Reveal>
 
             <Reveal delay={80}>
               <h1 className="mt-7 font-sans text-4xl font-black leading-[1.06] tracking-[-0.04em] sm:text-5xl lg:text-[58px]">
-                Reunite with your
-                <span className="block text-gradient-blue">DAV Khagaul batch.</span>
-                <span className="block text-white text-3xl sm:text-4xl lg:text-[44px] mt-2 font-bold tracking-tight">Secure your official alumni access.</span>
+                Reconnect with your
+                <span className="block text-gradient-blue">DAV Khagaul family.</span>
               </h1>
             </Reveal>
 
             <Reveal delay={160}>
               <div className="mt-6 max-w-xl text-base leading-relaxed text-white/70 sm:text-[17px]">
                 <p>
-                  Created and managed by the <strong>DAV Khagaul Alumni Welfare Trust</strong>. Connect with verified peers, access official circulars, explore mentorship, and support welfare initiatives in a private, mobile-first network.
+                  One trusted place to find your batchmates, receive official Trust
+                  updates, attend reunions, and support the school that shaped you —
+                  through a single, verified alumni membership.
                 </p>
               </div>
             </Reveal>
@@ -82,39 +85,32 @@ export function Hero({ alumniCount }: HeroProps) {
                   </Link>
                 </div>
                 <div className="flex flex-col gap-1 sm:pl-2 mt-1">
-                  <span className="text-[11px] text-white/60 font-medium tracking-wide">
-                    Takes under 3 minutes · Vetted by Trust Committee
+                  <span className="text-[12px] text-white/65 font-medium tracking-wide inline-flex items-center gap-1.5">
+                    <ShieldCheck className="h-3.5 w-3.5 text-sky-300" />
+                    Every registration is reviewed by the Trust before your account is activated.
                   </span>
-                  <p className="text-[11px] text-white/40 italic">
-                    Exclusively open to DAV Khagaul former students (matric/plus-two) and ex-teachers.
+                  <p className="text-[11px] text-white/45 italic">
+                    Open to former students and teachers of DAV Khagaul.
                   </p>
                 </div>
               </div>
             </Reveal>
 
-            <Reveal delay={320}>
-              <div className="mt-8 flex items-center gap-4 text-xs text-white/60">
-                <div className="flex -space-x-2">
-                  {[
-                    'from-blue-500 to-indigo-600',
-                    'from-sky-400 to-blue-500',
-                    'from-indigo-500 to-blue-700',
-                    'from-slate-400 to-slate-600',
-                  ].map((g, i) => (
-                    <span
-                      key={i}
-                      className={`inline-block h-7 w-7 rounded-full border-2 border-[#0a1130] bg-gradient-to-br ${g}`}
-                    />
-                  ))}
+            {hasRealCount && (
+              <Reveal delay={320}>
+                <div className="mt-8 inline-flex items-center gap-3 rounded-2xl border border-white/10 bg-white/[0.04] px-4 py-3 text-sm text-white/70 backdrop-blur">
+                  <Users className="h-4 w-4 text-sky-300" />
+                  <span>
+                    Trusted by <strong className="text-white">{alumniDisplay}+</strong> verified alumni and growing.
+                  </span>
                 </div>
-                <span><strong>{alumniDisplay} verified alumni</strong> · 50+ batches · 20+ countries</span>
-              </div>
-            </Reveal>
+              </Reveal>
+            )}
           </div>
 
           <Reveal direction="right" delay={120} className="hidden md:block">
             <div style={{ transform: `translate3d(0, ${cardOffset}px, 0)` }}>
-            <HeroPreview />
+              <HeroPreview />
             </div>
           </Reveal>
         </div>
@@ -132,6 +128,9 @@ export function Hero({ alumniCount }: HeroProps) {
   );
 }
 
+/**
+ * Hero dashboard preview — visual showcase of the member dashboard.
+ */
 function HeroPreview() {
   return (
     <div className="relative mx-auto w-full max-w-[560px]">

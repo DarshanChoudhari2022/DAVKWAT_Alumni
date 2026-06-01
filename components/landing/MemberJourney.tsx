@@ -1,21 +1,22 @@
+import Link from 'next/link';
 import { Reveal } from './Reveal';
-import { UserPlus, ShieldCheck, LogIn } from 'lucide-react';
+import { UserPlus, ShieldCheck, KeyRound, ArrowRight } from 'lucide-react';
 
 const steps = [
   {
     icon: UserPlus,
-    header: 'Complete Registration Form',
-    detail: 'Fill in your batch details, graduation year, and contact details in under 3 minutes.',
+    header: 'Complete your registration',
+    detail: 'Share your batch year, course, and contact details. It takes only a few minutes.',
   },
   {
     icon: ShieldCheck,
-    header: 'Trust Committee Review',
-    detail: 'Our executive committee validates your profile against school records to keep the network alumni-only.',
+    header: 'Trust committee review',
+    detail: 'The Trust verifies your details against school records to keep the network alumni-only. This may take a little time.',
   },
   {
-    icon: LogIn,
-    header: 'Connect & Participate',
-    detail: 'Log in to explore the directory, join batch discussions, view circulars, and support welfare programs.',
+    icon: KeyRound,
+    header: 'Activate your membership',
+    detail: 'Once approved, complete your membership contribution through our secure payment partner and sign in to access the full network.',
   },
 ];
 
@@ -27,10 +28,10 @@ export function MemberJourney() {
         <Reveal>
           <div className="mx-auto max-w-3xl text-center">
             <h2 className="font-sans text-3xl font-bold tracking-[-0.025em] sm:text-4xl lg:text-[42px]">
-              How to join the Trust network.
+              How membership works
             </h2>
             <p className="mt-4 text-[17px] leading-relaxed text-white/60">
-              A private, secure platform vetted and approved by the DAVKAWT executive committee.
+              A simple, vetted process that keeps the network genuine and alumni-only.
             </p>
           </div>
         </Reveal>
@@ -46,6 +47,9 @@ export function MemberJourney() {
                   />
                 )}
                 <div className="relative z-10 flex h-16 w-16 items-center justify-center rounded-full bg-gradient-to-br from-indigo-500/20 to-blue-500/20 shadow-lg shadow-indigo-500/10 border border-white/10 backdrop-blur-md">
+                  <span className="absolute -right-1 -top-1 grid h-6 w-6 place-items-center rounded-full bg-sky-400 text-[11px] font-bold text-[#070b22]">
+                    {index + 1}
+                  </span>
                   <step.icon className="h-7 w-7 text-indigo-400" />
                 </div>
                 <h3 className="mt-6 text-xl font-bold text-white">{step.header}</h3>
@@ -56,6 +60,28 @@ export function MemberJourney() {
             </Reveal>
           ))}
         </div>
+
+        <Reveal delay={200}>
+          <div className="mt-14 flex flex-col items-center gap-3">
+            <Link
+              href="/register"
+              className="inline-flex items-center gap-1.5 rounded-full bg-gradient-to-r from-amber-500 to-orange-500 px-7 py-3.5 text-sm font-semibold text-white shadow-lg shadow-amber-500/25 transition hover:from-amber-400 hover:to-orange-400"
+            >
+              Register as alumnus
+              <ArrowRight className="h-4 w-4" />
+            </Link>
+            <p className="text-xs text-white/50">
+              Payments are secure and covered by our{' '}
+              <Link href="/refund" className="underline hover:no-underline">
+                Refund Policy
+              </Link>
+              . Already a member?{' '}
+              <Link href="/login" className="text-white/80 underline hover:no-underline">
+                Member sign in
+              </Link>
+            </p>
+          </div>
+        </Reveal>
       </div>
     </section>
   );

@@ -40,10 +40,11 @@ export function Showcase({ events, announcements }: ShowcaseProps) {
               Live Trust Updates
             </span>
             <h2 className="mt-4 font-sans text-3xl font-bold tracking-[-0.025em] text-slate-900 sm:text-4xl lg:text-[42px]">
-              Latest from the community
+              Latest from the Trust
             </h2>
             <p className="mt-3 text-[17px] leading-relaxed text-slate-600">
-              Real-time updates on events, reunions, and official Trust circulars.
+              Upcoming events and official announcements, published directly by the
+              DAV Khagaul Alumni Welfare Trust.
             </p>
           </div>
         </Reveal>
@@ -59,10 +60,10 @@ export function Showcase({ events, announcements }: ShowcaseProps) {
                   <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-blue-50">
                     <Calendar className="h-5 w-5 text-blue-600" />
                   </div>
-                  <h3 className="text-xl font-bold text-slate-900">Trust Events</h3>
+                  <h3 className="text-xl font-bold text-slate-900">Upcoming events</h3>
                 </div>
                 <Link href="/events" className="text-sm font-semibold text-blue-600 hover:text-blue-700 transition-colors">
-                  View all
+                  View all events
                 </Link>
               </div>
               
@@ -96,7 +97,11 @@ export function Showcase({ events, announcements }: ShowcaseProps) {
                 ) : (
                   <div className="flex h-full flex-col items-center justify-center text-center text-slate-500 py-8">
                     <Calendar className="h-10 w-10 opacity-20 mb-3" />
-                    <p>No published events yet.</p>
+                    <p className="font-medium text-slate-700">No upcoming events yet.</p>
+                    <p className="mt-1 max-w-xs text-sm text-slate-500">
+                      Reunions, chapter meets, and mentorship circles will appear here
+                      as soon as the Trust schedules them. Register to be notified first.
+                    </p>
                   </div>
                 )}
               </div>
@@ -113,10 +118,10 @@ export function Showcase({ events, announcements }: ShowcaseProps) {
                   <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-blue-50">
                     <Bell className="h-5 w-5 text-blue-600" />
                   </div>
-                  <h3 className="text-xl font-bold text-slate-900">Trust Announcements</h3>
+                  <h3 className="text-xl font-bold text-slate-900">Announcements</h3>
                 </div>
                 <Link href="/announcements" className="text-sm font-semibold text-blue-600 hover:text-blue-700 transition-colors">
-                  View all
+                  View all announcements
                 </Link>
               </div>
 
@@ -147,7 +152,11 @@ export function Showcase({ events, announcements }: ShowcaseProps) {
                 ) : (
                   <div className="flex h-full flex-col items-center justify-center text-center text-slate-500 py-8">
                     <Bell className="h-10 w-10 opacity-20 mb-3" />
-                    <p>No recent announcements.</p>
+                    <p className="font-medium text-slate-700">No announcements published yet.</p>
+                    <p className="mt-1 max-w-xs text-sm text-slate-500">
+                      Official circulars and community updates from the DAV Khagaul
+                      Alumni Welfare Trust will appear here.
+                    </p>
                   </div>
                 )}
               </div>
