@@ -1,7 +1,11 @@
 import { NextResponse } from 'next/server';
 import { writeAuditLog } from '@/lib/audit';
 import { createAdminClient } from '@/lib/supabase/admin';
-import { getMembershipExpiryDate, sendPaymentReceiptEmail } from '@/lib/payments/membership';
+import {
+  getMembershipExpiryDate,
+  markPaymentSuccessful,
+  sendPaymentReceiptEmail,
+} from '@/lib/payments/membership';
 import { verifyPaymentHash } from '@/lib/easebuzz/verify';
 
 function membershipRedirect(path: string) {
@@ -68,17 +72,20 @@ export async function POST(req: Request) {
     const admin = createAdminClient();
 
     if (status === 'success') {
-      await admin
-        .from('payments')
-        .update({
-          status: 'success',
-          easebuzz_payment_id: easepayid ?? null,
-          payment_mode: PG_TYPE ?? payment_source ?? null,
-          bank_ref_num: bank_ref_num ?? null,
-          gateway_response: params,
-          updated_at: new Date().toISOString(),
-        })
-        .eq('txnid', txnid);
+      const { alreadyProcessed } = await markPaymentSuccessful({
+        txnid,
+        params,
+        easepayid,
+        paymentMode: PG_TYPE ?? payment_source ?? null,
+        bankRefNum: bank_ref_num ?? null,
+      });
+
+      // Another handler (webhook or a duplicate redirect) already finalised this
+      // transaction — skip the side effects so membership isn't double-granted
+      // and the receipt email isn't sent twice.
+      if (alreadyProcessed) {
+        return NextResponse.redirect(membershipRedirect('/membership?status=success'));
+      }
 
       const alumniId = udf1;
       const membershipType = udf3 as 'lifetime' | 'annual' | undefined;
@@ -123,7 +130,8 @@ export async function POST(req: Request) {
         gateway_response: params,
         updated_at: new Date().toISOString(),
       })
-      .eq('txnid', txnid);
+      .eq('txnid', txnid)
+      .neq('status', 'success');
 
     return NextResponse.redirect(membershipRedirect('/membership?status=failed'));
   } catch (err) {

@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { requireAdminApiAccess } from '@/lib/auth/admin-api';
 import { arrayToCSV, arrayToXLSX } from '@/lib/utils/export';
+import { escapeIlikePattern, normalizeSearchTerm } from '@/lib/utils/search';
 
 const ALUMNI_COLUMNS = [
   { key: 'full_name', label: 'Name' },
@@ -65,11 +66,14 @@ export async function GET(req: NextRequest) {
 
     const status = searchParams.get('status');
     const membership = searchParams.get('membership');
-    const q = searchParams.get('q');
+    const q = normalizeSearchTerm(searchParams.get('q'));
     if (status) query = query.eq('approval_status', status as 'pending' | 'approved' | 'rejected');
     if (membership === 'paid') query = query.eq('is_paid_member', true);
     if (membership === 'free') query = query.eq('is_paid_member', false);
-    if (q) query = query.or(`full_name.ilike.%${q}%,email.ilike.%${q}%`);
+    if (q) {
+      const term = `%${escapeIlikePattern(q)}%`;
+      query = query.or(`full_name.ilike.${term},email.ilike.${term}`);
+    }
 
     const { data: rows } = await query.order('created_at', { ascending: false });
     data = (rows ?? []) as unknown as Record<string, unknown>[];

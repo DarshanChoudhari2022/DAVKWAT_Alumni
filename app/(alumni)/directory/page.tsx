@@ -6,6 +6,7 @@ import { Badge } from '@/components/ui/badge';
 import { Avatar } from '@/components/shared/Avatar';
 import { Pagination } from '@/components/shared/Pagination';
 import { createClient } from '@/lib/supabase/server';
+import { escapeIlikePattern, normalizeSearchTerm } from '@/lib/utils/search';
 
 export const metadata: Metadata = { title: 'Alumni Directory' };
 
@@ -45,17 +46,20 @@ export default async function DirectoryPage({
     .eq('is_active', true);
 
   if (sp.q) {
-    const term = `%${sp.q}%`;
-    query = query.or(
-      `full_name.ilike.${term},company.ilike.${term},occupation.ilike.${term},industry.ilike.${term}`
-    );
+    const search = normalizeSearchTerm(sp.q);
+    if (search) {
+      const term = `%${escapeIlikePattern(search)}%`;
+      query = query.or(
+        `full_name.ilike.${term},company.ilike.${term},occupation.ilike.${term},industry.ilike.${term}`
+      );
+    }
   }
   if (sp.batch) query = query.eq('batch_year', Number(sp.batch));
   if (sp.course) query = query.eq('course', sp.course);
-  if (sp.city) query = query.ilike('current_city', `%${sp.city}%`);
-  if (sp.state) query = query.ilike('current_state', `%${sp.state}%`);
-  if (sp.country) query = query.ilike('current_country', `%${sp.country}%`);
-  if (sp.industry) query = query.ilike('industry', `%${sp.industry}%`);
+  if (sp.city) query = query.ilike('current_city', `%${escapeIlikePattern(sp.city)}%`);
+  if (sp.state) query = query.ilike('current_state', `%${escapeIlikePattern(sp.state)}%`);
+  if (sp.country) query = query.ilike('current_country', `%${escapeIlikePattern(sp.country)}%`);
+  if (sp.industry) query = query.ilike('industry', `%${escapeIlikePattern(sp.industry)}%`);
 
   if (sp.sort === 'batch_desc') {
     query = query

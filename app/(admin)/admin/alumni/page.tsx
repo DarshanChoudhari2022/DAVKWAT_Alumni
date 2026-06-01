@@ -8,6 +8,7 @@ import { Avatar } from '@/components/shared/Avatar';
 import { Pagination } from '@/components/shared/Pagination';
 import { requireAdminAccess } from '@/lib/auth/admin-access';
 import { formatDate } from '@/lib/utils/format';
+import { escapeIlikePattern, normalizeSearchTerm } from '@/lib/utils/search';
 
 export const metadata: Metadata = { title: 'Alumni Management — Admin' };
 
@@ -39,7 +40,11 @@ export default async function AdminAlumniPage({
     );
 
   if (sp.q) {
-    query = query.or(`full_name.ilike.%${sp.q}%,email.ilike.%${sp.q}%`);
+    const search = normalizeSearchTerm(sp.q);
+    if (search) {
+      const term = `%${escapeIlikePattern(search)}%`;
+      query = query.or(`full_name.ilike.${term},email.ilike.${term}`);
+    }
   }
   if (sp.status === 'approved') query = query.eq('approval_status', 'approved');
   if (sp.status === 'pending') query = query.eq('approval_status', 'pending');

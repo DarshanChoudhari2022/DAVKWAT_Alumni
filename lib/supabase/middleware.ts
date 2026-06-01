@@ -22,6 +22,12 @@ export async function updateSession(request: NextRequest): Promise<NextResponse>
   const needsAdmin = isAdminRoute(pathname);
   const isAuthPage = AUTH_ROUTES.some((r) => pathname === r);
 
+  // Public, non-auth routes (home, about, privacy, etc.) don't gate on a session.
+  // Skipping the Supabase auth round-trip here keeps these pages fast to load.
+  if (!needsAlumni && !needsAdmin && !isAuthPage) {
+    return response;
+  }
+
   const localAdminSession = await verifyLocalAdminSessionToken(
     request.cookies.get(LOCAL_ADMIN_COOKIE_NAME)?.value
   );

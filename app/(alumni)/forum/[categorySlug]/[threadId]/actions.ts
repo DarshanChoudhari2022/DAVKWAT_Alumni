@@ -35,20 +35,9 @@ export async function postReply(input: PostReplyInput) {
 
   if (insertError) return { error: insertError.message };
 
-  // Get current reply count then update
-  const { data: currentThread } = await supabase
-    .from('forum_threads')
-    .select('reply_count')
-    .eq('id', input.threadId)
-    .single();
-
-  await supabase
-    .from('forum_threads')
-    .update({
-      reply_count: (currentThread?.reply_count ?? 0) + 1,
-      last_reply_at: new Date().toISOString(),
-    })
-    .eq('id', input.threadId);
+  // reply_count and last_reply_at are maintained automatically by the
+  // `trg_forum_replies_count` database trigger on insert. Updating them here as
+  // well would double-count every reply, so we intentionally do not touch them.
 
   revalidatePath('/forum');
   return { success: true };

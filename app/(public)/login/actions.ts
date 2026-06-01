@@ -29,24 +29,15 @@ export async function loginAction(_prev: AuthState, formData: FormData): Promise
   }
 
   const supabase = await createClient();
-  const { error } = await supabase.auth.signInWithPassword(parsed.data);
+  // signInWithPassword already returns the authenticated user, so we avoid the
+  // extra getUser() network round-trip that previously ran on every login.
+  const { data: signInData, error } = await supabase.auth.signInWithPassword(parsed.data);
 
-  if (error) {
+  if (error || !signInData.user) {
     return { error: 'Invalid email or password.' };
   }
 
-  // Check approval status to send to the right page
-  const { data: { user } } = await supabase.auth.getUser();
-  if (!user) {
-    return { error: 'Login failed. Please try again.' };
-  }
-
-  await createAdminClient()
-    .from('profiles')
-    .update({ last_seen_at: new Date().toISOString() })
-    .eq('id', user.id);
-
-  revalidatePath('/', 'layout');
+  const user = signInData.user;
 
   const { data: profile } = await supabase
     .from('profiles')
@@ -61,6 +52,17 @@ export async function loginAction(_prev: AuthState, formData: FormData): Promise
         'Your account profile was not found. Please contact the admin team or register again.',
     };
   }
+
+  // Record presence without blocking the redirect.
+  void createAdminClient()
+    .from('profiles')
+    .update({ last_seen_at: new Date().toISOString() })
+    .eq('id', user.id)
+    .then(({ error: updateError }) => {
+      if (updateError) console.error('[login] last_seen_at update failed:', updateError.message);
+    });
+
+  revalidatePath('/', 'layout');
 
   redirect(resolveSignedInRedirect(redirectTo, profile.role, profile.approval_status));
 }

@@ -7,6 +7,7 @@ import { Button } from '@/components/ui/button';
 import { Pagination } from '@/components/shared/Pagination';
 import { requireAdminAccess } from '@/lib/auth/admin-access';
 import { formatINR, formatDateTime } from '@/lib/utils/format';
+import { escapeIlikePattern, normalizeSearchTerm } from '@/lib/utils/search';
 
 export const metadata: Metadata = { title: 'Payments — Admin' };
 
@@ -70,7 +71,11 @@ export default async function AdminPaymentsPage({
     query = query.lte('created_at', endOfDay.toISOString());
   }
   if (sp.q) {
-    query = query.or(`txnid.ilike.%${sp.q}%,profiles.full_name.ilike.%${sp.q}%`);
+    const search = normalizeSearchTerm(sp.q);
+    if (search) {
+      const term = `%${escapeIlikePattern(search)}%`;
+      query = query.or(`txnid.ilike.${term},profiles.full_name.ilike.${term}`);
+    }
   }
 
   const { data: payments, count } = await query

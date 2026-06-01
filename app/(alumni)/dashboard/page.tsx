@@ -19,11 +19,25 @@ export default async function DashboardPage() {
 
   const { data: profile } = await supabase
     .from('profiles')
-    .select('full_name, batch_year, course, is_paid_member, membership_expires_at, avatar_url')
+    .select('full_name, batch_year, course, is_paid_member, membership_expires_at, avatar_url, last_seen_at')
     .eq('id', user.id)
     .single();
 
   if (!profile) redirect('/login');
+
+  // Throttled presence update for "active users" analytics. Writing on every
+  // navigation is wasteful; once per hour is enough and keeps navigation fast.
+  const lastSeen = profile.last_seen_at ? new Date(profile.last_seen_at).getTime() : 0;
+  if (Date.now() - lastSeen > 60 * 60 * 1000) {
+    const { createAdminClient } = await import('@/lib/supabase/admin');
+    void createAdminClient()
+      .from('profiles')
+      .update({ last_seen_at: now })
+      .eq('id', user.id)
+      .then(({ error }) => {
+        if (error) console.error('[dashboard] last_seen_at update failed:', error.message);
+      });
+  }
 
   const [batchPeers, upcomingEvents, recentAnnouncements] = await Promise.all([
     supabase

@@ -1,7 +1,11 @@
 import { NextResponse } from 'next/server';
 import { writeAuditLog } from '@/lib/audit';
 import { createAdminClient } from '@/lib/supabase/admin';
-import { getMembershipExpiryDate, sendPaymentReceiptEmail } from '@/lib/payments/membership';
+import {
+  getMembershipExpiryDate,
+  markPaymentSuccessful,
+  sendPaymentReceiptEmail,
+} from '@/lib/payments/membership';
 import { verifyPaymentHash } from '@/lib/easebuzz/verify';
 
 /**
@@ -44,17 +48,20 @@ export async function POST(req: Request) {
     const supabase = createAdminClient();
 
     if (status === 'success') {
-      await supabase
-        .from('payments')
-        .update({
-          status: 'success',
-          easebuzz_payment_id: easepayid ?? null,
-          payment_mode: PG_TYPE ?? payment_source ?? null,
-          bank_ref_num: bank_ref_num ?? null,
-          gateway_response: params,
-          updated_at: new Date().toISOString(),
-        })
-        .eq('txnid', txnid);
+      const { alreadyProcessed } = await markPaymentSuccessful({
+        txnid,
+        params,
+        easepayid,
+        paymentMode: PG_TYPE ?? payment_source ?? null,
+        bankRefNum: bank_ref_num ?? null,
+      });
+
+      // Idempotency: if the browser redirect (verify route) or a previous webhook
+      // delivery already finalised this txn, acknowledge without re-running the
+      // membership grant or re-sending the receipt.
+      if (alreadyProcessed) {
+        return NextResponse.json({ status: 'ok', duplicate: true }, { status: 200 });
+      }
 
       const alumniId = udf1;
       const membershipType = udf3 as 'lifetime' | 'annual' | undefined;
@@ -96,7 +103,8 @@ export async function POST(req: Request) {
           gateway_response: params,
           updated_at: new Date().toISOString(),
         })
-        .eq('txnid', txnid);
+        .eq('txnid', txnid)
+        .neq('status', 'success');
     }
 
     return NextResponse.json({ status: 'ok' }, { status: 200 });

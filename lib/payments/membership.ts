@@ -16,6 +16,52 @@ export function getMembershipExpiryDate(
   return new Date(Date.now() + 365 * 24 * 60 * 60 * 1000).toISOString();
 }
 
+interface SuccessfulPaymentInput {
+  txnid: string;
+  params: Record<string, string>;
+  easepayid?: string;
+  paymentMode?: string | null;
+  bankRefNum?: string | null;
+}
+
+/**
+ * Atomically mark a payment as successful, but only if it has not already been
+ * marked successful. Easebuzz can deliver the same success twice (browser
+ * redirect to surl/furl AND the server-to-server webhook), so this guard makes
+ * the membership grant and receipt email idempotent.
+ *
+ * Returns `alreadyProcessed: true` when another handler already finalised the
+ * transaction, so callers can skip the side effects (profile update, receipt).
+ */
+export async function markPaymentSuccessful(
+  input: SuccessfulPaymentInput
+): Promise<{ alreadyProcessed: boolean; found: boolean }> {
+  const admin = createAdminClient();
+
+  const { data, error } = await admin
+    .from('payments')
+    .update({
+      status: 'success',
+      easebuzz_payment_id: input.easepayid ?? null,
+      payment_mode: input.paymentMode ?? null,
+      bank_ref_num: input.bankRefNum ?? null,
+      gateway_response: input.params,
+      updated_at: new Date().toISOString(),
+    })
+    .eq('txnid', input.txnid)
+    .neq('status', 'success')
+    .select('id');
+
+  if (error) {
+    console.error('[payments] failed to mark payment successful:', error.message);
+    // Treat a write error as "already processed" so we don't double-grant on retry.
+    return { alreadyProcessed: true, found: false };
+  }
+
+  const updatedRows = data?.length ?? 0;
+  return { alreadyProcessed: updatedRows === 0, found: updatedRows > 0 };
+}
+
 export async function sendPaymentReceiptEmail(params: {
   txnid: string;
   alumniId: string | null | undefined;

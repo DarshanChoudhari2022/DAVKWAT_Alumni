@@ -3,8 +3,6 @@ import { LayoutDashboard, Users, Calendar, MessageSquare, Megaphone, CreditCard,
 import { Logo } from '@/components/shared/Logo';
 import { logoutAction } from '@/app/(public)/login/actions';
 import { Button } from '@/components/ui/button';
-import { createAdminClient } from '@/lib/supabase/admin';
-import { createClient } from '@/lib/supabase/server';
 
 const NAV = [
   { href: '/dashboard', label: 'Dashboard', icon: LayoutDashboard },
@@ -16,25 +14,11 @@ const NAV = [
   { href: '/profile', label: 'Profile', icon: User },
 ];
 
-export const dynamic = 'force-dynamic';
-
-export default async function AlumniLayout({ children }: { children: React.ReactNode }) {
-  try {
-    const supabase = await createClient();
-    const {
-      data: { user },
-    } = await supabase.auth.getUser();
-
-    if (user) {
-      await createAdminClient()
-        .from('profiles')
-        .update({ last_seen_at: new Date().toISOString() })
-        .eq('id', user.id);
-    }
-  } catch (error) {
-    console.error('[alumni/layout] last_seen_at update failed:', error);
-  }
-
+// The session is already validated in middleware for every /dashboard, /directory,
+// etc. request, so the layout shell itself carries no per-request data and can be
+// served from the static shell. This removes an auth round-trip + a DB write that
+// previously ran on every single navigation (the main source of the UI lag).
+export default function AlumniLayout({ children }: { children: React.ReactNode }) {
   return (
     <div className="flex min-h-dvh flex-col lg:flex-row">
       {/* Desktop sidebar */}
