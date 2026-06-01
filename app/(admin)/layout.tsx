@@ -1,3 +1,4 @@
+import { Suspense } from 'react';
 import Link from 'next/link';
 import {
   LayoutDashboard,
@@ -30,13 +31,6 @@ const ADMIN_NAV = [
 
 export default async function AdminLayout({ children }: { children: React.ReactNode }) {
   const adminAccess = await requireAdminAccess();
-  const supabase = adminAccess.database;
-
-  // Get pending approval count for badge
-  const { count: pendingCount } = await supabase
-    .from('profiles')
-    .select('id', { count: 'exact', head: true })
-    .eq('approval_status', 'pending');
 
   return (
     <div className="flex min-h-dvh">
@@ -56,10 +50,10 @@ export default async function AdminLayout({ children }: { children: React.ReactN
                 >
                   <item.icon className="h-4 w-4 text-slate-500" />
                   {item.label}
-                  {item.badge && (pendingCount ?? 0) > 0 && (
-                    <span className="ml-auto flex h-5 min-w-5 items-center justify-center rounded-full bg-rose-500 px-1.5 text-[10px] font-bold text-white">
-                      {pendingCount}
-                    </span>
+                  {item.badge && (
+                    <Suspense fallback={null}>
+                      <PendingApprovalsBadge />
+                    </Suspense>
                   )}
                 </Link>
               </li>
@@ -107,5 +101,23 @@ export default async function AdminLayout({ children }: { children: React.ReactN
         </main>
       </div>
     </div>
+  );
+}
+
+async function PendingApprovalsBadge() {
+  const { database: supabase } = await requireAdminAccess();
+  const { count } = await supabase
+    .from('profiles')
+    .select('id', { count: 'exact', head: true })
+    .eq('approval_status', 'pending');
+
+  if (!count) {
+    return null;
+  }
+
+  return (
+    <span className="ml-auto flex h-5 min-w-5 items-center justify-center rounded-full bg-rose-500 px-1.5 text-[10px] font-bold text-white">
+      {count}
+    </span>
   );
 }

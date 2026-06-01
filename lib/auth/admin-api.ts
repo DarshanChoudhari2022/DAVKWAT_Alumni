@@ -2,7 +2,7 @@ import { NextResponse } from 'next/server';
 import { getAdminAccess, getAdminActorProfileErrorMessage } from './admin-access';
 
 export async function requireAdminApiAccess() {
-  const adminAccess = await getAdminAccess();
+  const adminAccess = await getAdminAccess({ resolveActorProfile: true });
 
   if (!adminAccess) {
     return {

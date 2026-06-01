@@ -1,3 +1,4 @@
+import { cache } from 'react';
 import { redirect } from 'next/navigation';
 import { createAdminClient } from '@/lib/supabase/admin';
 import { createClient } from '@/lib/supabase/server';
@@ -22,6 +23,14 @@ export interface AdminAccess {
   email: string;
   mode: 'local' | 'supabase';
   role: AdminRole;
+}
+
+interface AdminAccessOptions {
+  /**
+   * Page renders do not need the Supabase profile behind the local admin login.
+   * Write APIs do, because audit fields need a real profile id.
+   */
+  resolveActorProfile?: boolean;
 }
 
 async function resolveLocalAdminProfile(
@@ -74,12 +83,14 @@ export function getAdminActorProfileErrorMessage() {
   );
 }
 
-export async function getAdminAccess(): Promise<AdminAccess | null> {
+async function readAdminAccess(resolveActorProfile: boolean): Promise<AdminAccess | null> {
   const localSession = await getLocalAdminSession();
 
   if (localSession) {
     const supabase = createAdminClient();
-    const profile = await resolveLocalAdminProfile(supabase, localSession.email);
+    const profile = resolveActorProfile
+      ? await resolveLocalAdminProfile(supabase, localSession.email)
+      : null;
 
     return {
       actorProfileId: profile?.id ?? null,
@@ -124,8 +135,18 @@ export async function getAdminAccess(): Promise<AdminAccess | null> {
   };
 }
 
-export async function requireAdminAccess() {
-  const access = await getAdminAccess();
+const getCachedAdminAccess = cache((resolveActorProfile: boolean) =>
+  readAdminAccess(resolveActorProfile)
+);
+
+export async function getAdminAccess(
+  options: AdminAccessOptions = {}
+): Promise<AdminAccess | null> {
+  return readAdminAccess(Boolean(options.resolveActorProfile));
+}
+
+export async function requireAdminAccess(options: AdminAccessOptions = {}) {
+  const access = await getCachedAdminAccess(Boolean(options.resolveActorProfile));
 
   if (!access) {
     redirect('/admin-login');
