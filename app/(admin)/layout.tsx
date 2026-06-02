@@ -1,4 +1,3 @@
-import { Suspense } from 'react';
 import Link from 'next/link';
 import {
   LayoutDashboard,
@@ -16,6 +15,7 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { adminLogoutAction } from '@/app/(public)/admin-login/actions';
 import { requireAdminAccess } from '@/lib/auth/admin-access';
+import { AdminMobileNav } from './AdminMobileNav';
 
 const ADMIN_NAV = [
   { href: '/admin', label: 'Dashboard', icon: LayoutDashboard },
@@ -31,6 +31,11 @@ const ADMIN_NAV = [
 
 export default async function AdminLayout({ children }: { children: React.ReactNode }) {
   const adminAccess = await requireAdminAccess();
+  const { count } = await adminAccess.database
+    .from('profiles')
+    .select('id', { count: 'exact', head: true })
+    .eq('approval_status', 'pending');
+  const pendingCount = count ?? 0;
 
   return (
     <div className="flex min-h-dvh min-w-0">
@@ -50,10 +55,10 @@ export default async function AdminLayout({ children }: { children: React.ReactN
                 >
                   <item.icon className="h-4 w-4 text-slate-500" />
                   {item.label}
-                  {item.badge && (
-                    <Suspense fallback={null}>
-                      <PendingApprovalsBadge />
-                    </Suspense>
+                  {item.badge && pendingCount > 0 && (
+                    <span className="ml-auto flex h-5 min-w-5 items-center justify-center rounded-full bg-rose-500 px-1.5 text-[10px] font-bold text-white">
+                      {pendingCount}
+                    </span>
                   )}
                 </Link>
               </li>
@@ -70,57 +75,18 @@ export default async function AdminLayout({ children }: { children: React.ReactN
         </div>
       </aside>
 
-      {/* Mobile header */}
       <div className="flex min-w-0 flex-1 flex-col">
-        <header className="sticky top-0 z-30 flex h-14 items-center justify-between border-b border-slate-200 bg-white/95 px-3 backdrop-blur sm:px-4 lg:hidden">
-          <div className="flex items-center gap-2">
-            <Logo />
-            <Badge variant="primary" className="text-[10px]">Admin</Badge>
-          </div>
-          <form action={adminLogoutAction}>
-            <Button type="submit" variant="ghost" size="sm">Sign out</Button>
-          </form>
-        </header>
-
-        {/* Mobile nav */}
-        <nav
-          className="sticky top-14 z-20 flex snap-x gap-1 overflow-x-auto border-b border-slate-200 bg-white/95 px-2 py-2 backdrop-blur lg:hidden"
-          aria-label="Admin navigation"
-        >
-          {ADMIN_NAV.map((item) => (
-            <Link
-              key={item.href}
-              href={item.href}
-              className="flex min-h-11 shrink-0 snap-start items-center gap-1.5 rounded-xl border border-slate-100 bg-slate-50 px-3 text-xs font-medium text-slate-700 shadow-sm hover:border-[#0F2557]/20 hover:text-[#0F2557]"
-            >
-              <item.icon className="h-3.5 w-3.5" />
-              {item.label}
-            </Link>
-          ))}
-        </nav>
+        {/* Mobile header with slide-out drawer navigation */}
+        <AdminMobileNav
+          displayName={adminAccess.displayName}
+          pendingCount={pendingCount}
+          logoutAction={adminLogoutAction}
+        />
 
         <main id="main" className="min-w-0 flex-1 overflow-x-hidden bg-slate-50">
           {children}
         </main>
       </div>
     </div>
-  );
-}
-
-async function PendingApprovalsBadge() {
-  const { database: supabase } = await requireAdminAccess();
-  const { count } = await supabase
-    .from('profiles')
-    .select('id', { count: 'exact', head: true })
-    .eq('approval_status', 'pending');
-
-  if (!count) {
-    return null;
-  }
-
-  return (
-    <span className="ml-auto flex h-5 min-w-5 items-center justify-center rounded-full bg-rose-500 px-1.5 text-[10px] font-bold text-white">
-      {count}
-    </span>
   );
 }
