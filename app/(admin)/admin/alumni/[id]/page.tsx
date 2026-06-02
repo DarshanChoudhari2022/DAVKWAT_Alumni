@@ -35,6 +35,7 @@ export default async function AdminAlumniDetailPage({
     .select('id, txnid, amount, status, payment_mode, created_at')
     .eq('alumni_id', id)
     .order('created_at', { ascending: false })
+    .order('id', { ascending: false })
     .limit(10);
 
   return (

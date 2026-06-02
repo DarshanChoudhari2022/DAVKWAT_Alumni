@@ -75,7 +75,9 @@ export async function GET(req: NextRequest) {
       query = query.or(`full_name.ilike.${term},email.ilike.${term}`);
     }
 
-    const { data: rows } = await query.order('created_at', { ascending: false });
+    const { data: rows } = await query
+      .order('created_at', { ascending: false })
+      .order('id', { ascending: false });
     data = (rows ?? []) as unknown as Record<string, unknown>[];
 
   } else if (type === 'payments') {
@@ -89,7 +91,9 @@ export async function GET(req: NextRequest) {
     const status = searchParams.get('status');
     if (status) query = query.eq('status', status as 'pending' | 'success' | 'failed' | 'refunded');
 
-    const { data: rows } = await query.order('created_at', { ascending: false });
+    const { data: rows } = await query
+      .order('created_at', { ascending: false })
+      .order('id', { ascending: false });
     data = (rows ?? []).map((r: Record<string, unknown>) => {
       const profile = r.profiles as { full_name: string; email: string } | null;
       return {

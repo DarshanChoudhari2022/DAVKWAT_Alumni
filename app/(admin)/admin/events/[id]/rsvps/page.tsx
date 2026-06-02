@@ -32,7 +32,8 @@ export default async function EventRsvpsPage({
     .from('event_rsvps')
     .select('id, registered_at, profiles(id, full_name, email, batch_year, current_city, avatar_url)')
     .eq('event_id', id)
-    .order('registered_at', { ascending: false });
+    .order('registered_at', { ascending: false })
+    .order('id', { ascending: false });
 
   return (
     <div className="mx-auto max-w-4xl px-3 py-5 sm:px-6 sm:py-8 lg:px-8">

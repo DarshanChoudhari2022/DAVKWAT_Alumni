@@ -32,7 +32,8 @@ export default async function AdminForumThreadPage({
       .from('forum_replies')
       .select('id, author_id, content, is_deleted, created_at')
       .eq('thread_id', id)
-      .order('created_at', { ascending: true }),
+      .order('created_at', { ascending: true })
+      .order('id', { ascending: true }),
   ]);
 
   if (!thread) {

@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import { writeAuditLog } from '@/lib/audit';
 import { createAdminClient } from '@/lib/supabase/admin';
+import { invalidateAfterAction } from '@/lib/cache/invalidate';
 import {
   getMembershipExpiryDate,
   markPaymentSuccessful,
@@ -120,6 +121,10 @@ export async function POST(req: Request) {
         membershipType,
       });
 
+      // Committed success: payment marked successful + manual membership granted.
+      // Invalidate payments + dashboard stat caches (design Section 4).
+      invalidateAfterAction('payment_status');
+
       return NextResponse.redirect(membershipRedirect('/membership?status=success'));
     }
 
@@ -132,6 +137,9 @@ export async function POST(req: Request) {
       })
       .eq('txnid', txnid)
       .neq('status', 'success');
+
+    // Committed failed-status mark also shifts the payments aggregates.
+    invalidateAfterAction('payment_status');
 
     return NextResponse.redirect(membershipRedirect('/membership?status=failed'));
   } catch (err) {

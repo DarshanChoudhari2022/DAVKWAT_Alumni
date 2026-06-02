@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import { requireAdminApiAccess } from '@/lib/auth/admin-api';
 import { writeAuditLog } from '@/lib/audit';
+import { invalidateAfterAction } from '@/lib/cache/invalidate';
 import { mapSiteSettings } from '@/lib/site-settings';
 import { siteSettingsValuesSchema } from '@/lib/validations/admin';
 
@@ -78,6 +79,10 @@ export async function PUT(request: Request) {
       updated_keys: rows.map((row) => row.key),
     },
   });
+
+  // Settings save changed cached Reference_Data: refresh membership plans + site
+  // settings (Task 19.4 — Req 4.4, 9.1, 9.6).
+  invalidateAfterAction('settings_save');
 
   return NextResponse.json({ success: true });
 }

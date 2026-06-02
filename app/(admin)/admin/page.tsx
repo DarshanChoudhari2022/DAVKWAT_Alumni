@@ -7,6 +7,13 @@ import { Badge } from '@/components/ui/badge';
 import { MobileInfoRow } from '@/components/admin/MobileInfoRow';
 import { CardSkeleton, StatCardSkeleton, TableRowSkeleton } from '@/components/shared/Skeleton';
 import { requireAdminAccess } from '@/lib/auth/admin-access';
+import {
+  getApprovedProfilesCount,
+  getPaidMembersCount,
+  getPendingProfilesCount,
+  getUpcomingPublishedEventsCount,
+} from '@/lib/cache/admin-cache';
+import { getExactSum } from '@/lib/db/estimated-count';
 import { formatINR, formatDate } from '@/lib/utils/format';
 
 export const metadata: Metadata = { title: 'Admin Dashboard' };
@@ -38,55 +45,49 @@ export default function AdminDashboardPage() {
 
 async function DashboardStats() {
   const { database: supabase } = await requireAdminAccess();
-  const now = new Date().toISOString();
 
-  const [totalAlumni, pendingApprovals, paidMembers, totalRevenue, upcomingEvents] =
+  // Stat counts are served from the cache layer (Aggregate_Data, ≤120s); the
+  // monetary revenue total stays EXACT via a single amount.sum() aggregate
+  // (Req 5.4) and is never cached/estimated. All reads run concurrently in a
+  // single batch (Req 3.4, 5.5).
+  const [totalAlumni, pendingApprovals, paidMembers, revenue, upcomingEvents] =
     await Promise.all([
-      supabase
-        .from('profiles')
-        .select('id', { count: 'exact', head: true })
-        .eq('approval_status', 'approved'),
-      supabase
-        .from('profiles')
-        .select('id', { count: 'exact', head: true })
-        .eq('approval_status', 'pending'),
-      supabase
-        .from('profiles')
-        .select('id', { count: 'exact', head: true })
-        .eq('is_paid_member', true),
-      supabase
-        .from('payments')
-        .select('total:amount.sum()')
-        .eq('status', 'success'),
-      supabase
-        .from('events')
-        .select('id', { count: 'exact', head: true })
-        .eq('is_published', true)
-        .gte('starts_at', now),
+      getApprovedProfilesCount(),
+      getPendingProfilesCount(),
+      getPaidMembersCount(),
+      getExactSum(
+        () =>
+          supabase
+            .from('payments')
+            .select('total:amount.sum()')
+            .eq('status', 'success')
+            .maybeSingle() as unknown as PromiseLike<{
+            data: { total: number | null } | null;
+            error?: unknown;
+          }>
+      ),
+      getUpcomingPublishedEventsCount(),
     ]);
-
-  const revenueRow = (totalRevenue.data as { total: number | string | null }[] | null)?.[0];
-  const revenue = Number(revenueRow?.total ?? 0);
 
   return (
     <div className="mt-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-5">
       <StatCard
         icon={Users}
         label="Total Alumni"
-        value={String(totalAlumni.count ?? 0)}
+        value={String(totalAlumni)}
         href="/admin/alumni"
       />
       <StatCard
         icon={UserCheck}
         label="Pending Approvals"
-        value={String(pendingApprovals.count ?? 0)}
+        value={String(pendingApprovals)}
         href="/admin/approvals"
-        highlight={(pendingApprovals.count ?? 0) > 0}
+        highlight={pendingApprovals > 0}
       />
       <StatCard
         icon={CreditCard}
         label="Paid Members"
-        value={String(paidMembers.count ?? 0)}
+        value={String(paidMembers)}
         href="/admin/payments"
       />
       <StatCard
@@ -98,7 +99,7 @@ async function DashboardStats() {
       <StatCard
         icon={CalendarDays}
         label="Upcoming Events"
-        value={String(upcomingEvents.count ?? 0)}
+        value={String(upcomingEvents)}
         href="/admin/events?filter=upcoming"
       />
     </div>
@@ -111,6 +112,7 @@ async function RecentRegistrationsTable() {
     .from('profiles')
     .select('id, full_name, batch_year, course, approval_status, created_at')
     .order('created_at', { ascending: false })
+    .order('id', { ascending: false })
     .limit(8);
 
   return (

@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server';
 import { requireAdminApiAccess } from '@/lib/auth/admin-api';
 import { writeAuditLog } from '@/lib/audit';
 import { createAdminClient } from '@/lib/supabase/admin';
+import { invalidateAfterAction } from '@/lib/cache/invalidate';
 
 export async function POST(req: Request) {
   try {
@@ -65,6 +66,10 @@ export async function POST(req: Request) {
     } catch (emailErr) {
       console.error('[approve] email send failed:', emailErr);
     }
+
+    // Invalidate cached pending-approvals badge + dashboard stats after the
+    // committed approve write (design Section 4 invalidation table; Req 4.4, 9.1, 9.6).
+    invalidateAfterAction('approve_reject');
 
     return NextResponse.json({ success: true });
   } catch (err) {

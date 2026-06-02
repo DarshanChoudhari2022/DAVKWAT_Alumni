@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import { writeAuditLog } from '@/lib/audit';
 import { createAdminClient } from '@/lib/supabase/admin';
+import { invalidateAfterAction } from '@/lib/cache/invalidate';
 import {
   getMembershipExpiryDate,
   markPaymentSuccessful,
@@ -106,6 +107,12 @@ export async function POST(req: Request) {
         .eq('txnid', txnid)
         .neq('status', 'success');
     }
+
+    // A committed payment-status change (success grant or failed mark) backs the
+    // payments + dashboard stat caches (design Section 4 — payment status change /
+    // manual membership). The idempotent `alreadyProcessed` path returns earlier and
+    // never reaches here, so no redundant invalidation is issued.
+    invalidateAfterAction('payment_status');
 
     return NextResponse.json({ status: 'ok' }, { status: 200 });
   } catch (err) {

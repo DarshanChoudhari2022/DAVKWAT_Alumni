@@ -1,3 +1,4 @@
+import { Suspense } from 'react';
 import type { Metadata } from 'next';
 import Link from 'next/link';
 import { Plus, MessageSquare, Lock, Pin } from 'lucide-react';
@@ -5,27 +6,20 @@ import { Card } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { MobileInfoRow } from '@/components/admin/MobileInfoRow';
+import { CardSkeleton } from '@/components/shared/Skeleton';
+import { ListSkeleton } from '@/components/shared/admin-section';
+import { SectionError } from '@/components/shared/SectionError';
 import { requireAdminAccess } from '@/lib/auth/admin-access';
 import { formatRelative } from '@/lib/utils/format';
 import { ForumActions } from './ForumActions';
 
 export const metadata: Metadata = { title: 'Forum Management — Admin' };
 
-export default async function AdminForumPage() {
-  const { database: supabase } = await requireAdminAccess();
-
-  const { data: categories } = await supabase
-    .from('forum_categories')
-    .select('id, name, description, slug, display_order, is_active')
-    .order('display_order', { ascending: true });
-
-  // Get recent threads across all categories
-  const { data: threads } = await supabase
-    .from('forum_threads')
-    .select('id, title, is_pinned, is_locked, reply_count, created_at, category_id, profiles!forum_threads_author_id_fkey(full_name)')
-    .order('created_at', { ascending: false })
-    .limit(20);
-
+export default function AdminForumPage() {
+  // Shell renders synchronously (Req 3.1, 3.5): header + the two section
+  // headings. The categories list and recent-threads list each stream inside
+  // their own Suspense boundary so the two independent regions resolve
+  // separately (Req 3.3) and run concurrently relative to the shell.
   return (
     <div className="mx-auto max-w-5xl px-3 py-5 sm:px-6 sm:py-8 lg:px-8">
       <header className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
@@ -44,36 +38,100 @@ export default async function AdminForumPage() {
       {/* Categories */}
       <section className="mt-8">
         <h2 className="font-display text-xl font-semibold">Categories</h2>
-        <ul className="mt-4 space-y-2">
-          {(categories ?? []).map((cat) => (
-            <li key={cat.id}>
-              <Card className="flex flex-col gap-4 p-4 sm:flex-row sm:items-center sm:justify-between sm:p-5">
-                <div className="min-w-0 flex-1">
-                  <div className="flex items-center gap-2">
-                    <MessageSquare className="h-4 w-4 text-slate-400" />
-                    <h3 className="font-medium">{cat.name}</h3>
-                    {!cat.is_active && <Badge variant="warning">Inactive</Badge>}
-                    <Badge variant="default">Order: {cat.display_order}</Badge>
-                  </div>
-                  {cat.description && (
-                    <p className="mt-0.5 text-sm text-slate-500">{cat.description}</p>
-                  )}
-                </div>
-                <div className="flex justify-end">
-                  <ForumActions type="category" id={cat.id} isActive={cat.is_active} />
-                </div>
-              </Card>
-            </li>
-          ))}
-          {(categories ?? []).length === 0 && (
-            <li><Card className="text-center text-sm text-slate-500">No categories yet.</Card></li>
-          )}
-        </ul>
+        <Suspense
+          fallback={
+            <ul className="mt-4 space-y-2">
+              {Array.from({ length: 4 }).map((_, i) => (
+                <li key={i}>
+                  <CardSkeleton />
+                </li>
+              ))}
+            </ul>
+          }
+        >
+          <CategoriesRegion />
+        </Suspense>
       </section>
 
       {/* Recent threads */}
       <section className="mt-10">
         <h2 className="font-display text-xl font-semibold">Recent Threads</h2>
+        <Suspense fallback={<ListSkeleton rows={10} cols={5} />}>
+          <RecentThreadsRegion />
+        </Suspense>
+      </section>
+    </div>
+  );
+}
+
+/**
+ * Categories region (Req 3.2, 3.3, 3.7): runs the categories query and renders
+ * the same card list + empty state. Region-local try/catch renders a scoped
+ * error block instead of throwing so a failure here never blanks the shell or
+ * the recent-threads region.
+ */
+async function CategoriesRegion() {
+  try {
+    const { database: supabase } = await requireAdminAccess();
+
+    const { data: categories } = await supabase
+      .from('forum_categories')
+      .select('id, name, description, slug, display_order, is_active')
+      .order('display_order', { ascending: true })
+      .order('id', { ascending: true });
+
+    return (
+      <ul className="mt-4 space-y-2">
+        {(categories ?? []).map((cat) => (
+          <li key={cat.id}>
+            <Card className="flex flex-col gap-4 p-4 sm:flex-row sm:items-center sm:justify-between sm:p-5">
+              <div className="min-w-0 flex-1">
+                <div className="flex items-center gap-2">
+                  <MessageSquare className="h-4 w-4 text-slate-400" />
+                  <h3 className="font-medium">{cat.name}</h3>
+                  {!cat.is_active && <Badge variant="warning">Inactive</Badge>}
+                  <Badge variant="default">Order: {cat.display_order}</Badge>
+                </div>
+                {cat.description && (
+                  <p className="mt-0.5 text-sm text-slate-500">{cat.description}</p>
+                )}
+              </div>
+              <div className="flex justify-end">
+                <ForumActions type="category" id={cat.id} isActive={cat.is_active} />
+              </div>
+            </Card>
+          </li>
+        ))}
+        {(categories ?? []).length === 0 && (
+          <li><Card className="text-center text-sm text-slate-500">No categories yet.</Card></li>
+        )}
+      </ul>
+    );
+  } catch {
+    return <SectionError />;
+  }
+}
+
+/**
+ * Recent-threads region (Req 3.2, 3.3, 3.7): runs the threads query (identical
+ * select/order/limit, tie-breaker ordering preserved) and renders the same
+ * mobile cards + desktop table + empty state. Region-local try/catch renders a
+ * scoped error block instead of throwing.
+ */
+async function RecentThreadsRegion() {
+  try {
+    const { database: supabase } = await requireAdminAccess();
+
+    // Get recent threads across all categories
+    const { data: threads } = await supabase
+      .from('forum_threads')
+      .select('id, title, is_pinned, is_locked, reply_count, created_at, category_id, profiles!forum_threads_author_id_fkey(full_name)')
+      .order('created_at', { ascending: false })
+      .order('id', { ascending: false })
+      .limit(20);
+
+    return (
+      <>
         <div className="mt-4 grid gap-3 sm:hidden">
           {(threads ?? []).map((t) => {
             const authorName =
@@ -166,7 +224,9 @@ export default async function AdminForumPage() {
             </tbody>
           </table>
         </div>
-      </section>
-    </div>
-  );
+      </>
+    );
+  } catch {
+    return <SectionError />;
+  }
 }

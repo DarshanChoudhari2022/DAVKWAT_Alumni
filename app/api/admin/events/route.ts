@@ -3,6 +3,7 @@ import {
   getAdminActorProfileErrorResponse,
   requireAdminApiAccess,
 } from '@/lib/auth/admin-api';
+import { invalidateAfterAction } from '@/lib/cache/invalidate';
 import { revalidateEventContent } from '@/lib/utils/revalidate-content';
 
 export async function POST(req: NextRequest) {
@@ -64,6 +65,10 @@ export async function POST(req: NextRequest) {
       );
     }
     revalidateEventContent(data.slug);
+    // A newly created event may be published, changing the upcoming/published events
+    // count feeding the dashboard stats. Refresh the tag-based cache alongside the
+    // existing path-based revalidation (Task 19.5 — Req 4.4, 9.1, 9.6).
+    invalidateAfterAction('event_publish');
     return NextResponse.json({ ok: true, id: data.id });
   } catch (error) {
     console.error('[admin/events] create failed:', error);

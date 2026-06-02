@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { requireAdminApiAccess } from '@/lib/auth/admin-api';
 import { writeAuditLog } from '@/lib/audit';
+import { invalidateAfterAction } from '@/lib/cache/invalidate';
 import { membershipPlanSchema } from '@/lib/validations/admin';
 
 export async function POST(req: NextRequest) {
@@ -27,6 +28,10 @@ export async function POST(req: NextRequest) {
     target_type: 'membership_plan',
     metadata: { name: parsed.data.name },
   });
+
+  // Plan catalog changed: refresh cached membership plans + site settings
+  // Reference_Data (Task 19.4 — Req 4.4, 9.1, 9.6).
+  invalidateAfterAction('settings_save');
 
   return NextResponse.json({ success: true });
 }
@@ -55,6 +60,10 @@ export async function PATCH(req: NextRequest) {
     metadata: updates,
   });
 
+  // Plan catalog changed: refresh cached membership plans + site settings
+  // Reference_Data (Task 19.4 — Req 4.4, 9.1, 9.6).
+  invalidateAfterAction('settings_save');
+
   return NextResponse.json({ success: true });
 }
 
@@ -80,6 +89,10 @@ export async function DELETE(req: NextRequest) {
     target_type: 'membership_plan',
     target_id: id,
   });
+
+  // Plan catalog changed: refresh cached membership plans + site settings
+  // Reference_Data (Task 19.4 — Req 4.4, 9.1, 9.6).
+  invalidateAfterAction('settings_save');
 
   return NextResponse.json({ success: true });
 }

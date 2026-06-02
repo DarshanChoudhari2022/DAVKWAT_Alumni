@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { requireAdminApiAccess } from '@/lib/auth/admin-api';
+import { invalidateAfterAction } from '@/lib/cache/invalidate';
 import { revalidateEventContent } from '@/lib/utils/revalidate-content';
 
 async function assertAdmin() {
@@ -54,6 +55,10 @@ export async function PATCH(
 
     if (updateError) return NextResponse.json({ error: updateError.message }, { status: 500 });
     revalidateEventContent(updated?.slug);
+    // The update may toggle is_published, changing the upcoming/published events count
+    // feeding the dashboard stats. Refresh the tag-based cache alongside the existing
+    // path-based revalidation (Task 19.5 — Req 4.4, 9.1, 9.6).
+    invalidateAfterAction('event_publish');
     return NextResponse.json({ ok: true });
   } catch (error) {
     console.error('[admin/events] update failed:', error);
@@ -78,5 +83,9 @@ export async function DELETE(
     .maybeSingle();
   if (deleteError) return NextResponse.json({ error: deleteError.message }, { status: 500 });
   revalidateEventContent(deleted?.slug);
+  // Deleting an event changes the upcoming/published events count feeding the
+  // dashboard stats. Refresh the tag-based cache alongside the existing path-based
+  // revalidation (Task 19.5 — Req 4.4, 9.1, 9.6).
+  invalidateAfterAction('event_publish');
   return NextResponse.json({ ok: true });
 }

@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { requireAdminApiAccess } from '@/lib/auth/admin-api';
 import { writeAuditLog } from '@/lib/audit';
+import { invalidateAfterAction } from '@/lib/cache/invalidate';
 import { toggleActiveSchema } from '@/lib/validations/admin';
 
 export async function POST(req: NextRequest) {
@@ -33,6 +34,9 @@ export async function POST(req: NextRequest) {
     target_id: alumniId,
     metadata: { is_active },
   });
+
+  // Activation state feeds the dashboard/payments aggregates (design Section 4).
+  invalidateAfterAction('alumni_edit');
 
   return NextResponse.json({ success: true });
 }

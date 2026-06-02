@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { requireAdminApiAccess } from '@/lib/auth/admin-api';
 import { writeAuditLog } from '@/lib/audit';
+import { invalidateAfterAction } from '@/lib/cache/invalidate';
 import { changeRoleSchema } from '@/lib/validations/admin';
 
 export async function POST(req: NextRequest) {
@@ -38,6 +39,10 @@ export async function POST(req: NextRequest) {
     target_id: alumniId,
     metadata: { new_role: role },
   });
+
+  // Role changes alter admin/alumni composition behind the dashboard stats
+  // (design Section 4 — alumni edit / membership change).
+  invalidateAfterAction('alumni_edit');
 
   return NextResponse.json({ success: true });
 }

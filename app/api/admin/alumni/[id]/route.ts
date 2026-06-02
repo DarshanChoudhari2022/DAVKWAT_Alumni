@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { requireAdminApiAccess } from '@/lib/auth/admin-api';
 import { writeAuditLog } from '@/lib/audit';
+import { invalidateAfterAction } from '@/lib/cache/invalidate';
 import { adminProfileUpdateSchema } from '@/lib/validations/admin';
 
 function normalizeOptionalString(value: unknown) {
@@ -87,6 +88,10 @@ export async function PATCH(
     target_id: id,
     metadata: { updated_fields: Object.keys(sanitizedUpdates) },
   });
+
+  // Profile edits can change membership-backing fields (e.g. is_paid_member),
+  // so invalidate the dashboard + payments stat caches (design Section 4).
+  invalidateAfterAction('alumni_edit');
 
   return NextResponse.json({ success: true });
 }
