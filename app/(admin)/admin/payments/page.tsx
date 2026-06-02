@@ -17,7 +17,7 @@ import {
 } from '@/lib/cache/admin-cache';
 import {
   getListCount,
-  getExactSum,
+  getSuccessfulRevenue,
   formatCount,
   type EstimateFilter,
   type CountResult,
@@ -162,17 +162,7 @@ async function PaymentsStats() {
     const [successCount, pendingCount, totalRevenue] = await Promise.all([
       getPaymentsSuccessCount(),
       getPaymentsPendingCount(),
-      getExactSum(
-        () =>
-          supabase
-            .from('payments')
-            .select('total:amount.sum()')
-            .eq('status', 'success')
-            .maybeSingle() as unknown as PromiseLike<{
-            data: { total: number | null } | null;
-            error?: unknown;
-          }>,
-      ),
+      getSuccessfulRevenue(supabase),
     ]);
 
     return (

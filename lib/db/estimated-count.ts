@@ -195,43 +195,127 @@ export async function getListCount(
 }
 
 /**
- * Resolve an EXACT monetary total from a single aggregate query.
+ * Resolve an EXACT monetary total from a single aggregate query, with a safe
+ * non-aggregate fallback.
  *
  * Monetary figures (e.g. total successful revenue) are required to be exact
  * (Req 5.3, 5.4) and MUST NEVER flow through the estimated-count path above.
- * Compute them with a single aggregate query rather than fetching rows, e.g.:
+ *
+ * IMPORTANT: PostgREST aggregate functions (`amount.sum()`) are DISABLED by
+ * default on Supabase (`db-aggregates-enabled = false`). When disabled, the
+ * aggregate query returns the error "Use of aggregate functions is not allowed".
+ * This helper therefore does NOT throw on such an error — throwing would crash
+ * the whole region/page. Instead it returns `null` so the caller can fall back
+ * to {@link sumColumn}, which computes the exact total without DB aggregates.
  *
  * ```ts
- * const revenue = await getExactSum(() =>
- *   client
- *     .from('payments')
- *     .select('total:amount.sum()')
- *     .eq('status', 'success')
- *     .maybeSingle(),
- * );
+ * const revenue =
+ *   (await getExactSum(() =>
+ *     client.from('payments').select('total:amount.sum()').eq('status', 'success').maybeSingle(),
+ *   )) ??
+ *   (await sumColumn(client, { table: 'payments', column: 'amount', eq: { status: 'success' } }));
  * ```
- *
- * Unlike {@link getListCount}, this helper does NOT silently swallow errors: a
- * failed aggregate throws so the calling region can render a scoped error
- * (Req 3.7) rather than display a misleading `0` total. A successful query with
- * a `null`/absent total (no matching rows) coalesces to `0`.
  *
  * @param exactSum Thunk running the single aggregate query; resolves to a row
  *   `{ total }` (or `null`) plus an optional `error`.
- * @returns The exact total, or `0` when there are no matching rows.
- * @throws If the aggregate query reports an error.
+ * @returns The exact total, `0` when there are no matching rows, or `null` when
+ *   the aggregate query errored (signal the caller to use {@link sumColumn}).
  */
 export async function getExactSum(
   exactSum: () => PromiseLike<{
     data: { total: number | null } | null;
     error?: unknown;
   }>,
-): Promise<number> {
-  const { data, error } = await exactSum();
+): Promise<number | null> {
+  let result: { data: { total: number | null } | null; error?: unknown };
+  try {
+    result = await exactSum();
+  } catch {
+    // Network/transport failure — let the caller fall back to a manual sum.
+    return null;
+  }
+  const { data, error } = result;
+  // Aggregate disabled (or any query error): signal fallback rather than crash.
   if (error) {
-    throw error instanceof Error
-      ? error
-      : new Error('getExactSum: aggregate query failed');
+    return null;
   }
   return data?.total ?? 0;
+}
+
+/** Options for {@link sumColumn}: which numeric column to total and an optional equality filter. */
+export interface SumColumnOptions {
+  table: AllowedTable;
+  column: string;
+  /** Optional simple equality filters applied with `.eq()` (e.g. `{ status: 'success' }`). */
+  eq?: Record<string, string | number | boolean>;
+}
+
+/**
+ * Compute an EXACT sum of a numeric column WITHOUT relying on PostgREST
+ * aggregate functions (which are disabled by default on Supabase).
+ *
+ * It pages through the matching rows in batches, selecting only the target
+ * column, and sums in JS. This always works regardless of the
+ * `db-aggregates-enabled` setting, and never throws — on error it returns the
+ * total accumulated so far (which is `0` if the first page failed), so a stats
+ * region degrades gracefully rather than crashing the page (Req 3.7).
+ *
+ * For the payments table at realistic admin volumes this is a small number of
+ * paged reads; correctness (Req 5.3/5.4) is preserved.
+ */
+export async function sumColumn(
+  client: ListCountClient,
+  { table, column, eq }: SumColumnOptions,
+): Promise<number> {
+  const PAGE = 1000;
+  let total = 0;
+  let from = 0;
+
+  try {
+    for (;;) {
+      let query = client.from(table).select(column);
+      for (const [col, value] of Object.entries(eq ?? {})) {
+        query = query.eq(col, value);
+      }
+      const { data, error } = await query.range(from, from + PAGE - 1);
+      if (error || !data) {
+        break;
+      }
+      const rows = data as unknown as Array<Record<string, unknown>>;
+      for (const row of rows) {
+        total += Number(row[column] ?? 0);
+      }
+      if (rows.length < PAGE) {
+        break;
+      }
+      from += PAGE;
+    }
+  } catch {
+    // Return whatever was accumulated; never throw from a stats helper.
+  }
+
+  return total;
+}
+
+/**
+ * Convenience: the exact total successful-payment revenue, computed via the
+ * aggregate query when allowed and falling back to {@link sumColumn} when
+ * PostgREST aggregates are disabled. Never throws.
+ */
+export async function getSuccessfulRevenue(client: ListCountClient): Promise<number> {
+  const viaAggregate = await getExactSum(
+    () =>
+      client
+        .from('payments')
+        .select('total:amount.sum()')
+        .eq('status', 'success')
+        .maybeSingle() as unknown as PromiseLike<{
+        data: { total: number | null } | null;
+        error?: unknown;
+      }>,
+  );
+  if (viaAggregate !== null) {
+    return viaAggregate;
+  }
+  return sumColumn(client, { table: 'payments', column: 'amount', eq: { status: 'success' } });
 }

@@ -8,7 +8,7 @@ import { SectionError } from '@/components/shared/SectionError';
 import { Skeleton, CardSkeleton } from '@/components/shared/Skeleton';
 import { requireAdminAccess } from '@/lib/auth/admin-access';
 import { getApprovedProfilesCount, getPaidMembersCount } from '@/lib/cache/admin-cache';
-import { getExactSum } from '@/lib/db/estimated-count';
+import { getSuccessfulRevenue } from '@/lib/db/estimated-count';
 import { formatINR } from '@/lib/utils/format';
 import { ReportsCharts } from './ReportsCharts';
 
@@ -124,17 +124,7 @@ async function ReportsSummaryStats() {
     const [totalAlumni, paidAlumni, totalRevenue, activeRes] = await Promise.all([
       getApprovedProfilesCount(),
       getPaidMembersCount(),
-      getExactSum(
-        () =>
-          supabase
-            .from('payments')
-            .select('total:amount.sum()')
-            .eq('status', 'success')
-            .maybeSingle() as unknown as PromiseLike<{
-            data: { total: number | null } | null;
-            error?: unknown;
-          }>,
-      ),
+      getSuccessfulRevenue(supabase),
       supabase.from('profiles').select('id', { count: 'exact', head: true }).gte('last_seen_at', activeSince),
     ]);
 

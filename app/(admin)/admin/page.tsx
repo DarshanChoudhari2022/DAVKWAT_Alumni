@@ -6,6 +6,7 @@ import { Card } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { MobileInfoRow } from '@/components/admin/MobileInfoRow';
 import { CardSkeleton, StatCardSkeleton, TableRowSkeleton } from '@/components/shared/Skeleton';
+import { SectionError } from '@/components/shared/SectionError';
 import { requireAdminAccess } from '@/lib/auth/admin-access';
 import {
   getApprovedProfilesCount,
@@ -13,7 +14,7 @@ import {
   getPendingProfilesCount,
   getUpcomingPublishedEventsCount,
 } from '@/lib/cache/admin-cache';
-import { getExactSum } from '@/lib/db/estimated-count';
+import { getSuccessfulRevenue } from '@/lib/db/estimated-count';
 import { formatINR, formatDate } from '@/lib/utils/format';
 
 export const metadata: Metadata = { title: 'Admin Dashboard' };
@@ -44,66 +45,61 @@ export default function AdminDashboardPage() {
 }
 
 async function DashboardStats() {
-  const { database: supabase } = await requireAdminAccess();
+  try {
+    const { database: supabase } = await requireAdminAccess();
 
-  // Stat counts are served from the cache layer (Aggregate_Data, ≤120s); the
-  // monetary revenue total stays EXACT via a single amount.sum() aggregate
-  // (Req 5.4) and is never cached/estimated. All reads run concurrently in a
-  // single batch (Req 3.4, 5.5).
-  const [totalAlumni, pendingApprovals, paidMembers, revenue, upcomingEvents] =
-    await Promise.all([
-      getApprovedProfilesCount(),
-      getPendingProfilesCount(),
-      getPaidMembersCount(),
-      getExactSum(
-        () =>
-          supabase
-            .from('payments')
-            .select('total:amount.sum()')
-            .eq('status', 'success')
-            .maybeSingle() as unknown as PromiseLike<{
-            data: { total: number | null } | null;
-            error?: unknown;
-          }>
-      ),
-      getUpcomingPublishedEventsCount(),
-    ]);
+    // Stat counts are served from the cache layer (Aggregate_Data, ≤120s); the
+    // monetary revenue total stays EXACT via `getSuccessfulRevenue` (Req 5.4),
+    // which uses the aggregate query when allowed and falls back to a paged sum
+    // when PostgREST aggregates are disabled. All reads run concurrently in a
+    // single batch (Req 3.4, 5.5).
+    const [totalAlumni, pendingApprovals, paidMembers, revenue, upcomingEvents] =
+      await Promise.all([
+        getApprovedProfilesCount(),
+        getPendingProfilesCount(),
+        getPaidMembersCount(),
+        getSuccessfulRevenue(supabase),
+        getUpcomingPublishedEventsCount(),
+      ]);
 
-  return (
-    <div className="mt-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-5">
-      <StatCard
-        icon={Users}
-        label="Total Alumni"
-        value={String(totalAlumni)}
-        href="/admin/alumni"
-      />
-      <StatCard
-        icon={UserCheck}
-        label="Pending Approvals"
-        value={String(pendingApprovals)}
-        href="/admin/approvals"
-        highlight={pendingApprovals > 0}
-      />
-      <StatCard
-        icon={CreditCard}
-        label="Paid Members"
-        value={String(paidMembers)}
-        href="/admin/payments"
-      />
-      <StatCard
-        icon={TrendingUp}
-        label="Total Revenue"
-        value={formatINR(revenue)}
-        href="/admin/payments"
-      />
-      <StatCard
-        icon={CalendarDays}
-        label="Upcoming Events"
-        value={String(upcomingEvents)}
-        href="/admin/events?filter=upcoming"
-      />
-    </div>
-  );
+    return (
+      <div className="mt-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-5">
+        <StatCard
+          icon={Users}
+          label="Total Alumni"
+          value={String(totalAlumni)}
+          href="/admin/alumni"
+        />
+        <StatCard
+          icon={UserCheck}
+          label="Pending Approvals"
+          value={String(pendingApprovals)}
+          href="/admin/approvals"
+          highlight={pendingApprovals > 0}
+        />
+        <StatCard
+          icon={CreditCard}
+          label="Paid Members"
+          value={String(paidMembers)}
+          href="/admin/payments"
+        />
+        <StatCard
+          icon={TrendingUp}
+          label="Total Revenue"
+          value={formatINR(revenue)}
+          href="/admin/payments"
+        />
+        <StatCard
+          icon={CalendarDays}
+          label="Upcoming Events"
+          value={String(upcomingEvents)}
+          href="/admin/events?filter=upcoming"
+        />
+      </div>
+    );
+  } catch {
+    return <SectionError />;
+  }
 }
 
 async function RecentRegistrationsTable() {
