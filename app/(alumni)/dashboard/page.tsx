@@ -1,71 +1,49 @@
 import type { Metadata } from 'next';
 import Link from 'next/link';
-import { redirect } from 'next/navigation';
+import { Suspense } from 'react';
 import { Users, Calendar, Megaphone, ArrowRight } from 'lucide-react';
-import { createClient } from '@/lib/supabase/server';
 import { Card } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
+import { StatCardSkeleton } from '@/components/shared/Skeleton';
+import { SectionError } from '@/components/shared/SectionError';
+import { requireAlumniAccess } from '@/lib/auth/alumni-access';
 import { logoutAction } from '@/app/(public)/login/actions';
 import { formatDate } from '@/lib/utils/format';
 
 export const metadata: Metadata = { title: 'Dashboard' };
 
 export default async function DashboardPage() {
-  const supabase = await createClient();
-  const now = new Date().toISOString();
-  const { data: { user } } = await supabase.auth.getUser();
-  if (!user) redirect('/login');
-
-  const { data: profile } = await supabase
-    .from('profiles')
-    .select('full_name, batch_year, course, is_paid_member, membership_expires_at, avatar_url, last_seen_at')
-    .eq('id', user.id)
-    .single();
-
-  if (!profile) redirect('/login');
+  const { profile, database, userId } = await requireAlumniAccess();
 
   // Throttled presence update for "active users" analytics. Writing on every
   // navigation is wasteful; once per hour is enough and keeps navigation fast.
-  const lastSeen = profile.last_seen_at ? new Date(profile.last_seen_at).getTime() : 0;
-  if (Date.now() - lastSeen > 60 * 60 * 1000) {
-    const { createAdminClient } = await import('@/lib/supabase/admin');
-    void createAdminClient()
-      .from('profiles')
-      .update({ last_seen_at: now })
-      .eq('id', user.id)
-      .then(({ error }) => {
-        if (error) console.error('[dashboard] last_seen_at update failed:', error.message);
-      });
-  }
-
-  const [batchPeers, upcomingEvents, recentAnnouncements] = await Promise.all([
-    supabase
-      .from('profiles')
-      .select('id', { count: 'exact', head: true })
-      .eq('batch_year', profile.batch_year)
-      .eq('approval_status', 'approved')
-      .neq('id', user.id),
-    supabase
-      .from('events')
-      .select('id, title, slug, starts_at, venue, event_type')
-      .eq('is_published', true)
-      .gte('starts_at', now)
-      .order('starts_at', { ascending: true })
-      .limit(2),
-    supabase
-      .from('announcements')
-      .select('id, title, slug, published_at')
-      .eq('is_published', true)
-      .or(`scheduled_for.is.null,scheduled_for.lte.${now}`)
-      .order('is_pinned', { ascending: false })
-      .order('published_at', { ascending: false })
-      .limit(3),
-  ]);
+  // Fire-and-forget: do not block rendering.
+  void (async () => {
+    try {
+      const { data: presenceData } = await database
+        .from('profiles')
+        .select('last_seen_at')
+        .eq('id', userId)
+        .single();
+      const lastSeen = presenceData?.last_seen_at
+        ? new Date(presenceData.last_seen_at).getTime()
+        : 0;
+      if (Date.now() - lastSeen > 60 * 60 * 1000) {
+        const { createAdminClient } = await import('@/lib/supabase/admin');
+        await createAdminClient()
+          .from('profiles')
+          .update({ last_seen_at: new Date().toISOString() })
+          .eq('id', userId);
+      }
+    } catch (err) {
+      console.error('[dashboard] last_seen_at update failed:', err);
+    }
+  })();
 
   return (
     <div className="mx-auto max-w-6xl px-4 py-10 sm:px-6 lg:px-8">
-      {/* Top bar — minimal until full alumni shell is built */}
+      {/* Shell: heading + welcome (synchronous) */}
       <div className="mb-8 flex items-center justify-between">
         <div>
           <Badge variant="primary">Alumni</Badge>
@@ -80,29 +58,12 @@ export default async function DashboardPage() {
         </form>
       </div>
 
-      {/* Stats */}
-      <div className="grid gap-4 sm:grid-cols-3">
-        <StatCard
-          icon={Users}
-          label={`Alumni from Batch ${profile.batch_year}`}
-          value={String(batchPeers.count ?? 0)}
-          href="/directory"
-        />
-        <StatCard
-          icon={Calendar}
-          label="Upcoming events"
-          value={String(upcomingEvents.data?.length ?? 0)}
-          href="/events"
-        />
-        <StatCard
-          icon={Megaphone}
-          label="New announcements"
-          value={String(recentAnnouncements.data?.length ?? 0)}
-          href="/announcements"
-        />
-      </div>
+      {/* Stats region (async) */}
+      <Suspense fallback={<StatsRegionSkeleton />}>
+        <StatsRegion batchYear={profile.batch_year} userId={userId} />
+      </Suspense>
 
-      {/* Membership banner */}
+      {/* Membership banner (shell, uses profile data) */}
       {!profile.is_paid_member && (
         <Card className="mt-6 flex flex-col items-start gap-4 bg-gradient-to-r from-[#0F2557] to-[#1a3a7a] text-white sm:flex-row sm:items-center sm:justify-between">
           <div>
@@ -117,7 +78,94 @@ export default async function DashboardPage() {
         </Card>
       )}
 
-      {/* Upcoming events */}
+      {/* Upcoming events region (async) */}
+      <Suspense fallback={<EventsRegionSkeleton />}>
+        <EventsRegion />
+      </Suspense>
+
+      {/* Recent announcements region (async) */}
+      <Suspense fallback={<AnnouncementsRegionSkeleton />}>
+        <AnnouncementsRegion />
+      </Suspense>
+    </div>
+  );
+}
+
+// ---------------------------------------------------------------------------
+// Async regions
+// ---------------------------------------------------------------------------
+
+async function StatsRegion({
+  batchYear,
+  userId,
+}: {
+  batchYear: number;
+  userId: string;
+}) {
+  try {
+    const { database } = await requireAlumniAccess();
+    const now = new Date().toISOString();
+
+    const [batchPeers, upcomingEvents, recentAnnouncements] = await Promise.all([
+      database
+        .from('profiles')
+        .select('id', { count: 'exact', head: true })
+        .eq('batch_year', batchYear)
+        .eq('approval_status', 'approved')
+        .neq('id', userId),
+      database
+        .from('events')
+        .select('id', { count: 'exact', head: true })
+        .eq('is_published', true)
+        .gte('starts_at', now),
+      database
+        .from('announcements')
+        .select('id', { count: 'exact', head: true })
+        .eq('is_published', true)
+        .or(`scheduled_for.is.null,scheduled_for.lte.${now}`),
+    ]);
+
+    return (
+      <div className="grid gap-4 sm:grid-cols-3">
+        <StatCard
+          icon={Users}
+          label={`Alumni from Batch ${batchYear}`}
+          value={String(batchPeers.count ?? 0)}
+          href="/directory"
+        />
+        <StatCard
+          icon={Calendar}
+          label="Upcoming events"
+          value={String(upcomingEvents.count ?? 0)}
+          href="/events"
+        />
+        <StatCard
+          icon={Megaphone}
+          label="New announcements"
+          value={String(recentAnnouncements.count ?? 0)}
+          href="/announcements"
+        />
+      </div>
+    );
+  } catch {
+    return <SectionError title="Couldn't load stats." />;
+  }
+}
+
+async function EventsRegion() {
+  try {
+    const { database } = await requireAlumniAccess();
+    const now = new Date().toISOString();
+
+    const { data: upcomingEvents } = await database
+      .from('events')
+      .select('id, title, slug, starts_at, venue, event_type')
+      .eq('is_published', true)
+      .gte('starts_at', now)
+      .order('starts_at', { ascending: true })
+      .limit(2);
+
+    return (
       <section className="mt-10">
         <div className="flex items-end justify-between">
           <h2 className="font-display text-xl font-semibold">Upcoming events</h2>
@@ -126,10 +174,10 @@ export default async function DashboardPage() {
           </Link>
         </div>
         <div className="mt-4 grid gap-4 sm:grid-cols-2">
-          {(upcomingEvents.data ?? []).length === 0 && (
+          {(upcomingEvents ?? []).length === 0 && (
             <Card className="text-sm text-slate-500">No upcoming events yet.</Card>
           )}
-          {upcomingEvents.data?.map((e) => (
+          {upcomingEvents?.map((e) => (
             <Card key={e.id}>
               <Badge variant="warning">{formatDate(e.starts_at)}</Badge>
               <h3 className="mt-2 line-clamp-2 font-medium">{e.title}</h3>
@@ -140,8 +188,27 @@ export default async function DashboardPage() {
           ))}
         </div>
       </section>
+    );
+  } catch {
+    return <SectionError title="Couldn't load upcoming events." />;
+  }
+}
 
-      {/* Recent announcements */}
+async function AnnouncementsRegion() {
+  try {
+    const { database } = await requireAlumniAccess();
+    const now = new Date().toISOString();
+
+    const { data: recentAnnouncements } = await database
+      .from('announcements')
+      .select('id, title, slug, published_at')
+      .eq('is_published', true)
+      .or(`scheduled_for.is.null,scheduled_for.lte.${now}`)
+      .order('is_pinned', { ascending: false })
+      .order('published_at', { ascending: false })
+      .limit(3);
+
+    return (
       <section className="mt-10">
         <div className="flex items-end justify-between">
           <h2 className="font-display text-xl font-semibold">Recent announcements</h2>
@@ -150,10 +217,10 @@ export default async function DashboardPage() {
           </Link>
         </div>
         <div className="mt-4 space-y-3">
-          {(recentAnnouncements.data ?? []).length === 0 && (
+          {(recentAnnouncements ?? []).length === 0 && (
             <Card className="text-sm text-slate-500">No announcements yet.</Card>
           )}
-          {recentAnnouncements.data?.map((a) => (
+          {recentAnnouncements?.map((a) => (
             <Card key={a.id} className="flex items-center justify-between">
               <div>
                 <p className="text-xs text-slate-500">
@@ -166,9 +233,65 @@ export default async function DashboardPage() {
           ))}
         </div>
       </section>
+    );
+  } catch {
+    return <SectionError title="Couldn't load announcements." />;
+  }
+}
+
+// ---------------------------------------------------------------------------
+// Skeleton fallbacks
+// ---------------------------------------------------------------------------
+
+function StatsRegionSkeleton() {
+  return (
+    <div className="grid gap-4 sm:grid-cols-3">
+      <StatCardSkeleton />
+      <StatCardSkeleton />
+      <StatCardSkeleton />
     </div>
   );
 }
+
+function EventsRegionSkeleton() {
+  return (
+    <section className="mt-10">
+      <div className="mb-4 h-7 w-40 animate-pulse rounded bg-slate-200" />
+      <div className="grid gap-4 sm:grid-cols-2">
+        <div className="rounded-xl border border-slate-100 bg-white p-5">
+          <div className="mb-2 h-4 w-24 animate-pulse rounded bg-slate-200" />
+          <div className="mb-2 h-5 w-3/4 animate-pulse rounded bg-slate-200" />
+          <div className="h-4 w-1/2 animate-pulse rounded bg-slate-200" />
+        </div>
+        <div className="rounded-xl border border-slate-100 bg-white p-5">
+          <div className="mb-2 h-4 w-24 animate-pulse rounded bg-slate-200" />
+          <div className="mb-2 h-5 w-3/4 animate-pulse rounded bg-slate-200" />
+          <div className="h-4 w-1/2 animate-pulse rounded bg-slate-200" />
+        </div>
+      </div>
+    </section>
+  );
+}
+
+function AnnouncementsRegionSkeleton() {
+  return (
+    <section className="mt-10">
+      <div className="mb-4 h-7 w-52 animate-pulse rounded bg-slate-200" />
+      <div className="space-y-3">
+        {Array.from({ length: 3 }).map((_, i) => (
+          <div key={i} className="rounded-xl border border-slate-100 bg-white p-5">
+            <div className="mb-1 h-3 w-20 animate-pulse rounded bg-slate-200" />
+            <div className="h-5 w-3/4 animate-pulse rounded bg-slate-200" />
+          </div>
+        ))}
+      </div>
+    </section>
+  );
+}
+
+// ---------------------------------------------------------------------------
+// Sub-components
+// ---------------------------------------------------------------------------
 
 function StatCard({
   icon: Icon,

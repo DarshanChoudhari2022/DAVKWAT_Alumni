@@ -427,3 +427,63 @@ export const getPaymentsPendingCount = unstable_cache(
     revalidate: CACHE_DESCRIPTORS.paymentsPendingCount.revalidateSeconds,
   }
 );
+
+// ─── Alumni cache extension (member-portal-performance) ───────────────────────────
+
+/**
+ * Alumni-specific cache descriptors. These follow the same structure as
+ * {@link CACHE_DESCRIPTORS} but serve the alumni (member) portal.
+ *
+ * The `membershipPlansAlumni` entry shares the `referenceMembershipPlans` tag with the
+ * admin descriptors, so when an administrator modifies membership plans and invalidates
+ * that tag, the alumni cached entry is also purged (Req 3.4).
+ *
+ * Key parts are identity-independent — no user id component (Req 3.6, 7.1, 7.3).
+ */
+export const ALUMNI_CACHE_DESCRIPTORS = {
+  membershipPlansAlumni: {
+    keyParts: ['alumni', 'reference', 'membership-plans-active'],
+    tags: [CACHE_TAGS.referenceMembershipPlans],
+    revalidateSeconds: REVALIDATE.reference, // ≤ 300s
+    class: 'reference' as CacheClass,
+  },
+} as const satisfies Record<string, CachedValueDescriptor>;
+
+/** An active membership plan as served to alumni (portal-global reference data). */
+export interface MembershipPlanAlumni {
+  id: string;
+  name: string;
+  description: string | null;
+  amount: number;
+  membership_type: string;
+  duration_months: number | null;
+}
+
+/**
+ * Cached active membership plans for the alumni membership page.
+ *
+ * Reference_Data: only active plans (`is_active = true`), ordered by amount ascending.
+ * Uses the service-role client (safe — membership plans are portal-global reference
+ * data, not identity-scoped). Shares `referenceMembershipPlans` tag with the admin
+ * entries so admin plan writes auto-invalidate this entry (Req 3.4).
+ *
+ * Revalidation window: ≤ 300s (Req 3.2). Stale-while-revalidate semantics ensure the
+ * first request after the window elapses still receives the stale value while the
+ * refresh happens in the background (Req 3.3, 3.5).
+ */
+export const getMembershipPlansForAlumni = unstable_cache(
+  async (): Promise<MembershipPlanAlumni[]> => {
+    const supabase = createAdminClient();
+    const { data } = await supabase
+      .from('membership_plans')
+      .select('id, name, description, amount, membership_type, duration_months')
+      .eq('is_active', true)
+      .order('amount', { ascending: true });
+    return (data ?? []) as MembershipPlanAlumni[];
+  },
+  buildCacheKey(ALUMNI_CACHE_DESCRIPTORS.membershipPlansAlumni),
+  {
+    tags: ALUMNI_CACHE_DESCRIPTORS.membershipPlansAlumni.tags,
+    revalidate: ALUMNI_CACHE_DESCRIPTORS.membershipPlansAlumni.revalidateSeconds,
+  }
+);
