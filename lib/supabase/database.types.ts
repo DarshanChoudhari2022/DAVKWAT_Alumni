@@ -427,6 +427,7 @@ export interface Database {
     };
     Views: Record<string, never>;
     Functions: {
+      get_public_alumni_count: { Args: Record<string, never>; Returns: number };
       is_admin: { Args: Record<string, never>; Returns: boolean };
       is_approved_alumni: { Args: Record<string, never>; Returns: boolean };
     };

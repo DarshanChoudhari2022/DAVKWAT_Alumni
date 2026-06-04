@@ -29,10 +29,8 @@ Expected: ~600 packages, < 90 seconds.
 3. In **Project Settings -> Database**, copy the connection strings for:
    - `DATABASE_URL`
    - `DIRECT_URL`
-4. Open the SQL editor and run, in order:
-   - `supabase/migrations/0001_init.sql`
-   - `supabase/migrations/0002_rls.sql`
-   - `supabase/seed.sql`
+4. Apply every SQL file in `supabase/migrations/` in filename order, then run
+   `supabase/seed.sql`. With the Supabase CLI, use `supabase db push`.
 5. In **Auth -> URL Configuration**, add `http://localhost:3000/auth/callback` to "Redirect URLs".
 
 ## 4. Set up Resend

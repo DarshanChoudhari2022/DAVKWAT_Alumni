@@ -53,17 +53,13 @@ async function getLandingData() {
       .order('is_pinned', { ascending: false })
       .order('published_at', { ascending: false })
       .order('created_at', { ascending: false }),
-    supabase
-      .from('profiles')
-      .select('id', { count: 'exact', head: true })
-      .eq('approval_status', 'approved')
-      .eq('is_active', true),
+    supabase.rpc('get_public_alumni_count'),
   ]);
 
   return {
     events: eventsRes.data ?? [],
     announcements: announcementsRes.data ?? [],
-    alumniCount: statsRes.count ?? 0,
+    alumniCount: Number(statsRes.data ?? 0),
   };
 }
 
