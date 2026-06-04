@@ -3,6 +3,7 @@ import Link from 'next/link';
 import { notFound, redirect } from 'next/navigation';
 import { Badge } from '@/components/ui/badge';
 import { Card } from '@/components/ui/card';
+import { getTrustedUserId } from '@/lib/auth/trusted-identity';
 import { createClient } from '@/lib/supabase/server';
 import { formatDate, formatINR } from '@/lib/utils/format';
 
@@ -15,11 +16,9 @@ export default async function MembershipReceiptPage({
 }) {
   const { txnid } = await params;
   const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
+  const userId = await getTrustedUserId();
 
-  if (!user) {
+  if (!userId) {
     redirect(`/login?redirect=/membership/receipt/${encodeURIComponent(txnid)}`);
   }
 
@@ -29,7 +28,7 @@ export default async function MembershipReceiptPage({
       'id, txnid, amount, currency, status, payment_mode, bank_ref_num, created_at, membership_plans(name, membership_type)'
     )
     .eq('txnid', txnid)
-    .eq('alumni_id', user.id)
+    .eq('alumni_id', userId)
     .maybeSingle();
 
   if (!payment) {

@@ -16,12 +16,9 @@ import {
   getPaymentsPendingCount,
 } from '@/lib/cache/admin-cache';
 import {
-  getListCount,
   getSuccessfulRevenue,
-  formatCount,
-  type EstimateFilter,
-  type CountResult,
 } from '@/lib/db/estimated-count';
+import { formatCount } from '@/lib/db/count-format';
 import { computePagination } from '@/lib/db/pagination';
 import { formatINR, formatDateTime } from '@/lib/utils/format';
 import { escapeIlikePattern, normalizeSearchTerm } from '@/lib/utils/search';
@@ -203,27 +200,12 @@ async function PaymentsList({ sp, page }: { sp: SearchParams; page: number }) {
     const normalizedSearch = sp.q ? normalizeSearchTerm(sp.q) : null;
     const searchTerm = normalizedSearch ? `%${escapeIlikePattern(normalizedSearch)}%` : null;
 
-    // AND-expressible filters for the planner estimate (status/plan/date range).
-    const estimateFilters: EstimateFilter[] = [];
-    if (sp.status && sp.status !== 'all') {
-      estimateFilters.push({ column: 'status', op: 'eq', value: sp.status });
-    }
-    if (sp.plan) {
-      estimateFilters.push({ column: 'plan_id', op: 'eq', value: sp.plan });
-    }
-    if (sp.date_from) {
-      estimateFilters.push({ column: 'created_at', op: 'gte', value: new Date(sp.date_from).toISOString() });
-    }
-    if (sp.date_to) {
-      const endOfDay = new Date(`${sp.date_to}T23:59:59.999`).toISOString();
-      estimateFilters.push({ column: 'created_at', op: 'lte', value: endOfDay });
-    }
-
     // Real list query (identical select / filters / ordering / range as before).
     let listQuery = supabase
       .from('payments')
       .select(
         'id, txnid, amount, currency, status, payment_mode, bank_ref_num, created_at, alumni_id, profiles!inner(full_name, email)',
+        { count: 'exact' }
       );
     if (sp.status && sp.status !== 'all') {
       listQuery = listQuery.eq('status', sp.status as PaymentStatus);
@@ -242,56 +224,19 @@ async function PaymentsList({ sp, page }: { sp: SearchParams; page: number }) {
       listQuery = listQuery.or(`txnid.ilike.${searchTerm},profiles.full_name.ilike.${searchTerm}`);
     }
 
-    // Exact-count builder mirroring ALL applied filters (incl. the OR search).
-    // Returns a fresh builder per call so it can be awaited independently.
-    const buildExactCount = () => {
-      let countQuery = supabase
-        .from('payments')
-        .select('id', { count: 'exact', head: true });
-      if (sp.status && sp.status !== 'all') {
-        countQuery = countQuery.eq('status', sp.status as PaymentStatus);
-      }
-      if (sp.plan) {
-        countQuery = countQuery.eq('plan_id', sp.plan);
-      }
-      if (sp.date_from) {
-        countQuery = countQuery.gte('created_at', new Date(sp.date_from).toISOString());
-      }
-      if (sp.date_to) {
-        const endOfDay = new Date(`${sp.date_to}T23:59:59.999`).toISOString();
-        countQuery = countQuery.lte('created_at', endOfDay);
-      }
-      if (searchTerm) {
-        countQuery = countQuery.or(`txnid.ilike.${searchTerm},profiles.full_name.ilike.${searchTerm}`);
-      }
-      return countQuery;
-    };
-
     const listPromise = listQuery
       .order('created_at', { ascending: false })
       .order('id', { ascending: false })
       .range(offset, offset + PAGE_SIZE - 1);
 
-    // When search is active the OR predicate isn't expressible by the estimate
-    // RPC, so use the exact count; otherwise estimate from the AND filters.
-    const countPromise: Promise<CountResult> = searchTerm
-      ? (async (): Promise<CountResult> => {
-          const { count } = await buildExactCount();
-          return { count: count ?? 0, isEstimated: false };
-        })()
-      : getListCount(supabase, {
-          table: 'payments',
-          filters: estimateFilters,
-          exactFallback: buildExactCount,
-        });
-
-    const [listResult, countResult] = await Promise.all([listPromise, countPromise]);
+    const listResult = await listPromise;
 
     if (listResult.error) {
       throw listResult.error;
     }
 
     const payments = (listResult.data ?? []) as unknown as PaymentRow[];
+    const countResult = { count: listResult.count ?? payments.length, isEstimated: false };
     const { totalPages } = computePagination({
       rowsReturned: payments.length,
       pageSize: PAGE_SIZE,

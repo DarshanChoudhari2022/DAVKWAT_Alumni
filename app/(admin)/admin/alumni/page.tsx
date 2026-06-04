@@ -11,12 +11,7 @@ import { Pagination } from '@/components/shared/Pagination';
 import { ListSkeleton } from '@/components/shared/admin-section';
 import { SectionError } from '@/components/shared/SectionError';
 import { requireAdminAccess } from '@/lib/auth/admin-access';
-import {
-  getListCount,
-  formatCount,
-  type CountResult,
-  type EstimateFilter,
-} from '@/lib/db/estimated-count';
+import { formatCount } from '@/lib/db/count-format';
 import { computePagination } from '@/lib/db/pagination';
 import { formatDate } from '@/lib/utils/format';
 import { escapeIlikePattern, normalizeSearchTerm } from '@/lib/utils/search';
@@ -130,79 +125,45 @@ async function AlumniListRegion({ sp, page }: { sp: SearchParams; page: number }
     let listQuery = supabase
       .from('profiles')
       .select(
-        'id, full_name, email, batch_year, course, current_city, role, approval_status, is_paid_member, is_active, created_at, avatar_url'
+        'id, full_name, email, batch_year, course, current_city, role, approval_status, is_paid_member, is_active, created_at, avatar_url',
+        { count: 'exact' }
       );
 
     // AND-able filters run through indexed columns (Req 6.1, 6.2) and also feed
     // the planner estimate. The free-text `q` is an OR across two columns the
     // estimate RPC can't express, so it is omitted from the estimate filters.
-    const filters: EstimateFilter[] = [];
-
     // Normalize the search term once; the resulting ilike pattern (or null) is
     // reused by both the list query and the exact-count fallback.
     const search = sp.q ? normalizeSearchTerm(sp.q) : null;
     const searchPattern = search ? `%${escapeIlikePattern(search)}%` : null;
-    const hasSearch = searchPattern !== null;
-
     if (searchPattern) {
       listQuery = listQuery.or(`full_name.ilike.${searchPattern},email.ilike.${searchPattern}`);
     }
     if (sp.status === 'approved') {
       listQuery = listQuery.eq('approval_status', 'approved');
-      filters.push({ column: 'approval_status', op: 'eq', value: 'approved' });
     }
     if (sp.status === 'pending') {
       listQuery = listQuery.eq('approval_status', 'pending');
-      filters.push({ column: 'approval_status', op: 'eq', value: 'pending' });
     }
     if (sp.status === 'rejected') {
       listQuery = listQuery.eq('approval_status', 'rejected');
-      filters.push({ column: 'approval_status', op: 'eq', value: 'rejected' });
     }
     if (sp.membership === 'paid') {
       listQuery = listQuery.eq('is_paid_member', true);
-      filters.push({ column: 'is_paid_member', op: 'is_true' });
     }
     if (sp.membership === 'free') {
       listQuery = listQuery.eq('is_paid_member', false);
-      filters.push({ column: 'is_paid_member', op: 'is_false' });
     }
 
-    // Exact-count fallback: the SAME filtered predicate (including the search
-    // OR) with a head count. Used directly when a search term is present (the
-    // estimate can't express the OR) and as getListCount's fallback otherwise.
-    const exactCountFallback = () => {
-      let countQuery = supabase
-        .from('profiles')
-        .select('id', { count: 'exact', head: true });
-
-      if (searchPattern) {
-        countQuery = countQuery.or(`full_name.ilike.${searchPattern},email.ilike.${searchPattern}`);
-      }
-      if (sp.status === 'approved') countQuery = countQuery.eq('approval_status', 'approved');
-      if (sp.status === 'pending') countQuery = countQuery.eq('approval_status', 'pending');
-      if (sp.status === 'rejected') countQuery = countQuery.eq('approval_status', 'rejected');
-      if (sp.membership === 'paid') countQuery = countQuery.eq('is_paid_member', true);
-      if (sp.membership === 'free') countQuery = countQuery.eq('is_paid_member', false);
-
-      return countQuery;
-    };
-
-    // Concurrent per-region queries (Req 3.4, 5.5): list rows + count.
     const listPromise = listQuery
       .order('created_at', { ascending: false })
       .order('id', { ascending: false })
       .range(offset, offset + PAGE_SIZE - 1);
 
-    const countPromise: Promise<CountResult> = hasSearch
-      ? Promise.resolve(exactCountFallback()).then(({ count }) => ({
-          count: count ?? 0,
-          isEstimated: false,
-        }))
-      : getListCount(supabase, { table: 'profiles', filters, exactFallback: exactCountFallback });
-
-    const [listResult, countResult] = await Promise.all([listPromise, countPromise]);
+    const listResult = await listPromise;
+    if (listResult.error) throw listResult.error;
     const alumni = listResult.data ?? [];
+    const countResult = { count: listResult.count ?? alumni.length, isEstimated: false };
 
     // Estimate only drives totalPages; reachability is preserved even when the
     // estimate is low (Req 5.2).

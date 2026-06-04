@@ -6,13 +6,9 @@ import { Card } from '@/components/ui/card';
 import { CardSkeleton } from '@/components/shared/Skeleton';
 import { SectionError } from '@/components/shared/SectionError';
 import { Pagination } from '@/components/shared/Pagination';
-import { requireAlumniAccess } from '@/lib/auth/alumni-access';
-import {
-  getListCount,
-  formatCount,
-  type EstimateFilter,
-} from '@/lib/db/estimated-count';
+import { formatCount } from '@/lib/db/count-format';
 import { computePagination } from '@/lib/db/pagination';
+import { createClient } from '@/lib/supabase/server';
 import { formatDate } from '@/lib/utils/format';
 import { stripHtml } from '@/lib/utils/sanitize';
 
@@ -78,12 +74,15 @@ async function AnnouncementsListRegion({
     const now = new Date().toISOString();
 
     // Memoized auth — single-flight per request (Req 1.1, 1.2)
-    const { database: supabase } = await requireAlumniAccess();
+    const supabase = await createClient();
 
     // List query without count:'exact' — count resolved separately (Req 4.1)
     const listQuery = supabase
       .from('announcements')
-      .select('id, title, slug, content, is_pinned, published_at, scheduled_for, cover_image_url')
+      .select(
+        'id, title, slug, content, is_pinned, published_at, scheduled_for, cover_image_url',
+        { count: 'exact' }
+      )
       .eq('is_published', true)
       .or(`scheduled_for.is.null,scheduled_for.lte.${now}`)
       .order('is_pinned', { ascending: false })
@@ -91,28 +90,11 @@ async function AnnouncementsListRegion({
       .order('id', { ascending: false })
       .range(offset, offset + PAGE_SIZE - 1);
 
-    // Exact-count fallback for getListCount (Req 4.4)
-    const exactCountFallback = () =>
-      supabase
-        .from('announcements')
-        .select('id', { count: 'exact', head: true })
-        .eq('is_published', true)
-        .or(`scheduled_for.is.null,scheduled_for.lte.${now}`);
-
-    // The announcements list uses OR predicates that the estimate RPC can't
-    // express, so we use a simple filter set for the estimate and fall back
-    // to exact count when needed. The is_published=true filter is expressible.
-    const filters: EstimateFilter[] = [
-      { column: 'is_published', op: 'is_true' },
-    ];
-
-    // Concurrent per-region queries (Req 2.4, 4.5): list rows + count
-    const [listResult, countResult] = await Promise.all([
-      listQuery,
-      getListCount(supabase, { table: 'announcements', filters, exactFallback: exactCountFallback }),
-    ]);
+    const listResult = await listQuery;
+    if (listResult.error) throw listResult.error;
 
     const data = listResult.data ?? [];
+    const countResult = { count: listResult.count ?? data.length, isEstimated: false };
 
     // Pagination reachability under estimated counts (Req 4.2)
     const { totalPages } = computePagination({

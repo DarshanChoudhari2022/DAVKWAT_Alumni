@@ -15,6 +15,7 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { adminLogoutAction } from '@/app/(public)/admin-login/actions';
 import { requireAdminAccess } from '@/lib/auth/admin-access';
+import { getPendingApprovalsCount } from '@/lib/cache/admin-cache';
 import { AdminMobileNav } from './AdminMobileNav';
 
 const ADMIN_NAV = [
@@ -30,12 +31,10 @@ const ADMIN_NAV = [
 ];
 
 export default async function AdminLayout({ children }: { children: React.ReactNode }) {
-  const adminAccess = await requireAdminAccess();
-  const { count } = await adminAccess.database
-    .from('profiles')
-    .select('id', { count: 'exact', head: true })
-    .eq('approval_status', 'pending');
-  const pendingCount = count ?? 0;
+  const [adminAccess, pendingCount] = await Promise.all([
+    requireAdminAccess(),
+    getPendingApprovalsCount(),
+  ]);
 
   return (
     <div className="flex min-h-dvh min-w-0">

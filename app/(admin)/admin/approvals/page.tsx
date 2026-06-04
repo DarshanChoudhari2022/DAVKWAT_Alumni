@@ -7,12 +7,7 @@ import { Pagination } from '@/components/shared/Pagination';
 import { ListSkeleton } from '@/components/shared/admin-section';
 import { SectionError } from '@/components/shared/SectionError';
 import { requireAdminAccess } from '@/lib/auth/admin-access';
-import {
-  getListCount,
-  formatCount,
-  type CountResult,
-  type EstimateFilter,
-} from '@/lib/db/estimated-count';
+import { formatCount } from '@/lib/db/count-format';
 import { computePagination } from '@/lib/db/pagination';
 import { formatDate } from '@/lib/utils/format';
 import { ApprovalActions } from './ApprovalActions';
@@ -98,41 +93,18 @@ async function ApprovalsListRegion({ sp, page }: { sp: SearchParams; page: numbe
     let listQuery = supabase
       .from('profiles')
       .select(
-        'id, full_name, email, batch_year, course, current_city, phone, created_at, avatar_url'
+        'id, full_name, email, batch_year, course, current_city, phone, created_at, avatar_url',
+        { count: 'exact' }
       )
       .eq('approval_status', 'pending');
 
-    // Date filter feeds both the list query and the planner estimate filters so
-    // the count matches the rows shown.
-    const filters: EstimateFilter[] = [
-      { column: 'approval_status', op: 'eq', value: 'pending' },
-    ];
-
     if (sp.filter === 'today') {
       listQuery = listQuery.gte('created_at', startOfToday);
-      filters.push({ column: 'created_at', op: 'gte', value: startOfToday });
     } else if (sp.filter === 'week') {
       listQuery = listQuery.gte('created_at', oneWeekAgo);
-      filters.push({ column: 'created_at', op: 'gte', value: oneWeekAgo });
     } else if (sp.filter === 'older') {
       listQuery = listQuery.lt('created_at', oneWeekAgo);
-      filters.push({ column: 'created_at', op: 'lt', value: oneWeekAgo });
     }
-
-    // Exact-count fallback: the SAME filtered predicate with a head count. Used
-    // by getListCount only when the planner estimate is unavailable (Req 5.6).
-    const exactFallback = () => {
-      let countQuery = supabase
-        .from('profiles')
-        .select('id', { count: 'exact', head: true })
-        .eq('approval_status', 'pending');
-
-      if (sp.filter === 'today') countQuery = countQuery.gte('created_at', startOfToday);
-      else if (sp.filter === 'week') countQuery = countQuery.gte('created_at', oneWeekAgo);
-      else if (sp.filter === 'older') countQuery = countQuery.lt('created_at', oneWeekAgo);
-
-      return countQuery;
-    };
 
     // Concurrent per-region queries (Req 3.4, 5.5): list rows + count. Ordering
     // keeps the unique tie-breaker (created_at asc, then id asc) for a total order.
@@ -141,15 +113,13 @@ async function ApprovalsListRegion({ sp, page }: { sp: SearchParams; page: numbe
       .order('id', { ascending: true })
       .range(offset, offset + PAGE_SIZE - 1);
 
-    const countPromise: Promise<CountResult> = getListCount(supabase, {
-      table: 'profiles',
-      filters,
-      exactFallback,
-    });
-
-    const [listResult, countResult] = await Promise.all([listPromise, countPromise]);
+    const listResult = await listPromise;
     const pendingProfiles = listResult.data ?? [];
     const { error } = listResult;
+    const countResult = {
+      count: listResult.count ?? pendingProfiles.length,
+      isEstimated: false,
+    };
 
     // Estimate only drives totalPages; reachability is preserved even when the
     // estimate is low (Req 5.2).

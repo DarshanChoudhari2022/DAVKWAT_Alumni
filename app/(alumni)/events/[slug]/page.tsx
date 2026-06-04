@@ -6,6 +6,7 @@ import { ArrowLeft, Calendar, MapPin, Users, Download } from 'lucide-react';
 import { Card } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
+import { getTrustedUserId } from '@/lib/auth/trusted-identity';
 import { createClient } from '@/lib/supabase/server';
 import { formatDateTime } from '@/lib/utils/format';
 import { RsvpForm } from './RsvpForm';
@@ -32,10 +33,8 @@ export default async function EventDetailPage({
 }) {
   const { slug } = await params;
   const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-  if (!user) redirect('/login');
+  const userId = await getTrustedUserId();
+  if (!userId) redirect('/login');
 
   const { data: event } = await supabase
     .from('events')
@@ -53,7 +52,7 @@ export default async function EventDetailPage({
       .from('event_rsvps')
       .select('id')
       .eq('event_id', event.id)
-      .eq('alumni_id', user.id)
+      .eq('alumni_id', userId)
       .maybeSingle(),
     supabase
       .from('event_rsvps')

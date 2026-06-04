@@ -5,7 +5,7 @@ import { MessageSquare } from 'lucide-react';
 import { Card } from '@/components/ui/card';
 import { CardSkeleton } from '@/components/shared/Skeleton';
 import { SectionError } from '@/components/shared/SectionError';
-import { requireAlumniAccess } from '@/lib/auth/alumni-access';
+import { createClient } from '@/lib/supabase/server';
 import { formatRelative } from '@/lib/utils/format';
 
 export const metadata: Metadata = { title: 'Forum' };
@@ -64,7 +64,7 @@ export default function ForumPage() {
  */
 async function CategoriesRegion() {
   try {
-    const { database: supabase } = await requireAlumniAccess();
+    const supabase = await createClient();
 
     // Issue categories query and thread stats concurrently within this region
     const [{ data: categories }, { data: threadStats }] = await Promise.all([
@@ -146,7 +146,7 @@ async function CategoriesRegion() {
  */
 async function ThreadsRegion() {
   try {
-    const { database: supabase } = await requireAlumniAccess();
+    const supabase = await createClient();
 
     const { data: threads } = await supabase
       .from('forum_threads')

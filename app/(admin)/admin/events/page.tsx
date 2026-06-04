@@ -9,11 +9,7 @@ import { Pagination } from '@/components/shared/Pagination';
 import { ListSkeleton } from '@/components/shared/admin-section';
 import { SectionError } from '@/components/shared/SectionError';
 import { requireAdminAccess } from '@/lib/auth/admin-access';
-import {
-  getListCount,
-  formatCount,
-  type EstimateFilter,
-} from '@/lib/db/estimated-count';
+import { formatCount } from '@/lib/db/count-format';
 import { computePagination } from '@/lib/db/pagination';
 import { formatDateTime } from '@/lib/utils/format';
 import { EventActions } from './EventActions';
@@ -97,46 +93,24 @@ async function EventsListRegion({ filter, page }: { filter: string; page: number
     // just without count:'exact' (the count is resolved separately, Req 5.1).
     let listQuery = supabase
       .from('events')
-      .select('id, title, slug, starts_at, ends_at, venue, event_type, is_published, max_attendees');
+      .select(
+        'id, title, slug, starts_at, ends_at, venue, event_type, is_published, max_attendees',
+        { count: 'exact' }
+      );
 
     if (filter === 'upcoming') listQuery = listQuery.gte('starts_at', now);
     if (filter === 'past') listQuery = listQuery.lt('starts_at', now);
     if (filter === 'draft') listQuery = listQuery.eq('is_published', false);
 
-    // Exact-count fallback: the SAME filtered predicate with a head count. Used
-    // as getListCount's fallback.
-    const exactCountFallback = () => {
-      let countQuery = supabase
-        .from('events')
-        .select('id', { count: 'exact', head: true });
-
-      if (filter === 'upcoming') countQuery = countQuery.gte('starts_at', now);
-      if (filter === 'past') countQuery = countQuery.lt('starts_at', now);
-      if (filter === 'draft') countQuery = countQuery.eq('is_published', false);
-      return countQuery;
-    };
-
-    // All filters here are simply-expressible AND predicates the planner-estimate
-    // RPC can plan; 'all' estimates the whole table with no filters.
-    const filters: EstimateFilter[] = [];
-    if (filter === 'upcoming') filters.push({ column: 'starts_at', op: 'gte', value: now });
-    if (filter === 'past') filters.push({ column: 'starts_at', op: 'lt', value: now });
-    if (filter === 'draft') filters.push({ column: 'is_published', op: 'is_false' });
-
-    // Concurrent per-region queries (Req 3.4, 5.5): list rows + count.
     const listPromise = listQuery
       .order('starts_at', { ascending: false })
       .order('id', { ascending: false })
       .range(offset, offset + PAGE_SIZE - 1);
 
-    const countPromise = getListCount(supabase, {
-      table: 'events',
-      filters,
-      exactFallback: exactCountFallback,
-    });
-
-    const [listResult, countResult] = await Promise.all([listPromise, countPromise]);
+    const listResult = await listPromise;
+    if (listResult.error) throw listResult.error;
     const events = listResult.data ?? [];
+    const countResult = { count: listResult.count ?? events.length, isEstimated: false };
 
     // RSVP counts depend on the returned event ids, so they run after the list
     // query resolves (secondary query preserved from the original page).

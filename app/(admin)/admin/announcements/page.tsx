@@ -10,12 +10,7 @@ import { Pagination } from '@/components/shared/Pagination';
 import { ListSkeleton } from '@/components/shared/admin-section';
 import { SectionError } from '@/components/shared/SectionError';
 import { requireAdminAccess } from '@/lib/auth/admin-access';
-import {
-  getListCount,
-  formatCount,
-  type CountResult,
-  type EstimateFilter,
-} from '@/lib/db/estimated-count';
+import { formatCount } from '@/lib/db/count-format';
 import { computePagination } from '@/lib/db/pagination';
 import { formatDate } from '@/lib/utils/format';
 import { AnnouncementActions } from './AnnouncementActions';
@@ -102,7 +97,8 @@ async function AnnouncementsListRegion({ sp, page }: { sp: SearchParams; page: n
     let listQuery = supabase
       .from('announcements')
       .select(
-        'id, title, slug, is_pinned, is_published, published_at, scheduled_for, created_at, author_id, profiles(full_name)'
+        'id, title, slug, is_pinned, is_published, published_at, scheduled_for, created_at, author_id, profiles(full_name)',
+        { count: 'exact' }
       );
 
     if (sp.status === 'published') {
@@ -113,47 +109,15 @@ async function AnnouncementsListRegion({ sp, page }: { sp: SearchParams; page: n
       listQuery = listQuery.eq('is_published', true).not('scheduled_for', 'is', null).gt('scheduled_for', now);
     }
 
-    // Exact-count fallback: the SAME filtered predicate with a head count. Used
-    // as getListCount's fallback and directly for the published/scheduled
-    // filters (their OR/NOT predicates can't be expressed by the estimate RPC).
-    const exactCountFallback = () => {
-      let countQuery = supabase
-        .from('announcements')
-        .select('id', { count: 'exact', head: true });
-
-      if (sp.status === 'published') {
-        countQuery = countQuery.eq('is_published', true).or(`scheduled_for.is.null,scheduled_for.lte.${now}`);
-      }
-      if (sp.status === 'draft') countQuery = countQuery.eq('is_published', false);
-      if (sp.status === 'scheduled') {
-        countQuery = countQuery.eq('is_published', true).not('scheduled_for', 'is', null).gt('scheduled_for', now);
-      }
-      return countQuery;
-    };
-
-    // Only the all-filter (no predicate) and the draft filter are simply
-    // expressible AND filters the planner-estimate RPC can plan. The published
-    // and scheduled filters rely on OR/NOT predicates the RPC can't express, so
-    // they fall back to an exact count directly.
-    const canEstimate = !sp.status || sp.status === 'draft';
-    const filters: EstimateFilter[] = [];
-    if (sp.status === 'draft') filters.push({ column: 'is_published', op: 'is_false' });
-
-    // Concurrent per-region queries (Req 3.4, 5.5): list rows + count.
     const listPromise = listQuery
       .order('created_at', { ascending: false })
       .order('id', { ascending: false })
       .range(offset, offset + PAGE_SIZE - 1);
 
-    const countPromise: Promise<CountResult> = canEstimate
-      ? getListCount(supabase, { table: 'announcements', filters, exactFallback: exactCountFallback })
-      : Promise.resolve(exactCountFallback()).then(({ count }) => ({
-          count: count ?? 0,
-          isEstimated: false,
-        }));
-
-    const [listResult, countResult] = await Promise.all([listPromise, countPromise]);
+    const listResult = await listPromise;
+    if (listResult.error) throw listResult.error;
     const data = listResult.data ?? [];
+    const countResult = { count: listResult.count ?? data.length, isEstimated: false };
 
     // Estimate only drives totalPages; reachability is preserved even when the
     // estimate is low (Req 5.2).
