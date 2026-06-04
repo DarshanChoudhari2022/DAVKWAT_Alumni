@@ -7,13 +7,9 @@ import { Badge } from '@/components/ui/badge';
 import { Pagination } from '@/components/shared/Pagination';
 import { CardSkeleton } from '@/components/shared/Skeleton';
 import { SectionError } from '@/components/shared/SectionError';
-import { requireAlumniAccess } from '@/lib/auth/alumni-access';
-import {
-  getListCount,
-  formatCount,
-  type EstimateFilter,
-} from '@/lib/db/estimated-count';
+import { formatCount } from '@/lib/db/count-format';
 import { computePagination } from '@/lib/db/pagination';
+import { createClient } from '@/lib/supabase/server';
 import { formatDateTime } from '@/lib/utils/format';
 
 export const metadata: Metadata = { title: 'Events' };
@@ -95,13 +91,18 @@ export default async function EventsPage({
 async function EventsListRegion({ filter, page }: { filter: string; page: number }) {
   try {
     const offset = (page - 1) * PAGE_SIZE;
-    const { database: supabase } = await requireAlumniAccess();
+    // Middleware already verifies the session and approval status before this
+    // protected route renders. RLS remains the final data-access guard.
+    const supabase = await createClient();
     const now = new Date().toISOString();
 
-    // List query without count:'exact' — count resolved separately via getListCount.
+    // Fetch the page rows and exact count in the same indexed request.
     let listQuery = supabase
       .from('events')
-      .select('id, title, slug, starts_at, ends_at, venue, event_type, banner_image_url')
+      .select(
+        'id, title, slug, starts_at, ends_at, venue, event_type, banner_image_url',
+        { count: 'exact' }
+      )
       .eq('is_published', true);
 
     if (filter === 'upcoming') {
@@ -122,44 +123,20 @@ async function EventsListRegion({ filter, page }: { filter: string; page: number
         .order('id', { ascending: false });
     }
 
-    // Exact-count fallback: the same filtered predicate with a head count.
-    const exactCountFallback = () => {
-      let countQuery = supabase
-        .from('events')
-        .select('id', { count: 'exact', head: true })
-        .eq('is_published', true);
-
-      if (filter === 'upcoming') {
-        countQuery = countQuery.gte('starts_at', now);
-      } else {
-        countQuery = countQuery.lt('starts_at', now);
-      }
-      return countQuery;
-    };
-
-    // Build structured filters for the estimate RPC.
-    const filters: EstimateFilter[] = [
-      { column: 'is_published', op: 'is_true' },
-    ];
-    if (filter === 'upcoming') {
-      filters.push({ column: 'starts_at', op: 'gte', value: now });
-    } else {
-      filters.push({ column: 'starts_at', op: 'lt', value: now });
+    // Events is a small, indexed table. Return rows and count in one request
+    // instead of waiting on an estimate RPC and a possible exact-count fallback.
+    const listResult = await listQuery.range(offset, offset + PAGE_SIZE - 1);
+    if (listResult.error) {
+      throw listResult.error;
     }
 
-    // Concurrent queries: list rows + estimated count (Req 2.4, 4.5).
-    const [listResult, countResult] = await Promise.all([
-      listQuery.range(offset, offset + PAGE_SIZE - 1),
-      getListCount(supabase, {
-        table: 'events',
-        filters,
-        exactFallback: exactCountFallback,
-      }),
-    ]);
-
     const events = listResult.data ?? [];
+    const countResult = {
+      count: listResult.count ?? events.length,
+      isEstimated: false,
+    };
 
-    // Compute reachable pagination from the (possibly estimated) count (Req 4.2).
+    // Compute reachable pagination from the exact count.
     const { totalPages } = computePagination({
       rowsReturned: events.length,
       pageSize: PAGE_SIZE,
