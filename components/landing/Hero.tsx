@@ -45,7 +45,7 @@ export function Hero({ alumniCount }: HeroProps) {
               <div className="inline-flex items-center gap-2 rounded-full border border-white/15 bg-white/[0.06] px-3.5 py-1.5 backdrop-blur">
                 <ShieldCheck className="h-3.5 w-3.5 text-sky-300" />
                 <span className="text-xs font-semibold tracking-wide text-white/80">
-                  The official alumni portal of the DAV Khagaul Alumni Welfare Trust
+
                 </span>
               </div>
             </Reveal>

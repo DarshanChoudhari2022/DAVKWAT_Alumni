@@ -1,0 +1,473 @@
+
+
+
+
+
+SOFTWARE REQUIREMENTS SPECIFICATION
+
+DAVKAWT Alumni Portal
+DAV Khagaul Alumni Welfare Trust
+
+
+
+
+
+
+Client
+DAV Khagaul Alumni Welfare Trust (DAVKAWT)
+Vendor / Developer
+Creative Mark — Advertising | Digital Marketing | Branding | Multimedia | Printing | Technology Solutions
+Document Version
+1.0
+Date
+May 2026
+
+Table of Contents
+
+DAV Khagaul Alumni Welfare Trust (DAVKAWT) — Alumni Portal4
+Introduction4
+Purpose4
+Scope4
+Definitions5
+References5
+Overall Description5
+Product Perspective5
+User Classes5
+Operating Environment6
+Constraints6
+Assumptions6
+Technology Stack7
+Functional Requirements7
+Registration & Approval7
+Authentication & Roles8
+Alumni Directory8
+Alumni Profiles8
+Announcements8
+Events8
+Discussion Forum9
+Notifications & Email9
+Membership & Payments9
+Admin Dashboard9
+Reports & Exports9
+Non-Functional Requirements10
+External Interfaces10
+Data Handling & Security11
+Deliverables, Milestones & Acceptance11
+Phased Delivery (Indicative, 8 Weeks)11
+Deliverables12
+Acceptance12
+Assumptions, Constraints & Risks12
+Assumptions12
+Constraints12
+Key Risks & Mitigations12
+Commercial & Engagement Terms13
+Scope & Change Management13
+Payment Terms13
+Intellectual Property13
+Confidentiality & Data Ownership13
+Warranty14
+Third-Party Services14
+Limitation of Liability14
+Annual Maintenance Contract (AMC)14
+Termination14
+Force Majeure14
+Governing Law & Dispute Resolution15
+Communication15
+Acknowledgement15
+Appendices15
+Appendix A — Glossary15
+Appendix B — Documents to be Provided by DAVKAWT15
+Appendix C — Sign-off16
+
+DAV Khagaul Alumni Welfare Trust (DAVKAWT) — Alumni Portal
+
+
+
+
+Client
+DAV Khagaul Alumni Welfare Trust (DAVKAWT)
+Vendor
+Creative Mark — Advertising, Digital Marketing, Branding, Multimedia, Printing, Technology Solutions
+Document Version
+1.0
+Date
+May 2026
+Document Status
+Draft for Client Approval
+Confidentiality
+Confidential — for the named recipient only
+
+
+Introduction
+
+Purpose
+This document defines the agreed functional and non-functional scope for the DAVKAWT Alumni Portal — a web platform that enables alumni of DAV Khagaul to register, connect, and engage with the Trust. It forms the basis of the engagement between Creative Mark (Vendor) and DAVKAWT (Client) and is the reference for design, development, and acceptance.
+
+Scope
+The portal will provide:
+Alumni self-registration with admin approval.
+A searchable, role-restricted alumni directory.
+Alumni profile pages with privacy controls.
+Announcements, events calendar, and a discussion forum.
+Membership fee collection via an integrated payment gateway.
+Automated email notifications.
+An admin dashboard for moderation, payments, exports, and analytics.
+Responsive, mobile-first design.
+
+Definitions
+
+Term
+Meaning
+DAVKAWT
+DAV Khagaul Alumni Welfare Trust (Client)
+SRS
+Software Requirements Specification
+Admin
+Authorised representative of DAVKAWT managing the portal
+Alumnus / Alumni
+A registered, approved past student of DAV Khagaul
+SPoC
+Single Point of Contact
+AMC
+Annual Maintenance Contract
+UAT
+User Acceptance Testing
+
+References
+Core Features — Alumni Website document (DAVKAWT).
+Alumni Website Proposal (Creative Mark, April 2025).
+
+
+Overall Description
+
+Product Perspective
+A new, standalone web application that will be the central digital presence of DAVKAWT for alumni engagement. It integrates with a payment gateway, an email service, and a cloud database, all selected for reliability and Indian data compliance.
+
+User Classes
+
+Role
+Description
+Access
+Guest
+Any visitor without an account
+Public pages, registration, login
+Pending User
+Registered but awaiting admin approval
+Limited dashboard, profile draft, status view
+Verified Alumni
+Approved (and, if applicable, paid) member
+Full directory, profile, forum, events
+
+
+Admin
+
+Trust appointee
+All of the above plus moderation, payments, exports, content management
+Super Admin
+Root account
+All of the above plus admin user management and system settings
+
+Operating Environment
+End-user devices: Modern desktop and mobile browsers (current and previous major versions of Chrome, Edge, Safari, and Firefox).
+Hosting: Cloud platform with Indian region preference for data residency.
+
+Constraints
+Mobile-first responsive design is mandatory.
+All personal data of Indian alumni shall be stored in databases hosted in India to the extent practical.
+The payment gateway shall be Easebuzz, selected for competitive transaction rates and full coverage of UPI, cards, netbanking, and wallets.
+
+Assumptions
+DAVKAWT will provide the domain name, brand assets, and legal copy (privacy policy, terms, refund policy) reviewed by its own legal counsel.
+DAVKAWT will complete the payment gateway merchant onboarding (KYC) — see Appendix B.
+DAVKAWT will nominate a single point of contact (SPoC) for all communication and approvals.
+DAVKAWT will procure and pay directly for domain, hosting, email-sending, and gateway transaction charges will provide time to time approvals for the completion of work On time approval will be required to deliver within the promised timeline
+
+
+Technology Stack
+
+The platform will be built on a modern, type-safe, code-first web stack chosen for performance, security, and long-term maintainability.
+
+Layer
+Technology
+Application Framework
+Next.js (React, TypeScript)
+UI & Styling
+Tailwind CSS with a modern component library
+Database & Authentication
+Managed PostgreSQL with row-level security and built-in authentication (Supabase)
+File Storage
+Cloud object storage with image optimisation
+Email Delivery
+Transactional SMTP provider (e.g., RESEND/ Zoho Mail/..)
+Payments
+Easebuzz Payment Gateway
+Hosting
+Vercel + Supabase Cloud
+Monitoring
+Error tracking and product analytics
+Version Control & CI/CD
+GitHub with automated build and deployment pipeline
+
+Specific libraries, versions, and internal implementation choices remain at the Vendor's discretion provided the functional and non-functional requirements of this SRS are met.
+
+
+Functional Requirements
+
+This section lists the functional capabilities of the portal. Each capability shall be delivered to the standard of a typical, modern alumni platform; specific implementation details are at the Vendor's discretion.
+
+Registration & Approval
+Public registration form capturing name, batch / year, course, contact details, current location, occupation, and other relevant fields.
+Email OTP verification before submission.
+
+Admin review queue with approve / reject actions and optional remarks.
+Email notification to the user on approval or rejection.
+
+Authentication & Roles
+Email + password login; optional Google sign-in/LinkedIn
+Password reset via secure email link.
+Four role tiers (Section 2.2) with access restricted accordingly.
+Session management with automatic expiry and secure logout.
+
+Alumni Directory
+Listing of verified alumni with, name, batch, course, and city /Photo.
+Search by name, company, or keyword.
+Filters by batch / year, course, city, state, country, and industry.
+Pagination and sort options.
+Directory access restricted to verified alumni and administrators.
+
+Alumni Profiles
+Detailed alumni profile page showing professional and educational information.
+Profile edit by the owning alumnus; selected fields editable by administrators.
+Privacy controls — alumni can hide email or phone from the directory.
+
+Announcements
+Admin-published announcements visible to all verified alumni.
+Rich-text content with images.
+Pin and schedule options.
+
+Events
+Admin-created events with title, date and time, venue or online link, description, and banner.
+Event reminders via email.
+Past events archive.
+
+Discussion Forum
+Threaded discussion categories created by admins.
+Posting, replying, and basic moderation by admins (edit, delete, lock).
+Read and write access restricted to verified alumni.
+
+Notifications & Email
+Transactional emails for: account creation, approval / rejection, password reset, payment confirmation and receipt, event reminders, membership renewal reminders.
+Branded email templates approved by DAVKAWT before go-live.
+Bulk announcement email by administrators to selected segments (all alumni, batch, course, etc.).
+
+Membership & Payments
+Configurable membership plans (e.g., one-time registration fee and / or annual membership).
+Online payment via Easebuzz supporting UPI, credit / debit cards, netbanking, wallets, and other modes enabled on the merchant account.
+Payment confirmation page and emailed PDF receipt.
+Retry option for failed or abandoned payments.
+Annual membership tracks an expiry date; reminder emails before expiry.
+Admin-initiated refund through the payment gateway dashboard.
+
+Admin Dashboard
+Summary metrics: total alumni, pending approvals, paid members, upcoming events.
+Approval queue, alumni management (search, edit, deactivate), event management, announcement management, forum moderation.
+Payment record listing with filters by date, status, and plan.
+Configuration of membership plans, email templates, and basic site settings.
+
+Reports & Exports
+CSV / Excel export of alumni list, payment records, and event RSVPs based on selected filters.
+Basic engagement analytics (registrations over time, active users, popular content).
+
+
+Non-Functional Requirements
+
+
+Area
+Requirement
+
+Performance
+Public pages target a fast first paint on mobile under a typical 4G connection; admin lists support pagination for large datasets.
+Scalability
+Designed for 5,000 alumni at launch with headroom to grow.
+
+Availability
+Target uptime of 99.5% across the calendar year, excluding scheduled maintenance and third-party outages.
+
+Security
+Adherence to current best practices; encrypted traffic; secrets stored in a managed secrets store; rate limiting on sensitive endpoints.
+Privacy
+Compliant with India's DPDP Act 2023 principles; alumni privacy controls on personal contact fields.
+Usability
+Clean, modern interface following accessibility (WCAG 2.1 AA) guidelines; mobile-first.
+Maintainability
+Strictly typed code, well-structured repository, basic documentation for future engineers.
+Backups
+Automatic database backups retained by the cloud provider.
+External Interfaces
+
+
+Interface
+Purpose
+Payment Gateway (Easebuzz)
+Process membership payments, handle refunds and reconciliation.
+Email Service (SMTP)RESEND
+Send transactional and bulk emails.
+Cloud Database (Supabase)
+Store alumni data, content, and audit logs.
+Image / File Storage
+Store profile photos, event banners, and attachments.
+Google OAuth (optional)
+Social sign-in for alumni convenience.
+Error & Analytics Tools
+Operational monitoring and engagement reporting.
+
+Specific endpoint, key, and protocol details are maintained in the Vendor's internal technical documentation and are outside the scope of this SRS.
+
+
+Data Handling & Security
+
+All traffic between the user's browser and the platform shall be encrypted using TLS.
+Passwords shall be stored using industry-standard hashing.
+Role-based access controls shall be enforced at both the application and database layers.
+Administrative actions on alumni data shall be audit-logged.
+Data ownership: all alumni and operational data is owned by DAVKAWT. The Vendor acts strictly as a data processor for the duration of the engagement.
+
+Deliverables, Milestones & Acceptance
+
+Phased Delivery (Indicative, 8 Weeks)
+
+#
+Phase
+Deliverables
+1
+Discovery & Planning
+SRS sign-off, sitemap, wireframes
+2
+Setup & Foundations
+Repository, hosting setup, base UI shell, authentication
+3
+User System & Profiles
+Registration, approval flow, roles, profiles
+4
+Directory & Search
+Directory listing, search, filters, profile detail
+5
+Community & Events
+Announcements, events, forum
+
+6
+
+Payments, Notifications & Admin
+Easebuzz integration, email templates, admin dashboard, exports
+7
+Testing & QA
+Functional testing, performance audit, security review, UAT
+8
+Launch & Handover
+Production deployment, training, documentation
+
+Deliverables
+Live, deployed web application on DAVKAWT's domain.
+Admin user manual (PDF).
+30 days of post-launch bug-fix support.
+Year 1 AMC as per the commercial proposal.
+
+Acceptance
+Each phase is presented for UAT and accepted in writing by the SPoC.
+Final sign-off is documented on an Acceptance Certificate signed by DAVKAWT's authorised signatory.
+
+
+Assumptions, Constraints & Risks
+
+Assumptions
+DAVKAWT will provide brand assets, alumni seed data (if any), and legal copy on time and time to time immediate confirmations.
+The payment gateway KYC will be completed in good time before go-live the required documents must be shared within time.
+The SPoC nominated by DAVKAWT will be empowered to make timely decisions.
+
+Constraints
+Mobile-first design.
+Indian data residency for personal data where practical.
+Easebuzz is the fixed payment gateway.
+
+Key Risks & Mitigations
+
+Risk
+Mitigation
+Delay in receiving content, brand assets, or alumni data
+Early checklist shared with DAVKAWT; non-blocking development on placeholders.
+Payment gateway KYC delays
+Early submission of merchant documents; staged go-live for non-payment features first if needed.
+Spam or duplicate registrations
+Email OTP, CAPTCHA, admin approval, basic rate limiting.
+
+Third-party service downtime
+Reasonable retries, clear error messages; outages outside Vendor control.
+
+
+Commercial & Engagement Terms
+
+These commercial and engagement terms form an integral part of this SRS. By countersigning this document, DAVKAWT acknowledges and accepts these terms.
+
+Scope & Change Management
+The scope is defined exclusively by this SRS. Any addition or material change after sign-off shall be raised in writing as a Change Request and shall be estimated and approved separately before work commences.
+
+Payment Terms
+50% of the project fee payable on SRS sign-off, before development begins.
+50% payable on completion of UAT and prior to final handover.
+Domain, hosting, email-sending, and payment gateway transaction charges are borne directly by DAVKAWT.
+Production credentials, and final documentation will be transferred to DAVKAWT after full payment is received.
+Invoices unpaid beyond 30 days may attract suspension of services until settled.
+
+Intellectual Property
+On full and final payment, the custom application code developed specifically for DAVKAWT is assigned to DAVKAWT. Open-source frameworks and libraries used remain governed by their respective licences. The Vendor retains its prior knowhow, reusable internal utilities, and methodology.
+
+Confidentiality & Data Ownership
+All alumni data, content, and operational records are owned by DAVKAWT. The Vendor and its personnel will treat all such data as strictly confidential during and after the engagement and will use it solely for the purpose of delivering and supporting the platform.
+
+Warranty
+The Vendor warrants that the delivered system will materially conform to this SRS for a period of 30 days from go-live. Defects reported in writing during this period that are reproducible deviations from this SRS will be corrected at no additional cost. The warranty does not cover feature changes, third-party service changes, or issues caused by client-side modifications.
+
+Third-Party Services
+The platform depends on third-party services (payment gateway, hosting, email, cloud database, etc.). Service availability, Fee, policy changes, and KYC processes of these providers are outside the Vendor's control. Adapting the platform to material future changes by these providers shall be treated as a Change Request.
+
+Limitation of Liability
+The Vendor's aggregate liability under this engagement, regardless of cause, shall not exceed the total fees actually received from DAVKAWT for this project. The Vendor shall not be liable for indirect, incidental, or consequential damages including loss of profit, loss of data, or business interruption.
+
+Annual Maintenance Contract (AMC)
+Year 1 AMC is included as per the commercial proposal and covers routine bug fixes, basic monitoring, and minor adjustments. Year 2 onwards AMC is offered at ₹20,000 per annum, payable in advance, and excludes new features, redesigns, and major upgrades, which shall be treated as Change Requests. AMC must be renewed in writing before expiry.
+
+Termination
+Either party may terminate this engagement with 30 days' written notice. On termination, DAVKAWT shall pay for all work completed up to that date; the Vendor shall hand over completed work artefacts subject to payment clearance. Confidentiality obligations survive termination.
+
+Force Majeure
+Neither party shall be liable for delay or failure to perform caused by events outside reasonable control, including natural disasters, pandemics, government actions, internet or cloud provider outages, or labour disputes.
+
+Governing Law & Dispute Resolution
+This engagement is governed by the laws of India. Disputes shall first be addressed through good-faith negotiation; failing resolution, through arbitration under the Arbitration and Conciliation Act, 1996, conducted in English at a venue mutually agreed by the parties.
+
+Communication
+DAVKAWT shall nominate a single SPoC authorised to approve scope, sign deliverables, and process payments. Standard working days are Monday to Friday, 10:00 to 18:00 IST, excluding Indian public holidays.
+
+Acknowledgement
+By countersigning this SRS, the authorised signatory of DAVKAWT confirms agreement to both the technical scope (Sections 1–9) and the commercial and engagement terms (Section 10).
+
+
+Appendices
+
+Appendix A — Glossary
+See Section 1.3.
+
+Appendix B — Documents to be Provided by DAVKAWT
+For project commencement and for payment gateway onboarding, DAVKAWT shall provide:
+Project assets
+Trust logo (vector format preferred) and brand colours.
+About Us copy, registered office address, contact details.
+Privacy Policy, Terms of Use, and Refund / Cancellation Policy, reviewed by DAVKAWT's legal counsel.
+Alumni seed list, if available (Excel / CSV).
+Membership plan details and Fee.
+Payment gateway (Easebuzz) onboarding
+Trust Deed and Trust Registration Certificate.
+PAN of the Trust.
+12A and 80G certificates, if applicable.
+GST Certificate, if registered.
+

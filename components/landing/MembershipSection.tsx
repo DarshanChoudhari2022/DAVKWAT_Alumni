@@ -60,7 +60,7 @@ export function MembershipSection({ plans }: MembershipSectionProps) {
         </Reveal>
 
         <div className="mt-12 grid items-start gap-8 lg:grid-cols-[1fr_0.9fr]">
-          {/* Pricing */}
+          {/* Fee */}
           <Reveal direction="left">
             <div className="grid gap-5 sm:grid-cols-2">
               {hasPlans ? (
@@ -69,9 +69,8 @@ export function MembershipSection({ plans }: MembershipSectionProps) {
                   return (
                     <div
                       key={plan.id}
-                      className={`relative flex h-full flex-col rounded-3xl border bg-white p-6 shadow-sm ${
-                        isLifetime ? 'border-[#0F2557] ring-1 ring-[#0F2557]/15' : 'border-slate-200'
-                      }`}
+                      className={`relative flex h-full flex-col rounded-3xl border bg-white p-6 shadow-sm ${isLifetime ? 'border-[#0F2557] ring-1 ring-[#0F2557]/15' : 'border-slate-200'
+                        }`}
                     >
                       {isLifetime && (
                         <span className="absolute -top-2.5 right-5 rounded-full bg-[#0F2557] px-3 py-0.5 text-[10px] font-bold uppercase tracking-wider text-white">

@@ -32,7 +32,7 @@ audience (a retired teacher and a young engineer should both read it comfortably
 2. Hero
 3. Official & verified (trust band)
 4. Why register
-5. Membership that gives back (pricing + welfare)
+5. Membership that gives back (Fee + welfare)
 6. How membership works
 7. Events & announcements (live feeds)
 8. Directory preview (privacy-first)
@@ -153,7 +153,7 @@ DAV Khagaul.
 
 ---
 
-# 5 — Membership that gives back (pricing + welfare)
+# 5 — Membership that gives back (Fee + welfare)
 
 ```
 Section heading: Membership that gives back
@@ -162,7 +162,7 @@ Intro: Membership of the DAV Khagaul alumni network is supported by a modest
 contribution. It keeps the portal running securely — and a part of it goes
 directly toward welfare initiatives for current students and alumni in need.
 
-— Pricing —
+— Fee —
 Plan name: [PLAN_NAME]
 Amount: ₹[REAL_AMOUNT] / [PERIOD]
 Note: One simple contribution. No hidden charges.
@@ -459,7 +459,7 @@ community updates from the DAV Khagaul Alumni Welfare Trust will appear here.
    small line icons (shield, check, lock). The gravitas anchor — quiet and uncrowded.
 4. **Why register.** Clean 2–3 column benefit grid, simple icons, human headings, generous
    spacing, large readable type. Readability over decoration.
-5. **Membership that gives back.** A single calm pricing card centered — NOT a 3-tier SaaS wall.
+5. **Membership that gives back.** A single calm Fee card centered — NOT a 3-tier SaaS wall.
    The "what your contribution supports" list deserves equal visual weight to the amount. Welfare
    framing stays visible. Secure-payment + refund cues sit close by.
 6. **How membership works.** Horizontal 3-step row (stacked on mobile), numbered markers, a

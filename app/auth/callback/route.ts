@@ -25,17 +25,31 @@ export async function GET(request: NextRequest) {
     const {
       data: { user },
     } = await supabase.auth.getUser();
+    
+    let hasProfile = false;
     if (user) {
       try {
-        await createAdminClient()
+        const admin = createAdminClient();
+        const { data: profile } = await admin
           .from('profiles')
-          .update({ last_seen_at: new Date().toISOString() })
-          .eq('id', user.id);
+          .select('id')
+          .eq('id', user.id)
+          .maybeSingle();
+
+        if (profile) {
+          hasProfile = true;
+          await admin
+            .from('profiles')
+            .update({ last_seen_at: new Date().toISOString() })
+            .eq('id', user.id);
+        }
       } catch (error) {
-        console.warn('[auth/callback] last_seen_at update skipped:', error);
+        console.warn('[auth/callback] profile check / last_seen_at update skipped:', error);
       }
     }
-  }
 
-  return NextResponse.redirect(`${origin}${redirectTo}`);
+    // If resetting password, proceed to reset page even if profile is missing (should not happen)
+    const isReset = redirectTo === '/auth/reset-password';
+    const finalRedirect = (hasProfile || isReset) ? redirectTo : '/register/complete';
+    return NextResponse.redirect(`${origin}${finalRedirect}`);
 }

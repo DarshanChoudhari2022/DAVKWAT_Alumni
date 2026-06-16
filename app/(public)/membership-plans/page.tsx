@@ -10,7 +10,7 @@ export const dynamic = 'force-dynamic';
 export const revalidate = 0;
 
 export const metadata: Metadata = {
-  title: 'Membership & Pricing | DAVKAWT',
+  title: 'Membership & Fee | DAVKAWT',
   description:
     'How membership works and what your contribution supports at the DAV Khagaul Alumni Welfare Trust. Reviewed by the Trust committee and privacy-first.',
 };
@@ -59,7 +59,7 @@ export default async function MembershipPlansPage() {
             DAV Khagaul Alumni Welfare Trust
           </span>
           <h1 className="mt-4 font-sans text-3xl font-black tracking-[-0.03em] sm:text-4xl md:text-5xl">
-            Membership &amp; pricing
+            Membership &amp; Fee
           </h1>
           <p className="mx-auto mt-4 max-w-xl text-sm leading-relaxed text-white/70 sm:text-base">
             How membership works, what your contribution supports, and the plans

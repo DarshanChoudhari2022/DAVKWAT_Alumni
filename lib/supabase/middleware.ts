@@ -33,16 +33,17 @@ export async function updateSession(request: NextRequest): Promise<NextResponse>
   const needsAlumni = isAlumniRoute(pathname);
   const needsAdmin = isAdminRoute(pathname);
   const isAuthPage = AUTH_ROUTES.some((r) => pathname === r);
+  const isCompleteRegister = pathname === '/register/complete';
 
   // Public, non-auth routes (home, about, privacy, etc.) don't gate on a session.
   // Skipping the Supabase auth round-trip here keeps these pages fast to load.
-  if (!needsAlumni && !needsAdmin && !isAuthPage) {
+  if (!needsAlumni && !needsAdmin && !isAuthPage && !isCompleteRegister) {
     return response;
   }
 
   // Fail-closed helper for protected routes hit by a backend/network error.
   const failClosed = (): NextResponse | null => {
-    if (needsAdmin || needsAlumni) {
+    if (needsAdmin || needsAlumni || isCompleteRegister) {
       const url = request.nextUrl.clone();
       url.pathname = needsAdmin ? '/admin-login' : '/login';
       url.search = '';
@@ -105,7 +106,7 @@ export async function updateSession(request: NextRequest): Promise<NextResponse>
   }
 
   // Not logged in -> redirect protected routes, preserving the requested path (Req 2.4).
-  if (!user && (needsAlumni || needsAdmin)) {
+  if (!user && (needsAlumni || needsAdmin || isCompleteRegister)) {
     const url = request.nextUrl.clone();
     url.pathname = needsAdmin ? '/admin-login' : '/login';
     url.searchParams.set('redirect', requestedPath);
@@ -144,6 +145,25 @@ export async function updateSession(request: NextRequest): Promise<NextResponse>
         }
       }
 
+      if (isCompleteRegister) {
+        const { data: profile } = await supabase
+          .from('profiles')
+          .select('role, approval_status')
+          .eq('id', user.id)
+          .maybeSingle();
+
+        if (profile) {
+          const url = request.nextUrl.clone();
+          url.pathname = resolveSignedInRedirect(
+            null,
+            profile.role,
+            profile.approval_status
+          );
+          url.search = '';
+          return NextResponse.redirect(url);
+        }
+      }
+
       if (needsAlumni || needsAdmin) {
         const { data: profile } = await supabase
           .from('profiles')
@@ -153,7 +173,7 @@ export async function updateSession(request: NextRequest): Promise<NextResponse>
 
         if (!profile) {
           const url = request.nextUrl.clone();
-          url.pathname = '/login';
+          url.pathname = '/register/complete';
           url.search = '';
           return NextResponse.redirect(url);
         }

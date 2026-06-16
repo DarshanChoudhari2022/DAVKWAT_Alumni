@@ -63,7 +63,7 @@ concentrated in the page bodies below.
 | Page (`app/(public)/…`) | Kind | Patterns | Notes |
 |---|---|---|---|
 | `page.tsx` (landing) | landing | **BA**, **EC** | `export const dynamic = 'force-dynamic'; revalidate = 0` — fully re-queried each request. Awaits a 3-query `Promise.all` (events, announcements, **`count: 'exact', head: true`** approved-alumni count) before render. No Suspense. The alumni count and recent lists are portal-global Aggregate_Data and are candidates for the cache layer. |
-| `membership-plans/page.tsx` | pricing | **BA**, **URD** | `force-dynamic; revalidate = 0`; awaits `getPlans()` which queries **`membership_plans`** (`is_active`, order by amount) on every request with no cache — the same Reference_Data the admin settings page caches. No count. |
+| `membership-plans/page.tsx` | Fee | **BA**, **URD** | `force-dynamic; revalidate = 0`; awaits `getPlans()` which queries **`membership_plans`** (`is_active`, order by amount) on every request with no cache — the same Reference_Data the admin settings page caches. No count. |
 | `about/page.tsx` | content | *(none — already mitigated)* | Reads `site_settings` via `getPublicSiteSettings()`, **but** sets `export const revalidate = 300`, so the segment is ISR-cached within the same 300s bound the admin `getSiteSettings()` cache uses. Listed for completeness; it does **not** exhibit the URD pattern. |
 | `admin-login`, `login`, `register`, `forgot-password`, `verify-email`, `pending-approval`, `auth/reset-password` | auth/forms | *(none)* | Client forms / server actions; no server-side list/reference reads in the page render path. |
 | `features`, `terms`, `privacy`, `refund` | static content | *(none)* | Static marketing/legal content; no data fetching. |
