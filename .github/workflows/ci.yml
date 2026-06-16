@@ -1,14 +1,8 @@
 name: CI
 
+# CI disabled — re-enable by restoring push/pull_request triggers
 on:
-  push:
-    branches:
-      - main
-      - develop
-  pull_request:
-    branches:
-      - main
-      - develop
+  workflow_dispatch:
 
 jobs:
   validate:

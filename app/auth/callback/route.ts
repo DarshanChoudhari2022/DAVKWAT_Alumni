@@ -52,4 +52,8 @@ export async function GET(request: NextRequest) {
     const isReset = redirectTo === '/auth/reset-password';
     const finalRedirect = (hasProfile || isReset) ? redirectTo : '/register/complete';
     return NextResponse.redirect(`${origin}${finalRedirect}`);
+  }
+
+  // No code present — redirect to login
+  return NextResponse.redirect(`${origin}/login?error=missing_code`);
 }
