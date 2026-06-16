@@ -20,7 +20,7 @@ export interface CompleteState {
 async function insertProfile(
   userId: string,
   email: string,
-  data: Record<string, any>,
+  data: Record<string, unknown>,
   attempt = 1
 ): Promise<{ success: boolean; error?: string }> {
   try {
@@ -95,7 +95,7 @@ export async function completeRegistrationAction(
   }
 
   // ---------- 3. Parse & validate ----------
-  const raw: Record<string, any> = Object.fromEntries(formData.entries());
+  const raw: Record<string, unknown> = Object.fromEntries(formData.entries());
   if (raw.batch_year) raw.batch_year = Number(raw.batch_year);
   raw.hide_email = formData.get('hide_email') === 'on';
   raw.hide_phone = formData.get('hide_phone') === 'on';
