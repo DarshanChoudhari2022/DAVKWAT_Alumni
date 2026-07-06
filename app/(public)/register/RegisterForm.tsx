@@ -20,6 +20,7 @@ import {
 import { VALIDATION_LIMITS } from '@/lib/validations/constraints';
 import { LEFT_BEFORE_CLASSES } from '@/lib/validations/registration';
 import { PhotoUploadWithCrop } from '@/components/shared/PhotoUploadWithCrop';
+import { DocumentUpload } from '@/components/shared/DocumentUpload';
 import { registerAction, type RegisterState } from './actions';
 
 const initialState: RegisterState = {};
@@ -662,27 +663,14 @@ export function RegisterForm() {
       <div id="step-4" className={cn('space-y-5', step !== 4 && 'hidden')}>
         {/* School Document Upload (Compulsory) */}
         <div className="rounded-2xl border border-blue-200 bg-gradient-to-br from-blue-50 to-indigo-50 p-5">
-          <p className="text-sm font-bold text-slate-900 mb-1">📄 School Document <span className="text-rose-600">*</span></p>
-          <p className="text-xs text-slate-600 mb-3">
-            Upload a photo of any school document (ID card, marksheet, certificate, etc.) for verification.
-            Image will be auto-compressed.
-          </p>
-          <label
-            htmlFor="school_document"
-            className="flex cursor-pointer flex-col items-center justify-center gap-2 rounded-xl border-2 border-dashed border-slate-300 bg-white p-6 transition hover:border-[#0F2557] hover:bg-slate-50"
-          >
-            <Upload className="h-8 w-8 text-slate-400" />
-            <span className="text-sm font-medium text-slate-600">Click to upload school document</span>
-            <span className="text-xs text-slate-400">JPG, PNG or WebP — max 5 MB</span>
-            <input
-              type="file"
-              id="school_document"
-              name="school_document"
-              accept="image/jpeg,image/png,image/webp"
-              className="hidden"
-            />
-          </label>
-          <FieldError message={fieldErrors?.school_document} />
+          <DocumentUpload
+            name="school_document"
+            label="School Document"
+            required
+            error={fieldErrors?.school_document}
+            maxRawSize={10 * 1024 * 1024}
+            targetCompressedSize={350 * 1024}
+          />
         </div>
 
         {/* Membership Amount Selection */}
@@ -803,26 +791,13 @@ export function RegisterForm() {
 
         {/* Payment Proof Upload */}
         <div className="rounded-2xl border border-emerald-200 bg-gradient-to-br from-emerald-50 to-green-50 p-5">
-          <p className="text-sm font-bold text-slate-900 mb-1">📸 Payment Proof Screenshot</p>
-          <p className="text-xs text-slate-600 mb-3">
-            Upload a screenshot of your UPI payment confirmation. This helps the admin verify your payment faster.
-          </p>
-          <label
-            htmlFor="payment_proof"
-            className="flex cursor-pointer flex-col items-center justify-center gap-2 rounded-xl border-2 border-dashed border-slate-300 bg-white p-6 transition hover:border-emerald-500 hover:bg-emerald-50/30"
-          >
-            <Upload className="h-8 w-8 text-slate-400" />
-            <span className="text-sm font-medium text-slate-600">Click to upload payment screenshot</span>
-            <span className="text-xs text-slate-400">JPG, PNG or WebP — max 5 MB</span>
-            <input
-              type="file"
-              id="payment_proof"
-              name="payment_proof"
-              accept="image/jpeg,image/png,image/webp"
-              className="hidden"
-            />
-          </label>
-          <FieldError message={fieldErrors?.payment_proof} />
+          <DocumentUpload
+            name="payment_proof"
+            label="Payment Proof Screenshot"
+            error={fieldErrors?.payment_proof}
+            maxRawSize={10 * 1024 * 1024}
+            targetCompressedSize={350 * 1024}
+          />
         </div>
 
         <p className="text-xs leading-relaxed text-slate-600 rounded-lg bg-slate-50 p-3">
