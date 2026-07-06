@@ -41,15 +41,6 @@ export function Hero({ alumniCount }: HeroProps) {
       <div className="relative mx-auto max-w-7xl px-4 pb-14 pt-10 sm:px-6 sm:pt-20 md:pb-20 lg:px-8 lg:pb-28 lg:pt-24">
         <div className="grid items-center gap-12 lg:grid-cols-[1fr_0.9fr] lg:gap-14">
           <div className="max-w-2xl">
-            <Reveal direction="zoom">
-              <div className="inline-flex items-center gap-2 rounded-full border border-white/15 bg-white/[0.06] px-3.5 py-1.5 backdrop-blur">
-                <ShieldCheck className="h-3.5 w-3.5 text-sky-300" />
-                <span className="text-xs font-semibold tracking-wide text-white/80">
-
-                </span>
-              </div>
-            </Reveal>
-
             <Reveal delay={80}>
               <h1 className="mt-7 font-sans text-4xl font-black leading-[1.06] tracking-[-0.04em] sm:text-5xl lg:text-[58px]">
                 Reconnect with your

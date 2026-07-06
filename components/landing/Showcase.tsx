@@ -55,15 +55,15 @@ export function Showcase({ events, announcements }: ShowcaseProps) {
               id="events"
               className="flex h-full flex-col rounded-3xl border border-slate-200 bg-white p-6 shadow-xl shadow-slate-200/40 sm:p-8"
             >
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-3">
-                  <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-blue-50">
+              <div className="flex items-center justify-between gap-4">
+                <div className="flex items-center gap-3 min-w-0">
+                  <div className="flex h-10 w-10 flex-none items-center justify-center rounded-xl bg-blue-50">
                     <Calendar className="h-5 w-5 text-blue-600" />
                   </div>
-                  <h3 className="text-xl font-bold text-slate-900">Upcoming events</h3>
+                  <h3 className="text-xl font-bold text-slate-900 truncate">Upcoming events</h3>
                 </div>
-                <Link href="/events" className="text-sm font-semibold text-blue-600 hover:text-blue-700 transition-colors">
-                  View all events
+                <Link href="/events" className="text-sm font-semibold text-blue-600 hover:text-blue-700 transition-colors flex-none">
+                  View all <span className="hidden sm:inline">events</span>
                 </Link>
               </div>
               
@@ -113,15 +113,15 @@ export function Showcase({ events, announcements }: ShowcaseProps) {
               id="announcements"
               className="flex h-full flex-col rounded-3xl border border-slate-200 bg-white p-6 shadow-xl shadow-slate-200/40 sm:p-8"
             >
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-3">
-                  <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-blue-50">
+              <div className="flex items-center justify-between gap-4">
+                <div className="flex items-center gap-3 min-w-0">
+                  <div className="flex h-10 w-10 flex-none items-center justify-center rounded-xl bg-blue-50">
                     <Bell className="h-5 w-5 text-blue-600" />
                   </div>
-                  <h3 className="text-xl font-bold text-slate-900">Announcements</h3>
+                  <h3 className="text-xl font-bold text-slate-900 truncate">Announcements</h3>
                 </div>
-                <Link href="/announcements" className="text-sm font-semibold text-blue-600 hover:text-blue-700 transition-colors">
-                  View all announcements
+                <Link href="/announcements" className="text-sm font-semibold text-blue-600 hover:text-blue-700 transition-colors flex-none">
+                  View all <span className="hidden sm:inline">announcements</span>
                 </Link>
               </div>
 
