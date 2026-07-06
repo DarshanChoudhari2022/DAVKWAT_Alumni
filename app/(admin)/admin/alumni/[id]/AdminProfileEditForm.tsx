@@ -126,15 +126,15 @@ export function AdminProfileEditForm({ alumniId, initial }: AdminProfileEditForm
         <Field label="Full Name" name="full_name" defaultValue={initial.full_name} maxLength={VALIDATION_LIMITS.nameMax} required />
         <Field label="Email" name="email" type="email" defaultValue={initial.email} maxLength={VALIDATION_LIMITS.emailMax} required />
         <Field label="Display Name" name="display_name" defaultValue={initial.display_name ?? ''} maxLength={VALIDATION_LIMITS.displayNameMax} />
-        <Field label="Phone" name="phone" type="tel" inputMode="numeric" maxLength={10} pattern={INPUT_PATTERNS.indianMobile} title="Enter a valid 10-digit Indian mobile number starting with 6, 7, 8, or 9" defaultValue={initial.phone ?? ''} />
+        <Field label="Phone" name="phone" type="tel" inputMode="numeric" maxLength={20} pattern={INPUT_PATTERNS.internationalPhone} title="Enter a valid phone number (7-15 digits, optionally starting with +)" defaultValue={initial.phone ?? ''} />
         <Field
           label="Alternate Phone"
           name="alternate_phone"
           type="tel"
           inputMode="numeric"
-          maxLength={10}
-          pattern={INPUT_PATTERNS.indianMobile}
-          title="Enter a valid 10-digit Indian mobile number starting with 6, 7, 8, or 9"
+          maxLength={20}
+          pattern={INPUT_PATTERNS.internationalPhone}
+          title="Enter a valid phone number (7-15 digits, optionally starting with +)"
           defaultValue={initial.alternate_phone ?? ''}
         />
         <Field label="City" name="current_city" defaultValue={initial.current_city ?? ''} maxLength={VALIDATION_LIMITS.placeMax} />

@@ -8,7 +8,7 @@ import { APP_URL } from '@/lib/resend/client';
 
 const fullSchema = fullRegistrationSchema;
 type ProfileType = 'alumni' | 'faculty';
-type EducationLevel = 'left_before_10th' | 'secondary' | 'senior_secondary' | 'other';
+type EducationLevel = 'left_before_10th' | 'secondary' | 'senior_secondary';
 type EducationStream = 'Science' | 'Commerce' | 'Arts';
 
 export interface RegisterState {
@@ -82,12 +82,55 @@ async function cleanUpOrphanedUser(email: string): Promise<{ cleaned: boolean; e
 }
 
 /**
+ * Upload profile photo to Supabase storage 'avatars' bucket.
+ * Creates the bucket if it does not exist.
+ */
+async function uploadProfilePhoto(userId: string, photoFile: File): Promise<string> {
+  const admin = createAdminClient();
+  const bucketName = 'avatars';
+
+  // Ensure bucket exists
+  try {
+    const { data: buckets } = await admin.storage.listBuckets();
+    if (!buckets?.find((b) => b.name === bucketName)) {
+      console.log(`[register/upload] creating bucket "${bucketName}"`);
+      await admin.storage.createBucket(bucketName, {
+        public: true,
+        allowedMimeTypes: ['image/jpeg', 'image/png', 'image/webp'],
+        fileSizeLimit: 5 * 1024 * 1024,
+      });
+    }
+  } catch (e) {
+    console.warn('[register/upload] bucket check/creation warning:', e);
+  }
+
+  const fileExt = photoFile.name.split('.').pop() || 'jpg';
+  const fileName = `${userId}-${Date.now()}.${fileExt}`;
+  const filePath = `profile-photos/${fileName}`;
+
+  const { error: uploadError } = await admin.storage
+    .from(bucketName)
+    .upload(filePath, photoFile, {
+      contentType: photoFile.type,
+      upsert: true,
+    });
+
+  if (uploadError) {
+    throw new Error(`Failed to upload photo: ${uploadError.message}`);
+  }
+
+  const { data: { publicUrl } } = admin.storage.from(bucketName).getPublicUrl(filePath);
+  return publicUrl;
+}
+
+/**
  * Insert profile row via service-role Supabase client (bypasses RLS).
  * Retries once on transient failure.
  */
 async function insertProfile(
   userId: string,
   data: Record<string, unknown>,
+  avatarUrl: string | null,
   attempt = 1
 ): Promise<{ success: boolean; error?: string }> {
   try {
@@ -118,6 +161,7 @@ async function insertProfile(
       bio: (data.bio as string) || null,
       hide_email: data.hide_email as boolean,
       hide_phone: data.hide_phone as boolean,
+      avatar_url: avatarUrl,
       role: 'pending',
       approval_status: 'pending',
     });
@@ -135,7 +179,7 @@ async function insertProfile(
     // Retry once on transient errors
     if (attempt === 1 && msg.includes('connect')) {
       console.log('[register] retrying profile insert...');
-      return insertProfile(userId, data, 2);
+      return insertProfile(userId, data, avatarUrl, 2);
     }
 
     return { success: false, error: msg };
@@ -162,7 +206,32 @@ export async function registerAction(
   _prev: RegisterState,
   formData: FormData
 ): Promise<RegisterState> {
-  // ---------- 1. Parse & validate ----------
+  // ---------- 1. Check profile photo file first ----------
+  const photoFile = formData.get('profile_photo') as File | null;
+  if (!photoFile || photoFile.size === 0) {
+    return {
+      fieldErrors: {
+        profile_photo: 'Profile photo is required',
+      },
+    };
+  }
+  if (photoFile.size > 5 * 1024 * 1024) {
+    return {
+      fieldErrors: {
+        profile_photo: 'Photo must be under 5 MB',
+      },
+    };
+  }
+  const allowedTypes = ['image/jpeg', 'image/png', 'image/webp'];
+  if (!allowedTypes.includes(photoFile.type)) {
+    return {
+      fieldErrors: {
+        profile_photo: 'Only JPG, PNG or WebP images are allowed',
+      },
+    };
+  }
+
+  // ---------- 2. Parse & validate fields ----------
   const raw: Record<string, unknown> = Object.fromEntries(formData.entries());
   if (raw.passing_year) raw.passing_year = Number(raw.passing_year);
   if (raw.passing_year_10th) raw.passing_year_10th = Number(raw.passing_year_10th);
@@ -190,7 +259,7 @@ export async function registerAction(
   const data = parsed.data;
   console.log(`[register] starting registration for ${data.email}`);
 
-  // ---------- 2. Create auth user ----------
+  // ---------- 3. Create auth user ----------
   const supabase = await createClient();
   let signUpResult = await signUpUser(supabase, data.email, data.password, data.full_name);
 
@@ -252,8 +321,25 @@ export async function registerAction(
   const userId = currentUser.id;
   console.log(`[register] auth user created: ${userId}`);
 
-  // ---------- 3. Insert profile via service role ----------
-  const profileResult = await insertProfile(userId, data);
+  // ---------- 4. Upload profile photo ----------
+  let avatarUrl: string | null = null;
+  try {
+    avatarUrl = await uploadProfilePhoto(userId, photoFile);
+    console.log(`[register] profile photo uploaded successfully: ${avatarUrl}`);
+  } catch (uploadErr: any) {
+    console.error('[register] profile photo upload failed:', uploadErr);
+    // Roll back auth user
+    try {
+      const admin = createAdminClient();
+      await admin.auth.admin.deleteUser(userId);
+    } catch (rollbackErr) {
+      console.error('[register] rollback failed:', rollbackErr);
+    }
+    return { error: `Failed to upload profile photo: ${uploadErr.message}. Please try again.` };
+  }
+
+  // ---------- 5. Insert profile via service role ----------
+  const profileResult = await insertProfile(userId, data, avatarUrl);
 
   if (!profileResult.success) {
     // Roll back the auth user so the email isn't permanently taken
@@ -261,14 +347,13 @@ export async function registerAction(
     try {
       const admin = createAdminClient();
       await admin.auth.admin.deleteUser(userId);
-      console.log('[register] rolled back auth user successfully');
     } catch (rollbackErr) {
       console.error('[register] rollback failed — user may be orphaned:', rollbackErr);
     }
     return { error: `Failed to create your profile: ${profileResult.error}. Please try again.` };
   }
 
-  // ---------- 5. Send emails (non-blocking) ----------
+  // ---------- 6. Send emails (non-blocking) ----------
   try {
     const { getResend, FROM_EMAIL, ADMIN_EMAIL } = await import('@/lib/resend/client');
     const WelcomeEmail = (await import('@/emails/WelcomeEmail')).default;
@@ -310,7 +395,7 @@ export async function registerAction(
     // Registration still succeeded — emails are non-critical
   }
 
-  // ---------- 6. Redirect based on email confirmation status ----------
+  // ---------- 7. Redirect based on email confirmation status ----------
   const emailConfirmed = currentUser.email_confirmed_at != null;
 
   if (emailConfirmed) {

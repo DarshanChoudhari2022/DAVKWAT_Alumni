@@ -24,10 +24,12 @@ export const VALIDATION_LIMITS = {
 
 export const INPUT_PATTERNS = {
   indianMobile: '[6-9][0-9]{9}',
+  internationalPhone: '\\+?[0-9]{7,15}',
 } as const;
 
 export const VALIDATION_MESSAGES = {
   indianMobile: 'Enter a valid 10-digit Indian mobile number starting with 6, 7, 8, or 9',
+  internationalPhone: 'Enter a valid phone number (7-15 digits, optionally starting with +)',
   futureDate: 'Date of birth cannot be in the future',
   oldDate: 'Enter a realistic date of birth',
 } as const;

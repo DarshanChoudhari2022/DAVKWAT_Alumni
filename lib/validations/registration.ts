@@ -1,7 +1,7 @@
 import { z } from 'zod';
 import {
   optionalDateOfBirth,
-  optionalIndianMobile,
+  optionalInternationalPhone,
   optionalProfileUrl,
   optionalText,
   requiredName,
@@ -13,16 +13,47 @@ export const EDUCATION_LEVELS = [
   'left_before_10th',
   'secondary',
   'senior_secondary',
-  'other',
 ] as const;
 export const EDUCATION_STREAMS = ['Science', 'Commerce', 'Arts'] as const;
 
+/** Classes a student may have left at before completing 10th */
+export const LEFT_BEFORE_CLASSES = [
+  'Class 1', 'Class 2', 'Class 3', 'Class 4', 'Class 5',
+  'Class 6', 'Class 7', 'Class 8', 'Class 9',
+] as const;
+
 export const EDUCATION_LEVEL_LABELS: Record<(typeof EDUCATION_LEVELS)[number], string> = {
-  left_before_10th: 'Left before completing schooling',
+  left_before_10th: 'Left before completing Secondary (10th)',
   secondary: 'Secondary (10th)',
   senior_secondary: 'Higher Secondary (12th)',
-  other: 'Other',
 };
+
+/**
+ * Extract the class number from strings like "Class 8", "class 5", etc.
+ * Returns the number or null if parsing fails.
+ */
+export function extractClassNumber(classStr: string): number | null {
+  const match = classStr.match(/(\d+)/);
+  return match ? parseInt(match[1], 10) : null;
+}
+
+/**
+ * Calculate the equivalent 10th-batch year for students who left before 10th.
+ * If a student left at Class 8 in year Y, their batch year = Y + (10 - 8) = Y + 2.
+ */
+export function calculateBatchYear(
+  educationLevel: (typeof EDUCATION_LEVELS)[number],
+  passingYear: number,
+  leftBeforeSchoolingClass?: string
+): number {
+  if (educationLevel === 'left_before_10th' && leftBeforeSchoolingClass) {
+    const classNum = extractClassNumber(leftBeforeSchoolingClass);
+    if (classNum && classNum >= 1 && classNum <= 9) {
+      return passingYear + (10 - classNum);
+    }
+  }
+  return passingYear;
+}
 
 export function courseForEducationLevel(
   educationLevel: (typeof EDUCATION_LEVELS)[number],
@@ -33,7 +64,7 @@ export function courseForEducationLevel(
   if (educationLevel === 'left_before_10th') {
     return leftBeforeSchoolingClass
       ? `Schooling (studied till ${leftBeforeSchoolingClass})`
-      : 'Left before completing schooling';
+      : 'Left before completing Secondary (10th)';
   }
   return EDUCATION_LEVEL_LABELS[educationLevel];
 }
@@ -109,14 +140,14 @@ export const alumniAcademicSchema = z
   .transform((data) => ({
     ...data,
     profile_type: 'alumni' as const,
-    batch_year: data.passing_year,
+    batch_year: calculateBatchYear(data.education_level, data.passing_year, data.left_before_schooling_class),
     course: courseForEducationLevel(data.education_level, data.education_stream, data.left_before_schooling_class),
   }));
 
 export const academicSchema = alumniAcademicSchema;
 
 export const personalSchema = z.object({
-  phone: optionalIndianMobile,
+  phone: optionalInternationalPhone,
   current_city: optionalText(VALIDATION_LIMITS.placeMax),
   current_state: optionalText(VALIDATION_LIMITS.placeMax),
   current_country: optionalText(VALIDATION_LIMITS.placeMax).default('India'),
@@ -139,7 +170,7 @@ export const professionalSchema = z.object({
 export const facultyDetailsSchema = z
   .object({
     full_name: requiredName,
-    phone: optionalIndianMobile,
+    phone: optionalInternationalPhone,
     current_city: optionalText(VALIDATION_LIMITS.placeMax),
     current_state: optionalText(VALIDATION_LIMITS.placeMax),
     current_country: optionalText(VALIDATION_LIMITS.placeMax).default('India'),

@@ -34,6 +34,22 @@ export const nullableIndianMobile = z
   .nullable()
   .or(z.literal(''));
 
+/** Accepts international numbers like +919876543210, +12025550143, or plain 10-digit Indian numbers */
+export const optionalInternationalPhone = z
+  .string()
+  .trim()
+  .regex(/^\+?[0-9]{7,15}$/, VALIDATION_MESSAGES.internationalPhone)
+  .optional()
+  .or(z.literal(''));
+
+export const nullableInternationalPhone = z
+  .string()
+  .trim()
+  .regex(/^\+?[0-9]{7,15}$/, VALIDATION_MESSAGES.internationalPhone)
+  .optional()
+  .nullable()
+  .or(z.literal(''));
+
 export const optionalProfileUrl = z
   .string()
   .trim()

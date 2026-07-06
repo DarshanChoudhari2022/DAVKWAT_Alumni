@@ -3,12 +3,15 @@
 import type React from 'react';
 import { useActionState, useRef, useState } from 'react';
 import { useFormStatus } from 'react-dom';
+import { Camera } from 'lucide-react';
+import { toast } from 'sonner';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { FieldError } from '@/components/shared/FieldError';
 import { cn } from '@/lib/utils/cn';
-import { INPUT_PATTERNS, VALIDATION_LIMITS } from '@/lib/validations/constraints';
+import { VALIDATION_LIMITS } from '@/lib/validations/constraints';
+import { LEFT_BEFORE_CLASSES } from '@/lib/validations/registration';
 import { completeRegistrationAction, type CompleteState } from './actions';
 
 const initialState: CompleteState = {};
@@ -22,6 +25,35 @@ const MONTHS = [
 ];
 const DAYS = Array.from({ length: 31 }, (_, i) => i + 1);
 const BIRTH_YEARS = Array.from({ length: CURRENT_YEAR - 1919 }, (_, i) => CURRENT_YEAR - i);
+
+/** Country codes for the phone dropdown — US/UK at top, then common codes */
+const COUNTRY_CODES = [
+  { code: '+91', label: '🇮🇳 India (+91)' },
+  { code: '+1', label: '🇺🇸 US (+1)' },
+  { code: '+44', label: '🇬🇧 UK (+44)' },
+  { code: '+61', label: '🇦🇺 Australia (+61)' },
+  { code: '+971', label: '🇦🇪 UAE (+971)' },
+  { code: '+65', label: '🇸🇬 Singapore (+65)' },
+  { code: '+49', label: '🇩🇪 Germany (+49)' },
+  { code: '+81', label: '🇯🇵 Japan (+81)' },
+  { code: '+86', label: '🇨🇳 China (+86)' },
+  { code: '+33', label: '🇫🇷 France (+33)' },
+  { code: '+966', label: '🇸🇦 Saudi Arabia (+966)' },
+  { code: '+974', label: '🇶🇦 Qatar (+974)' },
+  { code: '+968', label: '🇴🇲 Oman (+968)' },
+  { code: '+977', label: '🇳🇵 Nepal (+977)' },
+  { code: '+880', label: '🇧🇩 Bangladesh (+880)' },
+  { code: '+94', label: '🇱🇰 Sri Lanka (+94)' },
+  { code: '+60', label: '🇲🇾 Malaysia (+60)' },
+  { code: '+27', label: '🇿🇦 South Africa (+27)' },
+  { code: '+82', label: '🇰🇷 South Korea (+82)' },
+  { code: '+39', label: '🇮🇹 Italy (+39)' },
+  { code: '+7', label: '🇷🇺 Russia (+7)' },
+  { code: '+55', label: '🇧🇷 Brazil (+55)' },
+  { code: '+52', label: '🇲🇽 Mexico (+52)' },
+  { code: '+234', label: '🇳🇬 Nigeria (+234)' },
+  { code: '+254', label: '🇰🇪 Kenya (+254)' },
+] as const;
 
 function SubmitButton() {
   const { pending } = useFormStatus();
@@ -49,6 +81,8 @@ export function RegisterCompleteForm({ initialData }: RegisterCompleteFormProps)
   const [dobDay, setDobDay] = useState('');
   const [dobMonth, setDobMonth] = useState('');
   const [dobYear, setDobYear] = useState('');
+  const [countryCode, setCountryCode] = useState('+91');
+  const [photoPreview, setPhotoPreview] = useState<string | null>(null);
 
   function validateCurrentStep(): boolean {
     const stepDiv = document.getElementById(`step-${step}`);
@@ -63,6 +97,14 @@ export function RegisterCompleteForm({ initialData }: RegisterCompleteFormProps)
       if (!input.checkValidity()) {
         const name = input.name || input.id;
         errors[name] = input.validationMessage;
+      }
+    }
+
+    // Custom validation for profile photo on Step 1 (Personal Details)
+    if (step === 1) {
+      const photoInput = stepDiv.querySelector<HTMLInputElement>('input[name="profile_photo"]');
+      if (photoInput && (!photoInput.files || photoInput.files.length === 0)) {
+        errors['profile_photo'] = 'Profile photo is required';
       }
     }
 
@@ -82,7 +124,32 @@ export function RegisterCompleteForm({ initialData }: RegisterCompleteFormProps)
 
   function handleSubmit(fd: FormData) {
     if (!validateCurrentStep()) return;
+    // Combine country code + phone number into a single "phone" field
+    const phoneNumber = fd.get('phone_number') as string;
+    const phoneCountry = fd.get('phone_country_code') as string;
+    if (phoneNumber) {
+      fd.set('phone', `${phoneCountry}${phoneNumber}`);
+    }
+    fd.delete('phone_number');
+    fd.delete('phone_country_code');
     formAction(fd);
+  }
+
+  function handlePhotoChange(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0];
+    if (file) {
+      if (file.size > 5 * 1024 * 1024) {
+        toast.error('Photo must be under 5 MB');
+        e.target.value = '';
+        setPhotoPreview(null);
+        return;
+      }
+      const reader = new FileReader();
+      reader.onloadend = () => setPhotoPreview(reader.result as string);
+      reader.readAsDataURL(file);
+    } else {
+      setPhotoPreview(null);
+    }
   }
 
   const fieldErrors = { ...clientErrors, ...state.fieldErrors };
@@ -155,22 +222,30 @@ export function RegisterCompleteForm({ initialData }: RegisterCompleteFormProps)
             className="mt-1.5 flex h-10 w-full rounded-lg border border-slate-200 bg-white px-4 text-sm focus:outline-none focus:ring-2 focus:ring-[#0F2557]"
           >
             <option value="">Select level...</option>
-            <option value="left_before_10th">Left before completing schooling</option>
+            <option value="left_before_10th">Left before completing Secondary (10th)</option>
             <option value="secondary">Secondary (10th)</option>
             <option value="senior_secondary">Higher Secondary (12th)</option>
-            <option value="other">Other</option>
           </select>
           <FieldError message={fieldErrors?.education_level} />
         </div>
         {educationLevel === 'left_before_10th' && (
-          <Field
-            label="Till what class did you study? (e.g. Class 8)"
-            name="left_before_schooling_class"
-            required
-            maxLength={50}
-            placeholder="e.g. Class 8"
-            error={fieldErrors?.left_before_schooling_class}
-          />
+          <div>
+            <Label htmlFor="left_before_schooling_class">
+              Till what class did you study at DAV Khagaul? <span className="text-rose-600">*</span>
+            </Label>
+            <select
+              id="left_before_schooling_class"
+              name="left_before_schooling_class"
+              required
+              className="mt-1.5 flex h-10 w-full rounded-lg border border-slate-200 bg-white px-4 text-sm focus:outline-none focus:ring-2 focus:ring-[#0F2557]"
+            >
+              <option value="">Select class...</option>
+              {LEFT_BEFORE_CLASSES.map((cls) => (
+                <option key={cls} value={cls}>{cls}</option>
+              ))}
+            </select>
+            <FieldError message={fieldErrors?.left_before_schooling_class} />
+          </div>
         )}
         {educationLevel === 'senior_secondary' && (
           <div>
@@ -191,7 +266,10 @@ export function RegisterCompleteForm({ initialData }: RegisterCompleteFormProps)
         )}
         {educationLevel === 'secondary' && (
           <div>
-            <Label htmlFor="passing_year">Year of passing (Secondary (10th)) <span className="text-rose-600">*</span></Label>
+            <Label htmlFor="passing_year">
+              Year of passing your Secondary 10th batch <span className="text-rose-600">*</span>
+            </Label>
+            <p className="text-xs text-slate-500 mt-0.5">If you have completed 10th, in which year?</p>
             <select
               id="passing_year"
               name="passing_year"
@@ -224,7 +302,10 @@ export function RegisterCompleteForm({ initialData }: RegisterCompleteFormProps)
               <FieldError message={fieldErrors?.passing_year} />
             </div>
             <div>
-              <Label htmlFor="passing_year_10th">Year of passing (Secondary (10th)) <span className="text-rose-600">*</span></Label>
+              <Label htmlFor="passing_year_10th">
+                Year of passing your Secondary 10th batch <span className="text-rose-600">*</span>
+              </Label>
+              <p className="text-xs text-slate-500 mt-0.5">If you have completed 10th, in which year?</p>
               <select
                 id="passing_year_10th"
                 name="passing_year_10th"
@@ -240,7 +321,27 @@ export function RegisterCompleteForm({ initialData }: RegisterCompleteFormProps)
             </div>
           </>
         )}
-        {(educationLevel === 'left_before_10th' || educationLevel === 'other' || !educationLevel) && (
+        {educationLevel === 'left_before_10th' && (
+          <div>
+            <Label htmlFor="passing_year">Year of leaving DAV Khagaul <span className="text-rose-600">*</span></Label>
+            <select
+              id="passing_year"
+              name="passing_year"
+              required
+              className="mt-1.5 flex h-10 w-full rounded-lg border border-slate-200 bg-white px-4 text-sm focus:outline-none focus:ring-2 focus:ring-[#0F2557]"
+            >
+              <option value="">Select year...</option>
+              {BATCH_YEARS.map((y) => (
+                <option key={y} value={y}>{y}</option>
+              ))}
+            </select>
+            <p className="mt-1 text-xs text-slate-500">
+              Your passout batch will be automatically calculated based on the class you studied till.
+            </p>
+            <FieldError message={fieldErrors?.passing_year} />
+          </div>
+        )}
+        {!educationLevel && (
           <div>
             <Label htmlFor="passing_year">Year of leaving/passing <span className="text-rose-600">*</span></Label>
             <select
@@ -261,19 +362,66 @@ export function RegisterCompleteForm({ initialData }: RegisterCompleteFormProps)
       </div>
 
       <div id="step-1" className={cn('space-y-4', step !== 1 && 'hidden')}>
-        <Field
-          label="Phone (10-digit Indian mobile)"
-          name="phone"
-          type="tel"
-          inputMode="numeric"
-          maxLength={10}
-          pattern={INPUT_PATTERNS.indianMobile}
-          title="Enter a valid 10-digit Indian mobile number starting with 6, 7, 8, or 9"
-          placeholder="9876543210"
-          error={fieldErrors?.phone}
-        />
+        {/* Profile Photo — Compulsory */}
+        <div>
+          <Label htmlFor="profile_photo">
+            Profile Photo <span className="text-rose-600">*</span>
+          </Label>
+          <div className="mt-1.5 flex items-center gap-4">
+            <div className="relative flex h-20 w-20 shrink-0 items-center justify-center overflow-hidden rounded-full border-2 border-dashed border-slate-300 bg-slate-50">
+              {photoPreview ? (
+                // eslint-disable-next-line @next/next/no-img-element
+                <img src={photoPreview} alt="Preview" className="h-full w-full object-cover" />
+              ) : (
+                <Camera className="h-6 w-6 text-slate-400" />
+              )}
+            </div>
+            <div className="flex-1">
+              <input
+                id="profile_photo"
+                name="profile_photo"
+                type="file"
+                accept="image/jpeg,image/png,image/webp"
+                required
+                onChange={handlePhotoChange}
+                className="block w-full text-sm text-slate-500 file:mr-3 file:rounded-lg file:border-0 file:bg-[#0F2557] file:px-4 file:py-2 file:text-sm file:font-semibold file:text-white hover:file:bg-indigo-800 file:cursor-pointer file:transition"
+              />
+              <p className="mt-1 text-xs text-slate-500">JPG, PNG or WebP. Max 5 MB.</p>
+            </div>
+          </div>
+          <FieldError message={fieldErrors?.profile_photo} />
+        </div>
+
+        {/* Phone — International */}
+        <div>
+          <Label htmlFor="phone_number">Phone</Label>
+          <div className="mt-1.5 flex gap-2">
+            <select
+              id="phone_country_code"
+              name="phone_country_code"
+              value={countryCode}
+              onChange={(e) => setCountryCode(e.target.value)}
+              className="flex h-10 w-[160px] shrink-0 rounded-lg border border-slate-200 bg-white px-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#0F2557]"
+            >
+              {COUNTRY_CODES.map((cc) => (
+                <option key={cc.code} value={cc.code}>{cc.label}</option>
+              ))}
+            </select>
+            <Input
+              id="phone_number"
+              name="phone_number"
+              type="tel"
+              inputMode="numeric"
+              maxLength={15}
+              placeholder="9876543210"
+              className="flex-1"
+            />
+          </div>
+          <FieldError message={fieldErrors?.phone} />
+        </div>
+
         <div className="grid gap-4 sm:grid-cols-2">
-          <Field label="City" name="current_city" maxLength={VALIDATION_LIMITS.placeMax} />
+          <Field label="Current City" name="current_city" maxLength={VALIDATION_LIMITS.placeMax} />
           <Field label="State" name="current_state" maxLength={VALIDATION_LIMITS.placeMax} />
         </div>
         <Field label="Country" name="current_country" defaultValue="India" maxLength={VALIDATION_LIMITS.placeMax} />

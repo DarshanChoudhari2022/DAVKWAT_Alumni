@@ -78,18 +78,18 @@ export function ProfileForm({ profile }: { profile: Profile }) {
 
       <Section title="Personal">
         <Field
-          label="Phone (10-digit Indian mobile)"
+          label="Phone (International or Indian mobile)"
           name="phone"
           type="tel"
           inputMode="numeric"
-          maxLength={10}
-          pattern={INPUT_PATTERNS.indianMobile}
-          title="Enter a valid 10-digit Indian mobile number starting with 6, 7, 8, or 9"
+          maxLength={20}
+          pattern={INPUT_PATTERNS.internationalPhone}
+          title="Enter a valid phone number (7-15 digits, optionally starting with +)"
           defaultValue={profile.phone ?? ''}
           error={state.fieldErrors?.phone}
         />
         <div className="grid gap-4 sm:grid-cols-3">
-          <Field label="City" name="current_city" defaultValue={profile.current_city ?? ''} maxLength={VALIDATION_LIMITS.placeMax} />
+          <Field label="Current City" name="current_city" defaultValue={profile.current_city ?? ''} maxLength={VALIDATION_LIMITS.placeMax} />
           <Field label="State" name="current_state" defaultValue={profile.current_state ?? ''} maxLength={VALIDATION_LIMITS.placeMax} />
           <Field label="Country" name="current_country" defaultValue={profile.current_country ?? 'India'} maxLength={VALIDATION_LIMITS.placeMax} />
         </div>

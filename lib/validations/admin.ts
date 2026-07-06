@@ -1,6 +1,7 @@
 import { z } from 'zod';
 import {
   nullableIndianMobile,
+  nullableInternationalPhone,
   optionalProfileUrl,
   optionalText,
   requiredName,
@@ -52,8 +53,8 @@ export const adminProfileUpdateSchema = z.object({
   full_name: requiredName.optional(),
   email: z.string().trim().toLowerCase().email().max(VALIDATION_LIMITS.emailMax).optional(),
   display_name: optionalText(VALIDATION_LIMITS.displayNameMax).nullable(),
-  phone: nullableIndianMobile,
-  alternate_phone: nullableIndianMobile,
+  phone: nullableInternationalPhone,
+  alternate_phone: nullableInternationalPhone,
   current_city: optionalText(VALIDATION_LIMITS.placeMax).nullable(),
   current_state: optionalText(VALIDATION_LIMITS.placeMax).nullable(),
   current_country: optionalText(VALIDATION_LIMITS.placeMax).nullable(),

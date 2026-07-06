@@ -1,7 +1,7 @@
 import { z } from 'zod';
 import {
   optionalDateOfBirth,
-  optionalIndianMobile,
+  optionalInternationalPhone,
   optionalProfileUrl,
   optionalText,
   requiredName,
@@ -14,7 +14,7 @@ export const profileUpdateSchema = z.object({
   course: z.enum(['Science', 'Commerce', 'Arts', 'Other']),
   roll_number: optionalText(VALIDATION_LIMITS.rollNumberMax),
 
-  phone: optionalIndianMobile,
+  phone: optionalInternationalPhone,
   current_city: optionalText(VALIDATION_LIMITS.placeMax),
   current_state: optionalText(VALIDATION_LIMITS.placeMax),
   current_country: optionalText(VALIDATION_LIMITS.placeMax),
