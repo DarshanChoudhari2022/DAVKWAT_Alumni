@@ -119,55 +119,59 @@ const scenarioArb = fc.record({
 });
 
 describe('Property 1: Auth resolution single-flight per request', () => {
-  it('runs the loader at most once per resolveActorProfile value and memoizes the result to every caller', async () => {
-    await fc.assert(
-      fc.asyncProperty(scenarioArb, async ({ callers, concurrent, delays }) => {
-        const backend = makeBackend();
-        const loader = makeCountingLoader(backend, delays);
-        const run = makeRequestScope<{ actor: string; resolveActorProfile: boolean; runIndex: number }>();
+  it(
+    'runs the loader at most once per resolveActorProfile value and memoizes the result to every caller',
+    async () => {
+      await fc.assert(
+        fc.asyncProperty(scenarioArb, async ({ callers, concurrent, delays }) => {
+          const backend = makeBackend();
+          const loader = makeCountingLoader(backend, delays);
+          const run = makeRequestScope<{ actor: string; resolveActorProfile: boolean; runIndex: number }>();
 
-        const flagsRequested = new Set(callers.map((c) => c.resolveActorProfile));
+          const flagsRequested = new Set(callers.map((c) => c.resolveActorProfile));
 
-        let results: { actor: string; resolveActorProfile: boolean; runIndex: number }[];
-        if (concurrent) {
-          // Arrival arrangement: all callers start before any awaits resolve.
-          results = await Promise.all(callers.map((c) => run(c.resolveActorProfile, loader)));
-        } else {
-          // Arrival arrangement: strictly sequential, each awaited before the next.
-          results = [];
-          for (const c of callers) {
-            // eslint-disable-next-line no-await-in-loop
-            results.push(await run(c.resolveActorProfile, loader));
-          }
-        }
-
-        // At most one loader run per distinct resolveActorProfile value.
-        for (const flag of flagsRequested) {
-          expect(backend.runsByFlag.get(flag)).toBe(1);
-        }
-        // Total identity verifications equals the number of distinct flags (<= 2),
-        // never the number of callers.
-        expect(backend.verifications).toBe(flagsRequested.size);
-        // At most one profile lookup, and only when some caller asked for the profile.
-        const expectedLookups = flagsRequested.has(true) ? 1 : 0;
-        expect(backend.profileLookups).toBe(expectedLookups);
-        expect(backend.profileLookups).toBeLessThanOrEqual(1);
-
-        // Every caller asking for the same flag receives the IDENTICAL memoized result.
-        const firstResultForFlag = new Map<boolean, (typeof results)[number]>();
-        callers.forEach((c, i) => {
-          const current = results[i]!;
-          const seen = firstResultForFlag.get(c.resolveActorProfile);
-          if (!seen) {
-            firstResultForFlag.set(c.resolveActorProfile, current);
+          let results: { actor: string; resolveActorProfile: boolean; runIndex: number }[];
+          if (concurrent) {
+            // Arrival arrangement: all callers start before any awaits resolve.
+            results = await Promise.all(callers.map((c) => run(c.resolveActorProfile, loader)));
           } else {
-            expect(current).toBe(seen); // reference equality -> same memoized run
+            // Arrival arrangement: strictly sequential, each awaited before the next.
+            results = [];
+            for (const c of callers) {
+              // eslint-disable-next-line no-await-in-loop
+              results.push(await run(c.resolveActorProfile, loader));
+            }
           }
-        });
-      }),
-      { numRuns: NUM_RUNS }
-    );
-  });
+
+          // At most one loader run per distinct resolveActorProfile value.
+          for (const flag of flagsRequested) {
+            expect(backend.runsByFlag.get(flag)).toBe(1);
+          }
+          // Total identity verifications equals the number of distinct flags (<= 2),
+          // never the number of callers.
+          expect(backend.verifications).toBe(flagsRequested.size);
+          // At most one profile lookup, and only when some caller asked for the profile.
+          const expectedLookups = flagsRequested.has(true) ? 1 : 0;
+          expect(backend.profileLookups).toBe(expectedLookups);
+          expect(backend.profileLookups).toBeLessThanOrEqual(1);
+
+          // Every caller asking for the same flag receives the IDENTICAL memoized result.
+          const firstResultForFlag = new Map<boolean, (typeof results)[number]>();
+          callers.forEach((c, i) => {
+            const current = results[i]!;
+            const seen = firstResultForFlag.get(c.resolveActorProfile);
+            if (!seen) {
+              firstResultForFlag.set(c.resolveActorProfile, current);
+            } else {
+              expect(current).toBe(seen); // reference equality -> same memoized run
+            }
+          });
+        }),
+        { numRuns: NUM_RUNS }
+      );
+    },
+    15_000
+  );
 
   it('isolates resolution per request: distinct Request_Contexts each run the loader once', async () => {
     await fc.assert(

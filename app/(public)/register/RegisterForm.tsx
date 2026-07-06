@@ -1,5 +1,6 @@
 'use client';
 
+import Image from 'next/image';
 import { useActionState, useState, useRef } from 'react';
 import { useFormStatus } from 'react-dom';
 import { Button } from '@/components/ui/button';
@@ -8,6 +9,11 @@ import { Label } from '@/components/ui/label';
 import { FieldError } from '@/components/shared/FieldError';
 import { PasswordInput } from '@/components/shared/PasswordInput';
 import { cn } from '@/lib/utils/cn';
+import {
+  buildManualPaymentWhatsappUrl,
+  buildUpiPaymentUrl,
+  MANUAL_MEMBERSHIP_PAYMENT,
+} from '@/lib/payments/manual-upi';
 import { registerAction, type RegisterState } from './actions';
 
 const initialState: RegisterState = {};
@@ -29,6 +35,7 @@ export function RegisterForm() {
   const [step, setStep] = useState(0);
   const [clientErrors, setClientErrors] = useState<Record<string, string>>({});
   const formRef = useRef<HTMLFormElement>(null);
+  const upiPaymentUrl = buildUpiPaymentUrl();
 
   /** Validate all visible inputs in the current step div */
   function validateCurrentStep(): boolean {
@@ -65,6 +72,21 @@ export function RegisterForm() {
     // Validate Step 4 fields before sending to server
     if (!validateCurrentStep()) return;
     formAction(fd);
+  }
+
+  function openPaymentWhatsapp() {
+    const formData = formRef.current ? new FormData(formRef.current) : null;
+    const getValue = (name: string) => String(formData?.get(name) ?? '').trim();
+
+    window.open(
+      buildManualPaymentWhatsappUrl({
+        fullName: getValue('full_name'),
+        batchYear: getValue('batch_year'),
+        phone: getValue('phone'),
+      }),
+      '_blank',
+      'noopener,noreferrer'
+    );
   }
 
   // Merge server errors with client errors
@@ -204,6 +226,54 @@ export function RegisterForm() {
             <input type="checkbox" name="hide_phone" className="rounded border-slate-300" />
             Hide my phone from the alumni directory
           </label>
+        </div>
+
+        <div className="rounded-2xl border border-amber-200 bg-amber-50 p-4">
+          <div className="flex flex-col gap-4 sm:flex-row sm:items-start">
+            <div className="mx-auto w-full max-w-[220px] shrink-0 overflow-hidden rounded-xl border border-white bg-white p-2 shadow-sm sm:mx-0">
+              <Image
+                src={MANUAL_MEMBERSHIP_PAYMENT.qrImagePath}
+                alt={`UPI QR code for ${MANUAL_MEMBERSHIP_PAYMENT.payeeName}`}
+                width={1002}
+                height={1600}
+                className="h-auto w-full rounded-lg"
+              />
+            </div>
+            <div className="flex-1 space-y-3">
+              <div>
+                <p className="text-sm font-semibold text-slate-900">
+                  Pay membership fee by UPI
+                </p>
+                <p className="mt-1 text-sm text-slate-700">
+                  Scan this QR with any UPI app, or tap the button below on mobile.
+                  After payment, send the screenshot or transaction ID on WhatsApp
+                  for manual verification.
+                </p>
+              </div>
+              <div className="rounded-lg bg-white/80 p-3 text-sm text-slate-700">
+                <p>
+                  <span className="font-medium">UPI ID:</span>{' '}
+                  {MANUAL_MEMBERSHIP_PAYMENT.upiId}
+                </p>
+                <p>
+                  <span className="font-medium">Payee:</span>{' '}
+                  {MANUAL_MEMBERSHIP_PAYMENT.payeeName}
+                </p>
+              </div>
+              <div className="grid gap-2 sm:grid-cols-2">
+                <Button asChild variant="accent">
+                  <a href={upiPaymentUrl}>Open UPI app</a>
+                </Button>
+                <Button type="button" variant="outline" onClick={openPaymentWhatsapp}>
+                  I have paid - WhatsApp proof
+                </Button>
+              </div>
+              <p className="text-xs leading-relaxed text-slate-600">
+                Payment is checked manually by the Trust team. Registration approval
+                is completed after alumni and payment verification.
+              </p>
+            </div>
+          </div>
         </div>
 
         <label className="flex items-start gap-2 text-sm text-slate-700">
