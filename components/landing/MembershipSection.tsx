@@ -61,45 +61,69 @@ export function MembershipSection({ plans }: MembershipSectionProps) {
 
         <div className="mt-12 grid items-start gap-8 lg:grid-cols-[1fr_0.9fr]">
           {/* Fee */}
-          <Reveal direction="left">
-            <div className="grid gap-5 sm:grid-cols-2">
+          <Reveal direction="left">            <div className="grid gap-5 sm:grid-cols-2">
               {hasPlans ? (
-                plans.map((plan) => {
-                  const isLifetime = plan.membership_type === 'lifetime';
-                  return (
-                    <div
-                      key={plan.id}
-                      className={`relative flex h-full flex-col rounded-3xl border bg-white p-6 shadow-sm ${isLifetime ? 'border-[#0F2557] ring-1 ring-[#0F2557]/15' : 'border-slate-200'
-                        }`}
-                    >
-                      {isLifetime && (
-                        <span className="absolute -top-2.5 right-5 rounded-full bg-[#0F2557] px-3 py-0.5 text-[10px] font-bold uppercase tracking-wider text-white">
-                          Recommended
-                        </span>
-                      )}
-                      <h3 className="text-lg font-bold text-slate-900">{plan.name}</h3>
-                      {plan.description && (
-                        <p className="mt-1 text-sm text-slate-500">{plan.description}</p>
-                      )}
-                      <p className="mt-4 font-sans text-3xl font-bold text-[#0F2557]">
-                        {formatINR(Number(plan.amount))}
-                      </p>
-                      <p className="mt-0.5 text-xs text-slate-500">{planPeriod(plan)}</p>
-                      <p className="mt-4 text-xs text-slate-500">
-                        One simple contribution. No hidden charges.
-                      </p>
-                      <div className="mt-auto pt-6">
-                        <Link
-                          href="/register"
-                          className="inline-flex w-full items-center justify-center gap-1.5 rounded-full bg-[#0F2557] px-5 py-3 text-sm font-semibold text-white transition hover:bg-indigo-800"
-                        >
-                          Register as alumnus
-                          <ArrowRight className="h-4 w-4" />
-                        </Link>
+                <>
+                  {plans.map((plan) => {
+                    const isLifetime = plan.membership_type === 'lifetime';
+                    return (
+                      <div
+                        key={plan.id}
+                        className={`relative flex h-full flex-col rounded-3xl border bg-white p-6 shadow-sm ${isLifetime ? 'border-[#0F2557] ring-1 ring-[#0F2557]/15' : 'border-slate-200'
+                          }`}
+                      >
+                        {isLifetime && (
+                          <span className="absolute -top-2.5 right-5 rounded-full bg-[#0F2557] px-3 py-0.5 text-[10px] font-bold uppercase tracking-wider text-white">
+                            Recommended
+                          </span>
+                        )}
+                        <h3 className="text-lg font-bold text-slate-900">{plan.name}</h3>
+                        {plan.description && (
+                          <p className="mt-1 text-sm text-slate-500">{plan.description}</p>
+                        )}
+                        <p className="mt-4 font-sans text-3xl font-bold text-[#0F2557]">
+                          {formatINR(Number(plan.amount))}
+                        </p>
+                        <p className="mt-0.5 text-xs text-slate-500">{planPeriod(plan)}</p>
+                        <p className="mt-4 text-xs text-slate-500">
+                          One simple contribution. No hidden charges.
+                        </p>
+                        <div className="mt-auto pt-6">
+                          <Link
+                            href="/register"
+                            className="inline-flex w-full items-center justify-center gap-1.5 rounded-full bg-[#0F2557] px-5 py-3 text-sm font-semibold text-white transition hover:bg-indigo-800"
+                          >
+                            Register as alumnus
+                            <ArrowRight className="h-4 w-4" />
+                          </Link>
+                        </div>
                       </div>
+                    );
+                  })}
+                  {/* Faculty Plan Card */}
+                  <div className="relative flex h-full flex-col rounded-3xl border border-slate-200 bg-white p-6 shadow-sm">
+                    <h3 className="text-lg font-bold text-slate-900">Faculty Membership</h3>
+                    <p className="mt-1 text-sm text-slate-500">
+                      Lifetime portal access for teachers and staff of DAV Khagaul.
+                    </p>
+                    <p className="mt-4 font-sans text-3xl font-bold text-[#0F2557]">
+                      Free
+                    </p>
+                    <p className="mt-0.5 text-xs text-slate-500">Lifetime</p>
+                    <p className="mt-4 text-xs text-slate-500">
+                      Verification required by the Trust committee.
+                    </p>
+                    <div className="mt-auto pt-6">
+                      <Link
+                        href="/register/faculty"
+                        className="inline-flex w-full items-center justify-center gap-1.5 rounded-full bg-slate-200 px-5 py-3 text-sm font-semibold text-slate-700 transition hover:bg-slate-300"
+                      >
+                        Register as faculty
+                        <ArrowRight className="h-4 w-4" />
+                      </Link>
                     </div>
-                  );
-                })
+                  </div>
+                </>
               ) : (
                 <div className="sm:col-span-2 rounded-3xl border border-slate-200 bg-white p-8 text-center shadow-sm">
                   <p className="text-base font-semibold text-slate-900">

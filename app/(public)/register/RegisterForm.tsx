@@ -2,8 +2,9 @@
 
 import Image from 'next/image';
 import type React from 'react';
-import { useActionState, useState, useRef } from 'react';
+import { useActionState, useState, useRef, useEffect } from 'react';
 import { useFormStatus } from 'react-dom';
+import { toast } from 'sonner';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -23,6 +24,34 @@ const CURRENT_YEAR = new Date().getFullYear();
 const BATCH_YEARS = Array.from({ length: CURRENT_YEAR - 1959 }, (_, i) => CURRENT_YEAR - i);
 const STEPS = ['Account', 'Academic', 'Personal', 'Professional'] as const;
 
+const FIELD_STEP_MAP: Record<string, number> = {
+  email: 0,
+  password: 0,
+  confirmPassword: 0,
+  full_name: 1,
+  education_level: 1,
+  education_stream: 1,
+  left_before_schooling_class: 1,
+  passing_year: 1,
+  passing_year_10th: 1,
+  roll_number: 1,
+  phone: 2,
+  current_city: 2,
+  current_state: 2,
+  current_country: 2,
+  date_of_birth: 2,
+  gender: 2,
+  occupation: 3,
+  company: 3,
+  job_title: 3,
+  industry: 3,
+  linkedin_url: 3,
+  bio: 3,
+  hide_email: 3,
+  hide_phone: 3,
+  terms_accepted: 3,
+};
+
 function SubmitButton() {
   const { pending } = useFormStatus();
   return (
@@ -40,6 +69,60 @@ export function RegisterForm() {
   const formRef = useRef<HTMLFormElement>(null);
   const upiPaymentUrl = buildUpiPaymentUrl();
   const maxBirthDate = todayIsoDate();
+
+  const lastHandledStateRef = useRef<RegisterState>(initialState);
+  const shouldScrollToFieldRef = useRef<string | null>(null);
+
+  // Effect to switch step and scroll/toast on state change
+  useEffect(() => {
+    if (state === lastHandledStateRef.current) return;
+    lastHandledStateRef.current = state;
+
+    if (state.error) {
+      toast.error(state.error);
+      setTimeout(() => {
+        const errorEl = document.getElementById('register-error-alert');
+        if (errorEl) {
+          errorEl.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        }
+      }, 50);
+    } else if (state.fieldErrors && Object.keys(state.fieldErrors).length > 0) {
+      const firstErrorKey = Object.keys(state.fieldErrors)[0];
+      if (firstErrorKey) {
+        const targetStep = FIELD_STEP_MAP[firstErrorKey];
+        if (typeof targetStep === 'number' && targetStep !== step) {
+          shouldScrollToFieldRef.current = firstErrorKey;
+          setStep(targetStep);
+        } else {
+          setTimeout(() => {
+            const errorEl = document.getElementsByName(firstErrorKey)[0] || document.getElementById(firstErrorKey);
+            if (errorEl) {
+              errorEl.scrollIntoView({ behavior: 'smooth', block: 'center' });
+              errorEl.focus();
+            }
+          }, 50);
+        }
+      }
+    }
+  }, [state, step]);
+
+  // Effect to scroll to the field error after the step changes
+  useEffect(() => {
+    const fieldKey = shouldScrollToFieldRef.current;
+    if (fieldKey) {
+      const targetStep = FIELD_STEP_MAP[fieldKey];
+      if (targetStep === step) {
+        shouldScrollToFieldRef.current = null;
+        setTimeout(() => {
+          const errorEl = document.getElementsByName(fieldKey)[0] || document.getElementById(fieldKey);
+          if (errorEl) {
+            errorEl.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            errorEl.focus();
+          }
+        }, 50);
+      }
+    }
+  }, [step]);
 
   /** Validate all visible inputs in the current step div */
   function validateCurrentStep(): boolean {
@@ -128,7 +211,7 @@ export function RegisterForm() {
       </p>
 
       {state.error && (
-        <div role="alert" className="rounded-lg border border-rose-200 bg-rose-50 p-3 text-sm text-rose-700">
+        <div id="register-error-alert" role="alert" className="rounded-lg border border-rose-200 bg-rose-50 p-3 text-sm text-rose-700">
           {state.error}
         </div>
       )}
@@ -154,13 +237,23 @@ export function RegisterForm() {
             className="mt-1.5 flex h-10 w-full rounded-lg border border-slate-200 bg-white px-4 text-sm focus:outline-none focus:ring-2 focus:ring-[#0F2557]"
           >
             <option value="">Select level...</option>
-            <option value="left_before_10th">Left before completing Secondary</option>
-            <option value="secondary">Secondary</option>
-            <option value="senior_secondary">Higher Secondary</option>
+            <option value="left_before_10th">Left before completing schooling</option>
+            <option value="secondary">Secondary (10th)</option>
+            <option value="senior_secondary">Higher Secondary (12th)</option>
             <option value="other">Other</option>
           </select>
           <FieldError message={fieldErrors?.education_level} />
         </div>
+        {educationLevel === 'left_before_10th' && (
+          <Field
+            label="Till what class did you study? (e.g. Class 8)"
+            name="left_before_schooling_class"
+            required
+            maxLength={50}
+            placeholder="e.g. Class 8"
+            error={fieldErrors?.left_before_schooling_class}
+          />
+        )}
         {educationLevel === 'senior_secondary' && (
           <div>
             <Label htmlFor="education_stream">Stream <span className="text-rose-600">*</span></Label>

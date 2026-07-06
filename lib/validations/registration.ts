@@ -18,17 +18,23 @@ export const EDUCATION_LEVELS = [
 export const EDUCATION_STREAMS = ['Science', 'Commerce', 'Arts'] as const;
 
 export const EDUCATION_LEVEL_LABELS: Record<(typeof EDUCATION_LEVELS)[number], string> = {
-  left_before_10th: 'Left before completing Secondary',
-  secondary: 'Secondary',
-  senior_secondary: 'Higher Secondary',
+  left_before_10th: 'Left before completing schooling',
+  secondary: 'Secondary (10th)',
+  senior_secondary: 'Higher Secondary (12th)',
   other: 'Other',
 };
 
 export function courseForEducationLevel(
   educationLevel: (typeof EDUCATION_LEVELS)[number],
-  educationStream?: (typeof EDUCATION_STREAMS)[number] | ''
+  educationStream?: (typeof EDUCATION_STREAMS)[number] | '',
+  leftBeforeSchoolingClass?: string
 ) {
-  if (educationLevel === 'senior_secondary') return educationStream || 'Higher Secondary';
+  if (educationLevel === 'senior_secondary') return educationStream || 'Higher Secondary (12th)';
+  if (educationLevel === 'left_before_10th') {
+    return leftBeforeSchoolingClass
+      ? `Schooling (studied till ${leftBeforeSchoolingClass})`
+      : 'Left before completing schooling';
+  }
   return EDUCATION_LEVEL_LABELS[educationLevel];
 }
 
@@ -62,11 +68,21 @@ export const alumniAcademicSchema = z
       errorMap: () => ({ message: 'Select education level' }),
     }),
     education_stream: z.enum(EDUCATION_STREAMS).optional().or(z.literal('')),
+    left_before_schooling_class: z.string().trim().max(50).optional().or(z.literal('')),
     passing_year: yearSchema,
     passing_year_10th: yearSchema.optional().nullable(),
     roll_number: optionalText(VALIDATION_LIMITS.rollNumberMax),
   })
   .superRefine((data, ctx) => {
+    if (data.education_level === 'left_before_10th') {
+      if (!data.left_before_schooling_class) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          path: ['left_before_schooling_class'],
+          message: 'Mention till what class you studied',
+        });
+      }
+    }
     if (data.education_level === 'senior_secondary') {
       if (!data.education_stream) {
         ctx.addIssue({
@@ -94,7 +110,7 @@ export const alumniAcademicSchema = z
     ...data,
     profile_type: 'alumni' as const,
     batch_year: data.passing_year,
-    course: courseForEducationLevel(data.education_level, data.education_stream),
+    course: courseForEducationLevel(data.education_level, data.education_stream, data.left_before_schooling_class),
   }));
 
 export const academicSchema = alumniAcademicSchema;

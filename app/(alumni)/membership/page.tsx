@@ -132,7 +132,7 @@ export default async function MembershipPage({
 async function PlansRegion({
   isPaidMember,
   isExpiringSoon,
-  profileType,
+  profileType: _profileType,
 }: {
   isPaidMember: boolean;
   isExpiringSoon: boolean;
@@ -209,42 +209,44 @@ async function PlansRegion({
                 the request will be recorded for manual follow-up.
               </p>
             </div>
-            <div className="mt-4 grid gap-4 sm:grid-cols-2">
+            <div className="mt-4 grid gap-4 md:grid-cols-3">
               {plans.map((plan) => (
                 <Card
                   key={plan.id}
-                  className={`relative ${
+                  className={`relative flex flex-col justify-between ${
                     plan.membership_type === 'lifetime'
                       ? 'border-[#0F2557] ring-1 ring-[#0F2557]/20'
                       : ''
                   }`}
                 >
-                  {plan.membership_type === 'lifetime' && (
-                    <Badge variant="primary" className="absolute -top-2.5 right-4">
-                      Recommended
-                    </Badge>
-                  )}
-                  <h3 className="font-display text-xl font-semibold">{plan.name}</h3>
-                  {plan.description && (
-                    <p className="mt-1 text-sm text-slate-500">{plan.description}</p>
-                  )}
-                  <p className="mt-4 font-display text-3xl font-bold text-[#0F2557]">
-                    {formatINR(Number(plan.amount))}
-                  </p>
-                  <p className="mt-0.5 text-xs text-slate-500">
-                    {plan.membership_type === 'lifetime'
-                      ? 'One-time fee'
-                      : `Per year${plan.duration_months ? ` (${plan.duration_months} months)` : ''}`}
-                  </p>
-                  <ul className="mt-4 space-y-2 text-sm text-slate-700">
-                    <BenefitItem>Full alumni directory access</BenefitItem>
-                    <BenefitItem>Event registrations and RSVP</BenefitItem>
-                    <BenefitItem>Forum participation</BenefitItem>
-                    <BenefitItem>Verified member badge</BenefitItem>
+                  <div>
                     {plan.membership_type === 'lifetime' && (
-                      <BenefitItem>Priority support and recognition</BenefitItem>
+                      <Badge variant="primary" className="absolute -top-2.5 right-4">
+                        Recommended
+                      </Badge>
                     )}
-                  </ul>
+                    <h3 className="font-display text-xl font-semibold">{plan.name}</h3>
+                    {plan.description && (
+                      <p className="mt-1 text-sm text-slate-500">{plan.description}</p>
+                    )}
+                    <p className="mt-4 font-display text-3xl font-bold text-[#0F2557]">
+                      {formatINR(Number(plan.amount))}
+                    </p>
+                    <p className="mt-0.5 text-xs text-slate-500">
+                      {plan.membership_type === 'lifetime'
+                        ? 'One-time fee'
+                        : `Per year${plan.duration_months ? ` (${plan.duration_months} months)` : ''}`}
+                    </p>
+                    <ul className="mt-4 space-y-2 text-sm text-slate-700">
+                      <BenefitItem>Full alumni directory access</BenefitItem>
+                      <BenefitItem>Event registrations and RSVP</BenefitItem>
+                      <BenefitItem>Forum participation</BenefitItem>
+                      <BenefitItem>Verified member badge</BenefitItem>
+                      {plan.membership_type === 'lifetime' && (
+                        <BenefitItem>Priority support and recognition</BenefitItem>
+                      )}
+                    </ul>
+                  </div>
                   <div className="mt-6">
                     <PayButton
                       planId={plan.id}
@@ -255,6 +257,34 @@ async function PlansRegion({
                   </div>
                 </Card>
               ))}
+
+              {/* Faculty Option Card */}
+              <Card className="relative flex flex-col justify-between border-slate-200">
+                <div>
+                  <h3 className="font-display text-xl font-semibold">Faculty Membership</h3>
+                  <p className="mt-1 text-sm text-slate-500">
+                    Lifetime portal access for teachers and staff of DAV Khagaul.
+                  </p>
+                  <p className="mt-4 font-display text-3xl font-bold text-[#0F2557]">
+                    Free
+                  </p>
+                  <p className="mt-0.5 text-xs text-slate-500">
+                    Lifetime
+                  </p>
+                  <ul className="mt-4 space-y-2 text-sm text-slate-700">
+                    <BenefitItem>Full directory access</BenefitItem>
+                    <BenefitItem>Event registrations and RSVP</BenefitItem>
+                    <BenefitItem>Forum participation</BenefitItem>
+                    <BenefitItem>Verified faculty badge</BenefitItem>
+                  </ul>
+                </div>
+                <div className="mt-6">
+                  <Badge variant="default" className="w-full justify-center py-2 text-sm">
+                    Verified Faculty Only
+                  </Badge>
+                </div>
+              </Card>
+
               {plans.length === 0 && (
                 <Card className="col-span-full text-center text-sm text-slate-500">
                   No membership plans are available at the moment.
@@ -359,7 +389,8 @@ function PlansSkeleton() {
     <section className="mt-8">
       <div className="mb-4 h-7 w-40 animate-pulse rounded bg-slate-200" />
       <div className="mb-2 h-4 w-64 animate-pulse rounded bg-slate-200" />
-      <div className="mt-4 grid gap-4 sm:grid-cols-2">
+      <div className="mt-4 grid gap-4 md:grid-cols-3">
+        <CardSkeleton className="h-64" />
         <CardSkeleton className="h-64" />
         <CardSkeleton className="h-64" />
       </div>

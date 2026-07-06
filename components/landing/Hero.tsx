@@ -11,9 +11,7 @@ interface HeroProps {
   alumniCount: number;
 }
 
-export function Hero({ alumniCount }: HeroProps) {
-  const hasRealCount = alumniCount > 0;
-  const alumniDisplay = alumniCount.toLocaleString('en-IN');
+export function Hero({ alumniCount: _alumniCount }: HeroProps) {
   const slowOffset = useScrollParallax(0.05);
   const cardOffset = useScrollParallax(0.035);
 
@@ -87,16 +85,6 @@ export function Hero({ alumniCount }: HeroProps) {
               </div>
             </Reveal>
 
-            {hasRealCount && (
-              <Reveal delay={320}>
-                <div className="mt-8 inline-flex items-center gap-3 rounded-2xl border border-white/10 bg-white/[0.04] px-4 py-3 text-sm text-white/70 backdrop-blur">
-                  <Users className="h-4 w-4 text-sky-300" />
-                  <span>
-                    Trusted by <strong className="text-white">{alumniDisplay}+</strong> verified alumni and growing.
-                  </span>
-                </div>
-              </Reveal>
-            )}
           </div>
 
           <Reveal direction="right" delay={120} className="hidden md:block">
