@@ -134,11 +134,11 @@ export default async function AdminAlumniDetailPage({
                     label="School Level"
                     value={
                       alumni.education_level === 'left_before_10th'
-                        ? 'Left before completing Secondary'
+                        ? 'Left before completing schooling'
                         : alumni.education_level === 'secondary'
-                        ? 'Secondary'
+                        ? 'Secondary (10th)'
                         : alumni.education_level === 'senior_secondary'
-                        ? 'Higher Secondary'
+                        ? 'Higher Secondary (12th)'
                         : alumni.education_level === 'other'
                         ? 'Other'
                         : (alumni.education_level as string).replaceAll('_', ' ')
@@ -150,8 +150,8 @@ export default async function AdminAlumniDetailPage({
                 )}
                 {alumni.education_level === 'senior_secondary' ? (
                   <>
-                    <DetailRow icon={GraduationCap} label="Secondary Passing Year" value={alumni.passing_year_10th ? String(alumni.passing_year_10th) : '—'} />
-                    <DetailRow icon={GraduationCap} label="Higher Secondary Passing Year" value={String(alumni.batch_year)} />
+                    <DetailRow icon={GraduationCap} label="Secondary (10th) Passing Year" value={alumni.passing_year_10th ? String(alumni.passing_year_10th) : '—'} />
+                    <DetailRow icon={GraduationCap} label="Higher Secondary (12th) Passing Year" value={String(alumni.batch_year)} />
                   </>
                 ) : (
                   <DetailRow icon={GraduationCap} label="Passing/Leaving Year" value={String(alumni.batch_year)} />

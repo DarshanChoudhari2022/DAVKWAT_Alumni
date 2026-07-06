@@ -44,11 +44,12 @@ describe('registration profile type validation', () => {
     const leftBefore10th = alumniAcademicSchema.parse({
       full_name: 'Maya Singh',
       education_level: 'left_before_10th',
+      left_before_schooling_class: 'Class 8',
       passing_year: 2008,
     });
 
-    expect(secondary.course).toBe('Secondary');
-    expect(leftBefore10th.course).toBe('Left before completing Secondary');
+    expect(secondary.course).toBe('Secondary (10th)');
+    expect(leftBefore10th.course).toBe('Schooling (studied till Class 8)');
   });
 
   it('validates faculty teaching years and subject', () => {

@@ -4,6 +4,7 @@ import Image from 'next/image';
 import type React from 'react';
 import { useActionState, useState, useRef, useEffect } from 'react';
 import { useFormStatus } from 'react-dom';
+import { Copy, Download, Check } from 'lucide-react';
 import { toast } from 'sonner';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -16,13 +17,20 @@ import {
   buildUpiPaymentUrl,
   MANUAL_MEMBERSHIP_PAYMENT,
 } from '@/lib/payments/manual-upi';
-import { INPUT_PATTERNS, VALIDATION_LIMITS, todayIsoDate } from '@/lib/validations/constraints';
+import { INPUT_PATTERNS, VALIDATION_LIMITS } from '@/lib/validations/constraints';
 import { registerAction, type RegisterState } from './actions';
 
 const initialState: RegisterState = {};
 const CURRENT_YEAR = new Date().getFullYear();
 const BATCH_YEARS = Array.from({ length: CURRENT_YEAR - 1959 }, (_, i) => CURRENT_YEAR - i);
 const STEPS = ['Account', 'Academic', 'Personal', 'Professional'] as const;
+
+const MONTHS = [
+  'January', 'February', 'March', 'April', 'May', 'June',
+  'July', 'August', 'September', 'October', 'November', 'December'
+];
+const DAYS = Array.from({ length: 31 }, (_, i) => i + 1);
+const BIRTH_YEARS = Array.from({ length: CURRENT_YEAR - 1919 }, (_, i) => CURRENT_YEAR - i);
 
 const FIELD_STEP_MAP: Record<string, number> = {
   email: 0,
@@ -68,7 +76,18 @@ export function RegisterForm() {
   const [clientErrors, setClientErrors] = useState<Record<string, string>>({});
   const formRef = useRef<HTMLFormElement>(null);
   const upiPaymentUrl = buildUpiPaymentUrl();
-  const maxBirthDate = todayIsoDate();
+
+  const [dobDay, setDobDay] = useState('');
+  const [dobMonth, setDobMonth] = useState('');
+  const [dobYear, setDobYear] = useState('');
+
+  const [copiedUpi, setCopiedUpi] = useState(false);
+  const handleCopyUpi = () => {
+    navigator.clipboard.writeText(MANUAL_MEMBERSHIP_PAYMENT.upiId);
+    setCopiedUpi(true);
+    toast.success('UPI ID copied to clipboard');
+    setTimeout(() => setCopiedUpi(false), 2000);
+  };
 
   const lastHandledStateRef = useRef<RegisterState>(initialState);
   const shouldScrollToFieldRef = useRef<string | null>(null);
@@ -273,7 +292,7 @@ export function RegisterForm() {
         )}
         {educationLevel === 'secondary' && (
           <div>
-            <Label htmlFor="passing_year">Year of passing (Secondary) <span className="text-rose-600">*</span></Label>
+            <Label htmlFor="passing_year">Year of passing (Secondary (10th)) <span className="text-rose-600">*</span></Label>
             <select
               id="passing_year"
               name="passing_year"
@@ -291,7 +310,7 @@ export function RegisterForm() {
         {educationLevel === 'senior_secondary' && (
           <>
             <div>
-              <Label htmlFor="passing_year">Year of passing (Higher Secondary) <span className="text-rose-600">*</span></Label>
+              <Label htmlFor="passing_year">Year of passing (Higher Secondary (12th)) <span className="text-rose-600">*</span></Label>
               <select
                 id="passing_year"
                 name="passing_year"
@@ -306,7 +325,7 @@ export function RegisterForm() {
               <FieldError message={fieldErrors?.passing_year} />
             </div>
             <div>
-              <Label htmlFor="passing_year_10th">Year of passing (Secondary) <span className="text-rose-600">*</span></Label>
+              <Label htmlFor="passing_year_10th">Year of passing (Secondary (10th)) <span className="text-rose-600">*</span></Label>
               <select
                 id="passing_year_10th"
                 name="passing_year_10th"
@@ -351,7 +370,61 @@ export function RegisterForm() {
         </div>
         <Field label="Country" name="current_country" defaultValue="India" maxLength={VALIDATION_LIMITS.placeMax} />
         <div className="grid gap-4 sm:grid-cols-2">
-          <Field label="Date of Birth" name="date_of_birth" type="date" min={VALIDATION_LIMITS.minBirthDate} max={maxBirthDate} />
+          <div>
+            <Label htmlFor="dob_month">Date of Birth</Label>
+            <div className="mt-1.5 grid grid-cols-3 gap-2">
+              <select
+                id="dob_month"
+                value={dobMonth}
+                onChange={(e) => setDobMonth(e.target.value)}
+                className="flex h-10 w-full rounded-lg border border-slate-200 bg-white px-3 text-sm focus:outline-none focus:ring-2 focus:ring-[#0F2557]"
+              >
+                <option value="">Month</option>
+                {MONTHS.map((m, idx) => (
+                  <option key={m} value={String(idx + 1).padStart(2, '0')}>
+                    {m}
+                  </option>
+                ))}
+              </select>
+              <select
+                id="dob_day"
+                value={dobDay}
+                onChange={(e) => setDobDay(e.target.value)}
+                className="flex h-10 w-full rounded-lg border border-slate-200 bg-white px-3 text-sm focus:outline-none focus:ring-2 focus:ring-[#0F2557]"
+              >
+                <option value="">Day</option>
+                {DAYS.map((d) => (
+                  <option key={d} value={String(d).padStart(2, '0')}>
+                    {d}
+                  </option>
+                ))}
+              </select>
+              <select
+                id="dob_year"
+                value={dobYear}
+                onChange={(e) => setDobYear(e.target.value)}
+                className="flex h-10 w-full rounded-lg border border-slate-200 bg-white px-3 text-sm focus:outline-none focus:ring-2 focus:ring-[#0F2557]"
+              >
+                <option value="">Year</option>
+                {BIRTH_YEARS.map((y) => (
+                  <option key={y} value={String(y)}>
+                    {y}
+                  </option>
+                ))}
+              </select>
+            </div>
+            <input
+              type="hidden"
+              id="date_of_birth"
+              name="date_of_birth"
+              value={
+                dobYear && dobMonth && dobDay
+                  ? `${dobYear}-${dobMonth}-${dobDay}`
+                  : ''
+              }
+            />
+            <FieldError message={fieldErrors?.date_of_birth} />
+          </div>
           <div>
             <Label htmlFor="gender">Gender</Label>
             <select id="gender" name="gender" className="mt-1.5 flex h-10 w-full rounded-lg border border-slate-200 bg-white px-4 text-sm focus:outline-none focus:ring-2 focus:ring-[#0F2557]">
@@ -399,14 +472,24 @@ export function RegisterForm() {
 
         <div className="rounded-2xl border border-amber-200 bg-amber-50 p-4">
           <div className="flex flex-col gap-4 sm:flex-row sm:items-start">
-            <div className="mx-auto w-full max-w-[220px] shrink-0 overflow-hidden rounded-xl border border-white bg-white p-2 shadow-sm sm:mx-0">
-              <Image
-                src={MANUAL_MEMBERSHIP_PAYMENT.qrImagePath}
-                alt={`UPI QR code for ${MANUAL_MEMBERSHIP_PAYMENT.payeeName}`}
-                width={1002}
-                height={1600}
-                className="h-auto w-full rounded-lg"
-              />
+            <div className="mx-auto w-full max-w-[220px] shrink-0 sm:mx-0 flex flex-col items-center">
+              <div className="overflow-hidden rounded-xl border border-white bg-white p-2 shadow-sm w-full">
+                <Image
+                  src={MANUAL_MEMBERSHIP_PAYMENT.qrImagePath}
+                  alt={`UPI QR code for ${MANUAL_MEMBERSHIP_PAYMENT.payeeName}`}
+                  width={1002}
+                  height={1600}
+                  className="h-auto w-full rounded-lg"
+                />
+              </div>
+              <a
+                href={MANUAL_MEMBERSHIP_PAYMENT.qrImagePath}
+                download="davkawt-upi-qr.jpeg"
+                className="mt-2.5 inline-flex w-full items-center justify-center gap-1.5 rounded-lg border border-slate-200 bg-white px-3 py-2 text-xs font-semibold text-slate-700 shadow-sm transition hover:bg-slate-50 hover:scale-[1.02] active:scale-[0.98]"
+              >
+                <Download className="h-3.5 w-3.5" />
+                Download QR Code
+              </a>
             </div>
             <div className="flex-1 space-y-3">
               <div>
@@ -420,17 +503,40 @@ export function RegisterForm() {
                 </p>
               </div>
               <div className="rounded-lg bg-white/80 p-3 text-sm text-slate-700">
-                <p>
-                  <span className="font-medium">UPI ID:</span>{' '}
-                  {MANUAL_MEMBERSHIP_PAYMENT.upiId}
-                </p>
-                <p>
-                  <span className="font-medium">Payee:</span>{' '}
-                  {MANUAL_MEMBERSHIP_PAYMENT.payeeName}
+                <div className="flex items-center justify-between gap-2">
+                  <p className="truncate">
+                    <span className="font-medium text-slate-900">UPI ID:</span>{' '}
+                    <span className="font-mono bg-slate-100/50 px-1 py-0.5 rounded text-xs select-all text-slate-800">{MANUAL_MEMBERSHIP_PAYMENT.upiId}</span>
+                  </p>
+                  <button
+                    type="button"
+                    onClick={handleCopyUpi}
+                    className="inline-flex items-center gap-1 shrink-0 rounded border border-slate-200 bg-white px-2 py-0.5 text-xs font-semibold text-slate-700 transition hover:bg-slate-50 hover:scale-105 active:scale-95 shadow-sm"
+                  >
+                    {copiedUpi ? (
+                      <>
+                        <Check className="h-3 w-3 text-emerald-600" />
+                        <span className="text-emerald-600">Copied</span>
+                      </>
+                    ) : (
+                      <>
+                        <Copy className="h-3 w-3" />
+                        <span>Copy</span>
+                      </>
+                    )}
+                  </button>
+                </div>
+                <p className="mt-1.5">
+                  <span className="font-medium text-slate-900">Payee:</span>{' '}
+                  <span className="text-slate-800">{MANUAL_MEMBERSHIP_PAYMENT.payeeName}</span>
                 </p>
               </div>
               <div className="grid gap-2 sm:grid-cols-2">
-                <Button asChild variant="accent">
+                <Button
+                  asChild
+                  variant="accent"
+                  className="animate-pulse hover:animate-none hover:scale-105 active:scale-95 transition-all duration-300 shadow-md hover:shadow-lg hover:shadow-amber-500/20"
+                >
                   <a href={upiPaymentUrl}>Open UPI app</a>
                 </Button>
                 <Button type="button" variant="outline" onClick={openPaymentWhatsapp}>

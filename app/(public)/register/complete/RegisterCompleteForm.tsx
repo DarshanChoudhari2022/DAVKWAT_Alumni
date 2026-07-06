@@ -8,13 +8,20 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { FieldError } from '@/components/shared/FieldError';
 import { cn } from '@/lib/utils/cn';
-import { INPUT_PATTERNS, VALIDATION_LIMITS, todayIsoDate } from '@/lib/validations/constraints';
+import { INPUT_PATTERNS, VALIDATION_LIMITS } from '@/lib/validations/constraints';
 import { completeRegistrationAction, type CompleteState } from './actions';
 
 const initialState: CompleteState = {};
 const CURRENT_YEAR = new Date().getFullYear();
 const BATCH_YEARS = Array.from({ length: CURRENT_YEAR - 1959 }, (_, i) => CURRENT_YEAR - i);
 const STEPS = ['Academic & Verification', 'Personal Details', 'Professional Profile'] as const;
+
+const MONTHS = [
+  'January', 'February', 'March', 'April', 'May', 'June',
+  'July', 'August', 'September', 'October', 'November', 'December'
+];
+const DAYS = Array.from({ length: 31 }, (_, i) => i + 1);
+const BIRTH_YEARS = Array.from({ length: CURRENT_YEAR - 1919 }, (_, i) => CURRENT_YEAR - i);
 
 function SubmitButton() {
   const { pending } = useFormStatus();
@@ -38,7 +45,10 @@ export function RegisterCompleteForm({ initialData }: RegisterCompleteFormProps)
   const [educationLevel, setEducationLevel] = useState('');
   const [clientErrors, setClientErrors] = useState<Record<string, string>>({});
   const formRef = useRef<HTMLFormElement>(null);
-  const maxBirthDate = todayIsoDate();
+
+  const [dobDay, setDobDay] = useState('');
+  const [dobMonth, setDobMonth] = useState('');
+  const [dobYear, setDobYear] = useState('');
 
   function validateCurrentStep(): boolean {
     const stepDiv = document.getElementById(`step-${step}`);
@@ -145,13 +155,23 @@ export function RegisterCompleteForm({ initialData }: RegisterCompleteFormProps)
             className="mt-1.5 flex h-10 w-full rounded-lg border border-slate-200 bg-white px-4 text-sm focus:outline-none focus:ring-2 focus:ring-[#0F2557]"
           >
             <option value="">Select level...</option>
-            <option value="left_before_10th">Left before completing Secondary</option>
-            <option value="secondary">Secondary</option>
-            <option value="senior_secondary">Higher Secondary</option>
+            <option value="left_before_10th">Left before completing schooling</option>
+            <option value="secondary">Secondary (10th)</option>
+            <option value="senior_secondary">Higher Secondary (12th)</option>
             <option value="other">Other</option>
           </select>
           <FieldError message={fieldErrors?.education_level} />
         </div>
+        {educationLevel === 'left_before_10th' && (
+          <Field
+            label="Till what class did you study? (e.g. Class 8)"
+            name="left_before_schooling_class"
+            required
+            maxLength={50}
+            placeholder="e.g. Class 8"
+            error={fieldErrors?.left_before_schooling_class}
+          />
+        )}
         {educationLevel === 'senior_secondary' && (
           <div>
             <Label htmlFor="education_stream">Stream <span className="text-rose-600">*</span></Label>
@@ -171,7 +191,7 @@ export function RegisterCompleteForm({ initialData }: RegisterCompleteFormProps)
         )}
         {educationLevel === 'secondary' && (
           <div>
-            <Label htmlFor="passing_year">Year of passing (Secondary) <span className="text-rose-600">*</span></Label>
+            <Label htmlFor="passing_year">Year of passing (Secondary (10th)) <span className="text-rose-600">*</span></Label>
             <select
               id="passing_year"
               name="passing_year"
@@ -189,7 +209,7 @@ export function RegisterCompleteForm({ initialData }: RegisterCompleteFormProps)
         {educationLevel === 'senior_secondary' && (
           <>
             <div>
-              <Label htmlFor="passing_year">Year of passing (Higher Secondary) <span className="text-rose-600">*</span></Label>
+              <Label htmlFor="passing_year">Year of passing (Higher Secondary (12th)) <span className="text-rose-600">*</span></Label>
               <select
                 id="passing_year"
                 name="passing_year"
@@ -204,7 +224,7 @@ export function RegisterCompleteForm({ initialData }: RegisterCompleteFormProps)
               <FieldError message={fieldErrors?.passing_year} />
             </div>
             <div>
-              <Label htmlFor="passing_year_10th">Year of passing (Secondary) <span className="text-rose-600">*</span></Label>
+              <Label htmlFor="passing_year_10th">Year of passing (Secondary (10th)) <span className="text-rose-600">*</span></Label>
               <select
                 id="passing_year_10th"
                 name="passing_year_10th"
@@ -258,7 +278,61 @@ export function RegisterCompleteForm({ initialData }: RegisterCompleteFormProps)
         </div>
         <Field label="Country" name="current_country" defaultValue="India" maxLength={VALIDATION_LIMITS.placeMax} />
         <div className="grid gap-4 sm:grid-cols-2">
-          <Field label="Date of Birth" name="date_of_birth" type="date" min={VALIDATION_LIMITS.minBirthDate} max={maxBirthDate} />
+          <div>
+            <Label htmlFor="dob_month">Date of Birth</Label>
+            <div className="mt-1.5 grid grid-cols-3 gap-2">
+              <select
+                id="dob_month"
+                value={dobMonth}
+                onChange={(e) => setDobMonth(e.target.value)}
+                className="flex h-10 w-full rounded-lg border border-slate-200 bg-white px-3 text-sm focus:outline-none focus:ring-2 focus:ring-[#0F2557]"
+              >
+                <option value="">Month</option>
+                {MONTHS.map((m, idx) => (
+                  <option key={m} value={String(idx + 1).padStart(2, '0')}>
+                    {m}
+                  </option>
+                ))}
+              </select>
+              <select
+                id="dob_day"
+                value={dobDay}
+                onChange={(e) => setDobDay(e.target.value)}
+                className="flex h-10 w-full rounded-lg border border-slate-200 bg-white px-3 text-sm focus:outline-none focus:ring-2 focus:ring-[#0F2557]"
+              >
+                <option value="">Day</option>
+                {DAYS.map((d) => (
+                  <option key={d} value={String(d).padStart(2, '0')}>
+                    {d}
+                  </option>
+                ))}
+              </select>
+              <select
+                id="dob_year"
+                value={dobYear}
+                onChange={(e) => setDobYear(e.target.value)}
+                className="flex h-10 w-full rounded-lg border border-slate-200 bg-white px-3 text-sm focus:outline-none focus:ring-2 focus:ring-[#0F2557]"
+              >
+                <option value="">Year</option>
+                {BIRTH_YEARS.map((y) => (
+                  <option key={y} value={String(y)}>
+                    {y}
+                  </option>
+                ))}
+              </select>
+            </div>
+            <input
+              type="hidden"
+              id="date_of_birth"
+              name="date_of_birth"
+              value={
+                dobYear && dobMonth && dobDay
+                  ? `${dobYear}-${dobMonth}-${dobDay}`
+                  : ''
+              }
+            />
+            <FieldError message={fieldErrors?.date_of_birth} />
+          </div>
           <div>
             <Label htmlFor="gender">Gender</Label>
             <select id="gender" name="gender" className="mt-1.5 flex h-10 w-full rounded-lg border border-slate-200 bg-white px-4 text-sm focus:outline-none focus:ring-2 focus:ring-[#0F2557]">
