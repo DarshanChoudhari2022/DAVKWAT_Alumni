@@ -7,6 +7,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { FieldError } from '@/components/shared/FieldError';
 import { cn } from '@/lib/utils/cn';
+import { INPUT_PATTERNS, VALIDATION_LIMITS, todayIsoDate } from '@/lib/validations/constraints';
 import { completeRegistrationAction, type CompleteState } from './actions';
 
 const initialState: CompleteState = {};
@@ -35,6 +36,7 @@ export function RegisterCompleteForm({ initialData }: RegisterCompleteFormProps)
   const [step, setStep] = useState(0);
   const [clientErrors, setClientErrors] = useState<Record<string, string>>({});
   const formRef = useRef<HTMLFormElement>(null);
+  const maxBirthDate = todayIsoDate();
 
   function validateCurrentStep(): boolean {
     const stepDiv = document.getElementById(`step-${step}`);
@@ -126,6 +128,7 @@ export function RegisterCompleteForm({ initialData }: RegisterCompleteFormProps)
           label="Full Name"
           name="full_name"
           defaultValue={initialData.full_name}
+          maxLength={VALIDATION_LIMITS.nameMax}
           required
           error={fieldErrors?.full_name}
         />
@@ -160,19 +163,19 @@ export function RegisterCompleteForm({ initialData }: RegisterCompleteFormProps)
           </select>
           <FieldError message={fieldErrors?.course} />
         </div>
-        <Field label="Roll Number (optional)" name="roll_number" />
+        <Field label="Roll Number (optional)" name="roll_number" maxLength={VALIDATION_LIMITS.rollNumberMax} />
       </div>
 
       {/* Step 2 — Personal Details */}
       <div id="step-1" className={cn('space-y-4', step !== 1 && 'hidden')}>
-        <Field label="Phone (10-digit Indian mobile)" name="phone" type="tel" inputMode="tel" placeholder="9876543210" error={fieldErrors?.phone} />
+        <Field label="Phone (10-digit Indian mobile)" name="phone" type="tel" inputMode="numeric" maxLength={10} pattern={INPUT_PATTERNS.indianMobile} title="Enter a valid 10-digit Indian mobile number starting with 6, 7, 8, or 9" placeholder="9876543210" error={fieldErrors?.phone} />
         <div className="grid gap-4 sm:grid-cols-2">
-          <Field label="City" name="current_city" />
-          <Field label="State" name="current_state" />
+          <Field label="City" name="current_city" maxLength={VALIDATION_LIMITS.placeMax} />
+          <Field label="State" name="current_state" maxLength={VALIDATION_LIMITS.placeMax} />
         </div>
-        <Field label="Country" name="current_country" defaultValue="India" />
+        <Field label="Country" name="current_country" defaultValue="India" maxLength={VALIDATION_LIMITS.placeMax} />
         <div className="grid gap-4 sm:grid-cols-2">
-          <Field label="Date of Birth" name="date_of_birth" type="date" />
+          <Field label="Date of Birth" name="date_of_birth" type="date" min={VALIDATION_LIMITS.minBirthDate} max={maxBirthDate} />
           <div>
             <Label htmlFor="gender">Gender</Label>
             <select id="gender" name="gender" className="mt-1.5 flex h-10 w-full rounded-lg border border-slate-200 bg-white px-4 text-sm focus:outline-none focus:ring-2 focus:ring-[#0F2557]">
@@ -187,20 +190,20 @@ export function RegisterCompleteForm({ initialData }: RegisterCompleteFormProps)
 
       {/* Step 3 — Professional Profile */}
       <div id="step-2" className={cn('space-y-4', step !== 2 && 'hidden')}>
-        <Field label="Occupation" name="occupation" />
+        <Field label="Occupation" name="occupation" maxLength={VALIDATION_LIMITS.professionalTextMax} />
         <div className="grid gap-4 sm:grid-cols-2">
-          <Field label="Company / Organisation" name="company" />
-          <Field label="Job Title" name="job_title" />
+          <Field label="Company / Organisation" name="company" maxLength={VALIDATION_LIMITS.professionalTextMax} />
+          <Field label="Job Title" name="job_title" maxLength={VALIDATION_LIMITS.professionalTextMax} />
         </div>
-        <Field label="Industry" name="industry" />
-        <Field label="LinkedIn URL" name="linkedin_url" type="url" placeholder="https://linkedin.com/in/..." error={fieldErrors?.linkedin_url} />
+        <Field label="Industry" name="industry" maxLength={VALIDATION_LIMITS.industryMax} />
+        <Field label="LinkedIn URL" name="linkedin_url" type="url" maxLength={VALIDATION_LIMITS.urlMax} placeholder="https://linkedin.com/in/..." error={fieldErrors?.linkedin_url} />
         <div>
           <Label htmlFor="bio">Short bio (max 500 chars)</Label>
           <textarea
             id="bio"
             name="bio"
             rows={4}
-            maxLength={500}
+            maxLength={VALIDATION_LIMITS.bioMax}
             className="mt-1.5 flex w-full rounded-lg border border-slate-200 bg-white px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-[#0F2557]"
           />
           <FieldError message={fieldErrors?.bio} />

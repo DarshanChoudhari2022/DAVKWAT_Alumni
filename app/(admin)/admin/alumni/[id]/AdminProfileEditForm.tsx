@@ -1,9 +1,10 @@
 'use client';
 
-import { useState, useTransition } from 'react';
+import { useState, useTransition, type InputHTMLAttributes } from 'react';
 import { useRouter } from 'next/navigation';
 import { Button } from '@/components/ui/button';
 import { readApiResponse } from '@/lib/utils/api-client';
+import { INPUT_PATTERNS, VALIDATION_LIMITS } from '@/lib/validations/constraints';
 
 interface AdminProfileEditFormProps {
   alumniId: string;
@@ -88,13 +89,14 @@ export function AdminProfileEditForm({ alumniId, initial }: AdminProfileEditForm
     defaultValue,
     type = 'text',
     required = false,
+    ...inputProps
   }: {
     label: string;
     name: string;
     defaultValue: string;
     type?: string;
     required?: boolean;
-  }) {
+  } & Omit<InputHTMLAttributes<HTMLInputElement>, 'defaultValue' | 'name' | 'type' | 'required'>) {
     return (
       <div>
         <label htmlFor={name} className={labelClass}>
@@ -107,6 +109,7 @@ export function AdminProfileEditForm({ alumniId, initial }: AdminProfileEditForm
           defaultValue={defaultValue}
           required={required}
           className={inputClass}
+          {...inputProps}
         />
       </div>
     );
@@ -120,36 +123,44 @@ export function AdminProfileEditForm({ alumniId, initial }: AdminProfileEditForm
       )}
 
       <div className="grid gap-4 md:grid-cols-2">
-        <Field label="Full Name" name="full_name" defaultValue={initial.full_name} required />
-        <Field label="Email" name="email" type="email" defaultValue={initial.email} required />
-        <Field label="Display Name" name="display_name" defaultValue={initial.display_name ?? ''} />
-        <Field label="Phone" name="phone" defaultValue={initial.phone ?? ''} />
+        <Field label="Full Name" name="full_name" defaultValue={initial.full_name} maxLength={VALIDATION_LIMITS.nameMax} required />
+        <Field label="Email" name="email" type="email" defaultValue={initial.email} maxLength={VALIDATION_LIMITS.emailMax} required />
+        <Field label="Display Name" name="display_name" defaultValue={initial.display_name ?? ''} maxLength={VALIDATION_LIMITS.displayNameMax} />
+        <Field label="Phone" name="phone" type="tel" inputMode="numeric" maxLength={10} pattern={INPUT_PATTERNS.indianMobile} title="Enter a valid 10-digit Indian mobile number starting with 6, 7, 8, or 9" defaultValue={initial.phone ?? ''} />
         <Field
           label="Alternate Phone"
           name="alternate_phone"
+          type="tel"
+          inputMode="numeric"
+          maxLength={10}
+          pattern={INPUT_PATTERNS.indianMobile}
+          title="Enter a valid 10-digit Indian mobile number starting with 6, 7, 8, or 9"
           defaultValue={initial.alternate_phone ?? ''}
         />
-        <Field label="City" name="current_city" defaultValue={initial.current_city ?? ''} />
-        <Field label="State" name="current_state" defaultValue={initial.current_state ?? ''} />
+        <Field label="City" name="current_city" defaultValue={initial.current_city ?? ''} maxLength={VALIDATION_LIMITS.placeMax} />
+        <Field label="State" name="current_state" defaultValue={initial.current_state ?? ''} maxLength={VALIDATION_LIMITS.placeMax} />
         <Field
           label="Country"
           name="current_country"
           defaultValue={initial.current_country ?? 'India'}
+          maxLength={VALIDATION_LIMITS.placeMax}
         />
-        <Field label="Occupation" name="occupation" defaultValue={initial.occupation ?? ''} />
-        <Field label="Company" name="company" defaultValue={initial.company ?? ''} />
-        <Field label="Job Title" name="job_title" defaultValue={initial.job_title ?? ''} />
-        <Field label="Industry" name="industry" defaultValue={initial.industry ?? ''} />
+        <Field label="Occupation" name="occupation" defaultValue={initial.occupation ?? ''} maxLength={VALIDATION_LIMITS.professionalTextMax} />
+        <Field label="Company" name="company" defaultValue={initial.company ?? ''} maxLength={VALIDATION_LIMITS.professionalTextMax} />
+        <Field label="Job Title" name="job_title" defaultValue={initial.job_title ?? ''} maxLength={VALIDATION_LIMITS.professionalTextMax} />
+        <Field label="Industry" name="industry" defaultValue={initial.industry ?? ''} maxLength={VALIDATION_LIMITS.industryMax} />
         <Field
           label="LinkedIn URL"
           name="linkedin_url"
           type="url"
+          maxLength={VALIDATION_LIMITS.urlMax}
           defaultValue={initial.linkedin_url ?? ''}
         />
         <Field
           label="Website URL"
           name="website_url"
           type="url"
+          maxLength={VALIDATION_LIMITS.urlMax}
           defaultValue={initial.website_url ?? ''}
         />
       </div>
@@ -162,6 +173,7 @@ export function AdminProfileEditForm({ alumniId, initial }: AdminProfileEditForm
           id="bio"
           name="bio"
           rows={4}
+          maxLength={VALIDATION_LIMITS.bioMax}
           defaultValue={initial.bio ?? ''}
           className="mt-1 w-full rounded-lg border border-slate-200 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#0F2557]"
         />
@@ -175,6 +187,7 @@ export function AdminProfileEditForm({ alumniId, initial }: AdminProfileEditForm
           id="achievements"
           name="achievements"
           rows={4}
+          maxLength={VALIDATION_LIMITS.achievementsMax}
           defaultValue={initial.achievements ?? ''}
           className="mt-1 w-full rounded-lg border border-slate-200 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#0F2557]"
         />

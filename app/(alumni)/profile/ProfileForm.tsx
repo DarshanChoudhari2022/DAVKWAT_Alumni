@@ -8,6 +8,7 @@ import { Label } from '@/components/ui/label';
 import { FieldError } from '@/components/shared/FieldError';
 import { updateProfileAction, type ProfileState } from './actions';
 import type { Database } from '@/lib/supabase/database.types';
+import { INPUT_PATTERNS, VALIDATION_LIMITS, todayIsoDate } from '@/lib/validations/constraints';
 
 type Profile = Database['public']['Tables']['profiles']['Row'];
 
@@ -26,6 +27,7 @@ function SaveButton() {
 
 export function ProfileForm({ profile }: { profile: Profile }) {
   const [state, action] = useActionState(updateProfileAction, initial);
+  const maxBirthDate = todayIsoDate();
 
   return (
     <form action={action} className="mt-6 space-y-6">
@@ -37,7 +39,7 @@ export function ProfileForm({ profile }: { profile: Profile }) {
       )}
 
       <Section title="Academic">
-        <Field label="Full name" name="full_name" defaultValue={profile.full_name} required error={state.fieldErrors?.full_name} />
+        <Field label="Full name" name="full_name" defaultValue={profile.full_name} maxLength={VALIDATION_LIMITS.nameMax} required error={state.fieldErrors?.full_name} />
         <div className="grid gap-4 sm:grid-cols-2">
           <div>
             <Label htmlFor="batch_year">Batch year *</Label>
@@ -71,7 +73,7 @@ export function ProfileForm({ profile }: { profile: Profile }) {
             <FieldError message={state.fieldErrors?.course} />
           </div>
         </div>
-        <Field label="Roll number" name="roll_number" defaultValue={profile.roll_number ?? ''} />
+        <Field label="Roll number" name="roll_number" defaultValue={profile.roll_number ?? ''} maxLength={VALIDATION_LIMITS.rollNumberMax} />
       </Section>
 
       <Section title="Personal">
@@ -79,17 +81,20 @@ export function ProfileForm({ profile }: { profile: Profile }) {
           label="Phone (10-digit Indian mobile)"
           name="phone"
           type="tel"
-          inputMode="tel"
+          inputMode="numeric"
+          maxLength={10}
+          pattern={INPUT_PATTERNS.indianMobile}
+          title="Enter a valid 10-digit Indian mobile number starting with 6, 7, 8, or 9"
           defaultValue={profile.phone ?? ''}
           error={state.fieldErrors?.phone}
         />
         <div className="grid gap-4 sm:grid-cols-3">
-          <Field label="City" name="current_city" defaultValue={profile.current_city ?? ''} />
-          <Field label="State" name="current_state" defaultValue={profile.current_state ?? ''} />
-          <Field label="Country" name="current_country" defaultValue={profile.current_country ?? 'India'} />
+          <Field label="City" name="current_city" defaultValue={profile.current_city ?? ''} maxLength={VALIDATION_LIMITS.placeMax} />
+          <Field label="State" name="current_state" defaultValue={profile.current_state ?? ''} maxLength={VALIDATION_LIMITS.placeMax} />
+          <Field label="Country" name="current_country" defaultValue={profile.current_country ?? 'India'} maxLength={VALIDATION_LIMITS.placeMax} />
         </div>
         <div className="grid gap-4 sm:grid-cols-2">
-          <Field label="Date of birth" name="date_of_birth" type="date" defaultValue={profile.date_of_birth ?? ''} />
+          <Field label="Date of birth" name="date_of_birth" type="date" min={VALIDATION_LIMITS.minBirthDate} max={maxBirthDate} defaultValue={profile.date_of_birth ?? ''} />
           <div>
             <Label htmlFor="gender">Gender</Label>
             <select id="gender" name="gender" defaultValue={profile.gender ?? ''} className="mt-1.5 flex h-10 w-full rounded-lg border border-slate-200 bg-white px-4 text-sm focus:outline-none focus:ring-2 focus:ring-[#0F2557]">
@@ -103,16 +108,17 @@ export function ProfileForm({ profile }: { profile: Profile }) {
       </Section>
 
       <Section title="Professional">
-        <Field label="Occupation" name="occupation" defaultValue={profile.occupation ?? ''} />
+        <Field label="Occupation" name="occupation" defaultValue={profile.occupation ?? ''} maxLength={VALIDATION_LIMITS.professionalTextMax} />
         <div className="grid gap-4 sm:grid-cols-2">
-          <Field label="Company / Organisation" name="company" defaultValue={profile.company ?? ''} />
-          <Field label="Job title" name="job_title" defaultValue={profile.job_title ?? ''} />
+          <Field label="Company / Organisation" name="company" defaultValue={profile.company ?? ''} maxLength={VALIDATION_LIMITS.professionalTextMax} />
+          <Field label="Job title" name="job_title" defaultValue={profile.job_title ?? ''} maxLength={VALIDATION_LIMITS.professionalTextMax} />
         </div>
-        <Field label="Industry" name="industry" defaultValue={profile.industry ?? ''} />
+        <Field label="Industry" name="industry" defaultValue={profile.industry ?? ''} maxLength={VALIDATION_LIMITS.industryMax} />
         <Field
           label="LinkedIn URL"
           name="linkedin_url"
           type="url"
+          maxLength={VALIDATION_LIMITS.urlMax}
           placeholder="https://linkedin.com/in/..."
           defaultValue={profile.linkedin_url ?? ''}
           error={state.fieldErrors?.linkedin_url}
@@ -123,7 +129,7 @@ export function ProfileForm({ profile }: { profile: Profile }) {
             id="bio"
             name="bio"
             rows={4}
-            maxLength={500}
+            maxLength={VALIDATION_LIMITS.bioMax}
             defaultValue={profile.bio ?? ''}
             className="mt-1.5 flex w-full rounded-lg border border-slate-200 bg-white px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-[#0F2557]"
           />

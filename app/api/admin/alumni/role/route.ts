@@ -3,6 +3,7 @@ import { requireAdminApiAccess } from '@/lib/auth/admin-api';
 import { writeAuditLog } from '@/lib/audit';
 import { invalidateAfterAction } from '@/lib/cache/invalidate';
 import { changeRoleSchema } from '@/lib/validations/admin';
+import { canAssignRole } from '@/lib/auth/role-governance';
 
 export async function POST(req: NextRequest) {
   const { adminAccess, error: authError } = await requireAdminApiAccess();
@@ -18,9 +19,11 @@ export async function POST(req: NextRequest) {
 
   const { alumniId, role } = parsed.data;
 
-  // Only super_admin can assign super_admin
-  if (role === 'super_admin' && adminAccess.role !== 'super_admin') {
-    return NextResponse.json({ error: 'Only super admins can assign super_admin role.' }, { status: 403 });
+  if (!canAssignRole({ actorRole: adminAccess.role, requestedRole: role })) {
+    return NextResponse.json(
+      { error: 'Only super admins can assign admin roles.' },
+      { status: 403 }
+    );
   }
 
   const { error: updateError } = await supabase

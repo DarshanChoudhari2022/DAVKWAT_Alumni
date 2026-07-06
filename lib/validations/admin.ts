@@ -1,8 +1,15 @@
 import { z } from 'zod';
+import {
+  nullableIndianMobile,
+  optionalProfileUrl,
+  optionalText,
+  requiredName,
+} from './common';
+import { VALIDATION_LIMITS } from './constraints';
 
 export const membershipPlanSchema = z.object({
-  name: z.string().min(1, 'Plan name is required').max(100),
-  description: z.string().max(500).optional(),
+  name: optionalText(VALIDATION_LIMITS.planNameMax).pipe(z.string().min(1, 'Plan name is required')),
+  description: optionalText(VALIDATION_LIMITS.planDescriptionMax),
   amount: z.coerce.number().positive('Amount must be greater than 0'),
   membership_type: z.enum(['lifetime', 'annual']),
   duration_months: z.coerce.number().int().positive().optional().nullable(),
@@ -17,15 +24,17 @@ export const siteSettingSchema = z.object({
 });
 
 export const siteSettingsValuesSchema = z.object({
-  trust_name: z.string().min(2, 'Trust name is required').max(160),
-  contact_email: z.string().email('Enter a valid contact email'),
-  contact_phone: z.string().max(30).optional().or(z.literal('')),
-  about_short: z.string().min(20, 'Add a short trust description').max(400),
+  trust_name: requiredName.pipe(z.string().max(VALIDATION_LIMITS.trustNameMax)),
+  contact_email: z.string().trim().toLowerCase().email('Enter a valid contact email'),
+  contact_phone: optionalText(VALIDATION_LIMITS.contactPhoneMax),
+  about_short: optionalText(VALIDATION_LIMITS.aboutShortMax).pipe(
+    z.string().min(20, 'Add a short trust description')
+  ),
   social_links: z.object({
-    facebook: z.string().url('Enter a valid Facebook URL').optional().or(z.literal('')),
-    twitter: z.string().url('Enter a valid Twitter/X URL').optional().or(z.literal('')),
-    linkedin: z.string().url('Enter a valid LinkedIn URL').optional().or(z.literal('')),
-    instagram: z.string().url('Enter a valid Instagram URL').optional().or(z.literal('')),
+    facebook: optionalProfileUrl,
+    twitter: optionalProfileUrl,
+    linkedin: optionalProfileUrl,
+    instagram: optionalProfileUrl,
   }),
 });
 
@@ -40,22 +49,22 @@ export const toggleActiveSchema = z.object({
 });
 
 export const adminProfileUpdateSchema = z.object({
-  full_name: z.string().min(2).max(120).optional(),
-  email: z.string().email().max(254).optional(),
-  display_name: z.string().max(120).optional().nullable(),
-  phone: z.string().max(20).optional().nullable(),
-  alternate_phone: z.string().max(20).optional().nullable(),
-  current_city: z.string().max(80).optional().nullable(),
-  current_state: z.string().max(80).optional().nullable(),
-  current_country: z.string().max(80).optional().nullable(),
-  occupation: z.string().max(120).optional().nullable(),
-  company: z.string().max(120).optional().nullable(),
-  job_title: z.string().max(120).optional().nullable(),
-  industry: z.string().max(80).optional().nullable(),
-  linkedin_url: z.string().url().optional().nullable().or(z.literal('')),
-  website_url: z.string().url().optional().nullable().or(z.literal('')),
-  bio: z.string().max(500).optional().nullable(),
-  achievements: z.string().max(1000).optional().nullable(),
+  full_name: requiredName.optional(),
+  email: z.string().trim().toLowerCase().email().max(VALIDATION_LIMITS.emailMax).optional(),
+  display_name: optionalText(VALIDATION_LIMITS.displayNameMax).nullable(),
+  phone: nullableIndianMobile,
+  alternate_phone: nullableIndianMobile,
+  current_city: optionalText(VALIDATION_LIMITS.placeMax).nullable(),
+  current_state: optionalText(VALIDATION_LIMITS.placeMax).nullable(),
+  current_country: optionalText(VALIDATION_LIMITS.placeMax).nullable(),
+  occupation: optionalText(VALIDATION_LIMITS.professionalTextMax).nullable(),
+  company: optionalText(VALIDATION_LIMITS.professionalTextMax).nullable(),
+  job_title: optionalText(VALIDATION_LIMITS.professionalTextMax).nullable(),
+  industry: optionalText(VALIDATION_LIMITS.industryMax).nullable(),
+  linkedin_url: optionalProfileUrl,
+  website_url: optionalProfileUrl,
+  bio: optionalText(VALIDATION_LIMITS.bioMax).nullable(),
+  achievements: optionalText(VALIDATION_LIMITS.achievementsMax).nullable(),
   hide_email: z.boolean().optional(),
   hide_phone: z.boolean().optional(),
 });

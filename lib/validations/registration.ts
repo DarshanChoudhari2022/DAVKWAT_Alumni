@@ -1,14 +1,20 @@
 import { z } from 'zod';
-
-const CURRENT_YEAR = new Date().getFullYear();
+import {
+  optionalDateOfBirth,
+  optionalIndianMobile,
+  optionalProfileUrl,
+  optionalText,
+  requiredName,
+} from './common';
+import { VALIDATION_LIMITS } from './constraints';
 
 export const accountSchema = z
   .object({
-    email: z.string().email('Enter a valid email').max(254),
+    email: z.string().trim().toLowerCase().email('Enter a valid email').max(VALIDATION_LIMITS.emailMax),
     password: z
       .string()
       .min(8, 'Minimum 8 characters')
-      .max(128)
+      .max(VALIDATION_LIMITS.passwordMax)
       .regex(/[A-Z]/, 'Must contain an uppercase letter')
       .regex(/[a-z]/, 'Must contain a lowercase letter')
       .regex(/[0-9]/, 'Must contain a number'),
@@ -20,38 +26,34 @@ export const accountSchema = z
   });
 
 export const academicSchema = z.object({
-  full_name: z.string().min(2, 'Required').max(120),
+  full_name: requiredName,
   batch_year: z
     .number({ invalid_type_error: 'Required' })
     .int()
-    .min(1950, 'Too early')
-    .max(CURRENT_YEAR, 'In the future'),
+    .min(VALIDATION_LIMITS.minBatchYear, 'Too early')
+    .max(VALIDATION_LIMITS.maxBatchYear, 'In the future'),
   course: z.enum(['Science', 'Commerce', 'Arts', 'Other'], {
     errorMap: () => ({ message: 'Select a course' }),
   }),
-  roll_number: z.string().max(40).optional().or(z.literal('')),
+  roll_number: optionalText(VALIDATION_LIMITS.rollNumberMax),
 });
 
 export const personalSchema = z.object({
-  phone: z
-    .string()
-    .regex(/^[6-9]\d{9}$/, 'Enter a 10-digit Indian mobile number')
-    .optional()
-    .or(z.literal('')),
-  current_city: z.string().max(80).optional().or(z.literal('')),
-  current_state: z.string().max(80).optional().or(z.literal('')),
-  current_country: z.string().max(80).default('India'),
-  date_of_birth: z.string().optional().or(z.literal('')),
+  phone: optionalIndianMobile,
+  current_city: optionalText(VALIDATION_LIMITS.placeMax),
+  current_state: optionalText(VALIDATION_LIMITS.placeMax),
+  current_country: optionalText(VALIDATION_LIMITS.placeMax).default('India'),
+  date_of_birth: optionalDateOfBirth,
   gender: z.enum(['male', 'female', 'other']).optional(),
 });
 
 export const professionalSchema = z.object({
-  occupation: z.string().max(120).optional().or(z.literal('')),
-  company: z.string().max(120).optional().or(z.literal('')),
-  job_title: z.string().max(120).optional().or(z.literal('')),
-  industry: z.string().max(80).optional().or(z.literal('')),
-  linkedin_url: z.string().url('Enter a valid URL').optional().or(z.literal('')),
-  bio: z.string().max(500, 'Max 500 characters').optional().or(z.literal('')),
+  occupation: optionalText(VALIDATION_LIMITS.professionalTextMax),
+  company: optionalText(VALIDATION_LIMITS.professionalTextMax),
+  job_title: optionalText(VALIDATION_LIMITS.professionalTextMax),
+  industry: optionalText(VALIDATION_LIMITS.industryMax),
+  linkedin_url: optionalProfileUrl,
+  bio: optionalText(VALIDATION_LIMITS.bioMax),
   hide_email: z.boolean().default(false),
   hide_phone: z.boolean().default(false),
   terms_accepted: z.literal(true, { errorMap: () => ({ message: 'You must accept the terms' }) }),
