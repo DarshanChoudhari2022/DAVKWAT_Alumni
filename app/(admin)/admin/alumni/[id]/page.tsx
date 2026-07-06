@@ -21,22 +21,25 @@ export default async function AdminAlumniDetailPage({
   const { id } = await params;
   const { database: supabase } = await requireAdminAccess();
 
-  const { data: alumni } = await supabase
-    .from('profiles')
-    .select('*')
-    .eq('id', id)
-    .single();
+  // Parallel fetch: profile + payments at the same time (~2x faster)
+  const [alumniResult, paymentsResult] = await Promise.all([
+    supabase
+      .from('profiles')
+      .select('*')
+      .eq('id', id)
+      .single(),
+    supabase
+      .from('payments')
+      .select('id, txnid, amount, status, payment_mode, created_at')
+      .eq('alumni_id', id)
+      .order('created_at', { ascending: false })
+      .order('id', { ascending: false })
+      .limit(10),
+  ]);
 
+  const alumni = alumniResult.data;
   if (!alumni) notFound();
-
-  // Fetch payment history
-  const { data: payments } = await supabase
-    .from('payments')
-    .select('id, txnid, amount, status, payment_mode, created_at')
-    .eq('alumni_id', id)
-    .order('created_at', { ascending: false })
-    .order('id', { ascending: false })
-    .limit(10);
+  const payments = paymentsResult.data;
 
   return (
     <div className="mx-auto max-w-4xl px-3 py-5 sm:px-6 sm:py-8 lg:px-8">

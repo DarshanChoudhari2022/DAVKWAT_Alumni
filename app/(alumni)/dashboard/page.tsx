@@ -60,7 +60,7 @@ export default async function DashboardPage() {
 
       {/* Stats region (async) */}
       <Suspense fallback={<StatsRegionSkeleton />}>
-        <StatsRegion batchYear={profile.batch_year} userId={userId} />
+        <StatsRegion batchYear={profile.batch_year} userId={userId} database={database} />
       </Suspense>
 
       {/* Membership banner (shell, uses profile data) */}
@@ -80,12 +80,12 @@ export default async function DashboardPage() {
 
       {/* Upcoming events region (async) */}
       <Suspense fallback={<EventsRegionSkeleton />}>
-        <EventsRegion />
+        <EventsRegion database={database} />
       </Suspense>
 
       {/* Recent announcements region (async) */}
       <Suspense fallback={<AnnouncementsRegionSkeleton />}>
-        <AnnouncementsRegion />
+        <AnnouncementsRegion database={database} />
       </Suspense>
     </div>
   );
@@ -98,12 +98,13 @@ export default async function DashboardPage() {
 async function StatsRegion({
   batchYear,
   userId,
+  database,
 }: {
   batchYear: number;
   userId: string;
+  database: Awaited<ReturnType<typeof requireAlumniAccess>>['database'];
 }) {
   try {
-    const { database } = await requireAlumniAccess();
     const now = new Date().toISOString();
 
     const [batchPeers, upcomingEvents, recentAnnouncements] = await Promise.all([
@@ -152,9 +153,8 @@ async function StatsRegion({
   }
 }
 
-async function EventsRegion() {
+async function EventsRegion({ database }: { database: Awaited<ReturnType<typeof requireAlumniAccess>>['database'] }) {
   try {
-    const { database } = await requireAlumniAccess();
     const now = new Date().toISOString();
 
     const { data: upcomingEvents } = await database
@@ -194,9 +194,8 @@ async function EventsRegion() {
   }
 }
 
-async function AnnouncementsRegion() {
+async function AnnouncementsRegion({ database }: { database: Awaited<ReturnType<typeof requireAlumniAccess>>['database'] }) {
   try {
-    const { database } = await requireAlumniAccess();
     const now = new Date().toISOString();
 
     const { data: recentAnnouncements } = await database

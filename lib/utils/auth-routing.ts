@@ -3,7 +3,6 @@ const ALUMNI_ROUTE_PREFIXES = [
   '/directory',
   '/profile',
   '/announcements',
-  '/events',
   '/forum',
   '/membership',
 ];

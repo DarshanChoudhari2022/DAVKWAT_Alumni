@@ -125,14 +125,17 @@ export async function updateSession(request: NextRequest): Promise<NextResponse>
     );
 
     try {
+      // Single profile lookup for all gating decisions — saves up to 2 DB round-trips.
+      // The branches below (isAuthPage, isCompleteRegister, needsAlumni/needsAdmin) are
+      // mutually exclusive path classes, so one query serves all of them.
+      const { data: profile } = await supabase
+        .from('profiles')
+        .select('role, approval_status')
+        .eq('id', user.id)
+        .maybeSingle();
+
       // Logged in users shouldn't see auth pages if they have a valid profile
       if (isAuthPage) {
-        const { data: profile } = await supabase
-          .from('profiles')
-          .select('role, approval_status')
-          .eq('id', user.id)
-          .single();
-
         if (profile) {
           const url = request.nextUrl.clone();
           url.pathname = resolveSignedInRedirect(
@@ -146,12 +149,6 @@ export async function updateSession(request: NextRequest): Promise<NextResponse>
       }
 
       if (isCompleteRegister) {
-        const { data: profile } = await supabase
-          .from('profiles')
-          .select('role, approval_status')
-          .eq('id', user.id)
-          .maybeSingle();
-
         if (profile) {
           const url = request.nextUrl.clone();
           url.pathname = resolveSignedInRedirect(
@@ -165,12 +162,6 @@ export async function updateSession(request: NextRequest): Promise<NextResponse>
       }
 
       if (needsAlumni || needsAdmin) {
-        const { data: profile } = await supabase
-          .from('profiles')
-          .select('role, approval_status')
-          .eq('id', user.id)
-          .single();
-
         if (!profile) {
           const url = request.nextUrl.clone();
           url.pathname = '/register/complete';

@@ -16,6 +16,22 @@ export async function rsvpAction(
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) return { error: 'Please log in to RSVP.' };
 
+  // Backend Security Gating: check profile status
+  const { data: profile } = await supabase
+    .from('profiles')
+    .select('role, approval_status, is_paid_member, profile_type')
+    .eq('id', user.id)
+    .maybeSingle();
+
+  if (!profile || profile.approval_status !== 'approved') {
+    return { error: 'Your registration must be approved before registering for events.' };
+  }
+
+  const isPaidOrFaculty = profile.is_paid_member || profile.profile_type === 'faculty';
+  if (!isPaidOrFaculty) {
+    return { error: 'An active membership is required to register for events.' };
+  }
+
   const eventId = formData.get('event_id')?.toString();
   const slug = formData.get('slug')?.toString();
 

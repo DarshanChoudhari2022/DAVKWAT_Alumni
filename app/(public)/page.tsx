@@ -12,8 +12,7 @@ import { ManageEngage } from '@/components/landing/ManageEngage';
 import { PrivacyData } from '@/components/landing/PrivacyData';
 import { FinalCTA } from '@/components/landing/FinalCTA';
 
-export const dynamic = 'force-dynamic';
-export const revalidate = 0;
+export const revalidate = 60;
 
 function createLandingDataClient(): SupabaseClient<Database> | null {
   if (

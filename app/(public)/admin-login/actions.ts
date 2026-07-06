@@ -61,7 +61,7 @@ export async function adminLoginAction(
   }
 
   await startLocalAdminSession(parsed.data.email);
-  revalidatePath('/', 'layout');
+  revalidatePath('/(admin)', 'layout');
 
   redirect(resolveAdminRedirect(formData.get('redirect')?.toString()));
 }
@@ -76,6 +76,6 @@ export async function adminLogoutAction() {
     // Ignore Supabase logout failures when local admin access is being used.
   }
 
-  revalidatePath('/', 'layout');
+  revalidatePath('/(admin)', 'layout');
   redirect('/admin-login');
 }

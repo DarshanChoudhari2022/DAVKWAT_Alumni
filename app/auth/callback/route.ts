@@ -13,7 +13,7 @@ export async function GET(request: NextRequest) {
 
   if (code) {
     const supabase = await createClient();
-    const { error } = await supabase.auth.exchangeCodeForSession(code);
+    const { data: sessionData, error } = await supabase.auth.exchangeCodeForSession(code);
     if (error) {
       if (redirectTo === '/auth/reset-password') {
         return NextResponse.redirect(`${origin}/forgot-password?error=invalid_link`);
@@ -22,9 +22,8 @@ export async function GET(request: NextRequest) {
       return NextResponse.redirect(`${origin}/login?error=verification_failed`);
     }
 
-    const {
-      data: { user },
-    } = await supabase.auth.getUser();
+    // Reuse user from exchangeCodeForSession — skip redundant getUser() round-trip
+    const user = sessionData?.user ?? null;
     
     let hasProfile = false;
     if (user) {
@@ -38,10 +37,14 @@ export async function GET(request: NextRequest) {
 
         if (profile) {
           hasProfile = true;
-          await admin
+          // Fire-and-forget: don't block the redirect for a presence update
+          void admin
             .from('profiles')
             .update({ last_seen_at: new Date().toISOString() })
-            .eq('id', user.id);
+            .eq('id', user.id)
+            .then(({ error: updateErr }) => {
+              if (updateErr) console.warn('[auth/callback] last_seen_at update skipped:', updateErr.message);
+            });
         }
       } catch (error) {
         console.warn('[auth/callback] profile check / last_seen_at update skipped:', error);

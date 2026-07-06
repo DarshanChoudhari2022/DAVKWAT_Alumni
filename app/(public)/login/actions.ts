@@ -62,7 +62,8 @@ export async function loginAction(_prev: AuthState, formData: FormData): Promise
       if (updateError) console.error('[login] last_seen_at update failed:', updateError.message);
     });
 
-  revalidatePath('/', 'layout');
+  revalidatePath('/(alumni)', 'layout');
+  revalidatePath('/(admin)', 'layout');
 
   redirect(resolveSignedInRedirect(redirectTo, profile.role, profile.approval_status));
 }
@@ -70,6 +71,7 @@ export async function loginAction(_prev: AuthState, formData: FormData): Promise
 export async function logoutAction(): Promise<void> {
   const supabase = await createClient();
   await supabase.auth.signOut();
-  revalidatePath('/', 'layout');
+  revalidatePath('/(alumni)', 'layout');
+  revalidatePath('/(admin)', 'layout');
   redirect('/login');
 }

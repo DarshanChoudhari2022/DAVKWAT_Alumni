@@ -21,8 +21,13 @@ const nextConfig = {
     ],
     formats: ['image/avif', 'image/webp'],
   },
+  compress: true,
   experimental: {
     serverActions: { bodySizeLimit: '5mb' },
+    staleTimes: {
+      dynamic: 30,
+      static: 180,
+    },
   },
   async headers() {
     return [
