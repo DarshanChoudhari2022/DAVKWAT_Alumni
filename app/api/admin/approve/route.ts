@@ -15,7 +15,15 @@ export async function POST(req: Request) {
     }
 
     const admin = createAdminClient();
+    const { data: profile } = await admin
+      .from('profiles')
+      .select('profile_type')
+      .eq('id', alumniId)
+      .maybeSingle();
+
+    const isFaculty = profile?.profile_type === 'faculty';
     const now = new Date().toISOString();
+    
     const { data: approvedProfile, error: updateError } = await admin
       .from('profiles')
       .update({
@@ -25,6 +33,7 @@ export async function POST(req: Request) {
         approved_by: adminAccess.actorProfileId,
         rejection_reason: null,
         updated_at: now,
+        is_paid_member: isFaculty ? true : undefined,
       })
       .eq('id', alumniId)
       .eq('approval_status', 'pending')

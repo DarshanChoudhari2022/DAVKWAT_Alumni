@@ -18,9 +18,9 @@ export const EDUCATION_LEVELS = [
 export const EDUCATION_STREAMS = ['Science', 'Commerce', 'Arts'] as const;
 
 export const EDUCATION_LEVEL_LABELS: Record<(typeof EDUCATION_LEVELS)[number], string> = {
-  left_before_10th: 'Left before completing 10th',
-  secondary: '10th / Secondary',
-  senior_secondary: '12th / Senior Secondary',
+  left_before_10th: 'Left before completing Secondary',
+  secondary: 'Secondary',
+  senior_secondary: 'Higher Secondary',
   other: 'Other',
 };
 
@@ -28,7 +28,7 @@ export function courseForEducationLevel(
   educationLevel: (typeof EDUCATION_LEVELS)[number],
   educationStream?: (typeof EDUCATION_STREAMS)[number] | ''
 ) {
-  if (educationLevel === 'senior_secondary') return educationStream || 'Senior Secondary';
+  if (educationLevel === 'senior_secondary') return educationStream || 'Higher Secondary';
   return EDUCATION_LEVEL_LABELS[educationLevel];
 }
 
@@ -63,15 +63,31 @@ export const alumniAcademicSchema = z
     }),
     education_stream: z.enum(EDUCATION_STREAMS).optional().or(z.literal('')),
     passing_year: yearSchema,
+    passing_year_10th: yearSchema.optional().nullable(),
     roll_number: optionalText(VALIDATION_LIMITS.rollNumberMax),
   })
   .superRefine((data, ctx) => {
-    if (data.education_level === 'senior_secondary' && !data.education_stream) {
-      ctx.addIssue({
-        code: z.ZodIssueCode.custom,
-        path: ['education_stream'],
-        message: 'Select Science, Commerce, or Arts',
-      });
+    if (data.education_level === 'senior_secondary') {
+      if (!data.education_stream) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          path: ['education_stream'],
+          message: 'Select Science, Commerce, or Arts',
+        });
+      }
+      if (!data.passing_year_10th) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          path: ['passing_year_10th'],
+          message: 'Required',
+        });
+      } else if (data.passing_year_10th > data.passing_year) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          path: ['passing_year_10th'],
+          message: 'Secondary passing year must be earlier than Higher Secondary passing year',
+        });
+      }
     }
   })
   .transform((data) => ({

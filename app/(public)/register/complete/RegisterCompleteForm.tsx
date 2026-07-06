@@ -145,9 +145,9 @@ export function RegisterCompleteForm({ initialData }: RegisterCompleteFormProps)
             className="mt-1.5 flex h-10 w-full rounded-lg border border-slate-200 bg-white px-4 text-sm focus:outline-none focus:ring-2 focus:ring-[#0F2557]"
           >
             <option value="">Select level...</option>
-            <option value="left_before_10th">Left before completing 10th</option>
-            <option value="secondary">10th / Secondary</option>
-            <option value="senior_secondary">12th / Senior Secondary</option>
+            <option value="left_before_10th">Left before completing Secondary</option>
+            <option value="secondary">Secondary</option>
+            <option value="senior_secondary">Higher Secondary</option>
             <option value="other">Other</option>
           </select>
           <FieldError message={fieldErrors?.education_level} />
@@ -169,21 +169,74 @@ export function RegisterCompleteForm({ initialData }: RegisterCompleteFormProps)
             <FieldError message={fieldErrors?.education_stream} />
           </div>
         )}
-        <div>
-          <Label htmlFor="passing_year">Year of passing <span className="text-rose-600">*</span></Label>
-          <select
-            id="passing_year"
-            name="passing_year"
-            required
-            className="mt-1.5 flex h-10 w-full rounded-lg border border-slate-200 bg-white px-4 text-sm focus:outline-none focus:ring-2 focus:ring-[#0F2557]"
-          >
-            <option value="">Select year...</option>
-            {BATCH_YEARS.map((y) => (
-              <option key={y} value={y}>{y}</option>
-            ))}
-          </select>
-          <FieldError message={fieldErrors?.passing_year} />
-        </div>
+        {educationLevel === 'secondary' && (
+          <div>
+            <Label htmlFor="passing_year">Year of passing (Secondary) <span className="text-rose-600">*</span></Label>
+            <select
+              id="passing_year"
+              name="passing_year"
+              required
+              className="mt-1.5 flex h-10 w-full rounded-lg border border-slate-200 bg-white px-4 text-sm focus:outline-none focus:ring-2 focus:ring-[#0F2557]"
+            >
+              <option value="">Select year...</option>
+              {BATCH_YEARS.map((y) => (
+                <option key={y} value={y}>{y}</option>
+              ))}
+            </select>
+            <FieldError message={fieldErrors?.passing_year} />
+          </div>
+        )}
+        {educationLevel === 'senior_secondary' && (
+          <>
+            <div>
+              <Label htmlFor="passing_year">Year of passing (Higher Secondary) <span className="text-rose-600">*</span></Label>
+              <select
+                id="passing_year"
+                name="passing_year"
+                required
+                className="mt-1.5 flex h-10 w-full rounded-lg border border-slate-200 bg-white px-4 text-sm focus:outline-none focus:ring-2 focus:ring-[#0F2557]"
+              >
+                <option value="">Select year...</option>
+                {BATCH_YEARS.map((y) => (
+                  <option key={y} value={y}>{y}</option>
+                ))}
+              </select>
+              <FieldError message={fieldErrors?.passing_year} />
+            </div>
+            <div>
+              <Label htmlFor="passing_year_10th">Year of passing (Secondary) <span className="text-rose-600">*</span></Label>
+              <select
+                id="passing_year_10th"
+                name="passing_year_10th"
+                required
+                className="mt-1.5 flex h-10 w-full rounded-lg border border-slate-200 bg-white px-4 text-sm focus:outline-none focus:ring-2 focus:ring-[#0F2557]"
+              >
+                <option value="">Select year...</option>
+                {BATCH_YEARS.map((y) => (
+                  <option key={y} value={y}>{y}</option>
+                ))}
+              </select>
+              <FieldError message={fieldErrors?.passing_year_10th} />
+            </div>
+          </>
+        )}
+        {(educationLevel === 'left_before_10th' || educationLevel === 'other' || !educationLevel) && (
+          <div>
+            <Label htmlFor="passing_year">Year of leaving/passing <span className="text-rose-600">*</span></Label>
+            <select
+              id="passing_year"
+              name="passing_year"
+              required
+              className="mt-1.5 flex h-10 w-full rounded-lg border border-slate-200 bg-white px-4 text-sm focus:outline-none focus:ring-2 focus:ring-[#0F2557]"
+            >
+              <option value="">Select year...</option>
+              {BATCH_YEARS.map((y) => (
+                <option key={y} value={y}>{y}</option>
+              ))}
+            </select>
+            <FieldError message={fieldErrors?.passing_year} />
+          </div>
+        )}
         <Field label="Roll Number (optional)" name="roll_number" maxLength={VALIDATION_LIMITS.rollNumberMax} />
       </div>
 

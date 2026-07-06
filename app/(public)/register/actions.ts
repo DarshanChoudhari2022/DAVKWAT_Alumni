@@ -102,6 +102,7 @@ async function insertProfile(
       education_level: (data.education_level as EducationLevel | undefined) ?? null,
       education_stream: (data.education_stream as EducationStream | '' | undefined) || null,
       passing_year: (data.passing_year as number) || (data.batch_year as number),
+      passing_year_10th: (data.passing_year_10th as number) || null,
       roll_number: (data.roll_number as string) || null,
       phone: (data.phone as string) || null,
       current_city: (data.current_city as string) || null,
@@ -164,6 +165,7 @@ export async function registerAction(
   // ---------- 1. Parse & validate ----------
   const raw: Record<string, unknown> = Object.fromEntries(formData.entries());
   if (raw.passing_year) raw.passing_year = Number(raw.passing_year);
+  if (raw.passing_year_10th) raw.passing_year_10th = Number(raw.passing_year_10th);
   raw.hide_email = formData.get('hide_email') === 'on';
   raw.hide_phone = formData.get('hide_phone') === 'on';
   raw.terms_accepted = formData.get('terms_accepted') === 'on';

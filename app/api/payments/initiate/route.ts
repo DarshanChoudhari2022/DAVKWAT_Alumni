@@ -22,7 +22,7 @@ export async function POST(req: Request) {
     const [{ data: profile }, { data: plan }] = await Promise.all([
       supabase
         .from('profiles')
-        .select('id, full_name, approval_status, is_active')
+        .select('id, full_name, approval_status, is_active, profile_type')
         .eq('id', user.id)
         .maybeSingle(),
       supabase
@@ -37,6 +37,13 @@ export async function POST(req: Request) {
       return NextResponse.json(
         { error: 'Only approved alumni can submit membership requests.' },
         { status: 403 }
+      );
+    }
+
+    if (profile.profile_type === 'faculty') {
+      return NextResponse.json(
+        { error: 'Faculty members are not required to pay membership fees.' },
+        { status: 400 }
       );
     }
 

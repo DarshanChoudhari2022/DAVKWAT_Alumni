@@ -25,6 +25,7 @@ export interface Database {
           education_level: 'left_before_10th' | 'secondary' | 'senior_secondary' | 'other' | null;
           education_stream: 'Science' | 'Commerce' | 'Arts' | null;
           passing_year: number | null;
+          passing_year_10th: number | null;
           taught_subject: string | null;
           taught_from_year: number | null;
           taught_to_year: number | null;
@@ -72,6 +73,7 @@ export interface Database {
           education_level?: 'left_before_10th' | 'secondary' | 'senior_secondary' | 'other' | null;
           education_stream?: 'Science' | 'Commerce' | 'Arts' | null;
           passing_year?: number | null;
+          passing_year_10th?: number | null;
           taught_subject?: string | null;
           taught_from_year?: number | null;
           taught_to_year?: number | null;

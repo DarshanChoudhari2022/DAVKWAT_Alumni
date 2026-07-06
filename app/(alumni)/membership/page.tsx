@@ -59,7 +59,23 @@ export default async function MembershipPage({
       )}
 
       {/* Shell: status banner for active members (synchronous, auth data only) */}
-      {profile.is_paid_member && (
+      {profile.profile_type === 'faculty' ? (
+        <Card className="mt-6 border-emerald-200 bg-emerald-50/50">
+          <div className="flex items-start gap-4">
+            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-emerald-100 text-emerald-600">
+              <Crown className="h-5 w-5" />
+            </div>
+            <div>
+              <h2 className="font-display text-lg font-semibold text-emerald-800">
+                Faculty Member
+              </h2>
+              <p className="mt-0.5 text-sm text-emerald-700">
+                Faculty accounts have a free lifetime membership and full portal access.
+              </p>
+            </div>
+          </div>
+        </Card>
+      ) : profile.is_paid_member ? (
         <Card className="mt-6 border-emerald-200 bg-emerald-50/50">
           <div className="flex items-start gap-4">
             <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-emerald-100 text-emerald-600">
@@ -83,15 +99,18 @@ export default async function MembershipPage({
             </div>
           </div>
         </Card>
-      )}
+      ) : null}
 
       {/* Plans region (cached, ≤300s) — independent Suspense boundary */}
-      <Suspense fallback={<PlansSkeleton />}>
-        <PlansRegion
-          isPaidMember={profile.is_paid_member}
-          isExpiringSoon={isExpiringSoon}
-        />
-      </Suspense>
+      {profile.profile_type !== 'faculty' && (
+        <Suspense fallback={<PlansSkeleton />}>
+          <PlansRegion
+            isPaidMember={profile.is_paid_member}
+            isExpiringSoon={isExpiringSoon}
+            profileType={profile.profile_type}
+          />
+        </Suspense>
+      )}
 
       {/* Payments region (fresh, identity-scoped) — independent Suspense boundary */}
       <Suspense fallback={<PaymentsSkeleton />}>
@@ -113,9 +132,11 @@ export default async function MembershipPage({
 async function PlansRegion({
   isPaidMember,
   isExpiringSoon,
+  profileType,
 }: {
   isPaidMember: boolean;
   isExpiringSoon: boolean;
+  profileType: 'alumni' | 'faculty';
 }) {
   try {
     const { database, userId } = await requireAlumniAccess();

@@ -43,6 +43,7 @@ describe('alumni profile validation hardening', () => {
       education_level: 'senior_secondary',
       education_stream: 'Science',
       passing_year: 2012,
+      passing_year_10th: 2010,
       roll_number: '  R-42  ',
     });
 

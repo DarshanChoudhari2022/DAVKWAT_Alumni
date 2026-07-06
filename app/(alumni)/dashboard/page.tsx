@@ -64,7 +64,7 @@ export default async function DashboardPage() {
       </Suspense>
 
       {/* Membership banner (shell, uses profile data) */}
-      {!profile.is_paid_member && (
+      {profile.profile_type !== 'faculty' && !profile.is_paid_member && (
         <Card className="mt-6 flex flex-col items-start gap-4 bg-gradient-to-r from-[#0F2557] to-[#1a3a7a] text-white sm:flex-row sm:items-center sm:justify-between">
           <div>
             <h2 className="font-display text-lg font-semibold">Become a paying member</h2>

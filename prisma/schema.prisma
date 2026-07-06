@@ -56,6 +56,7 @@ model profiles {
   education_level  String?
   education_stream String?
   passing_year     Int?
+  passing_year_10th Int?
   taught_subject   String?
   taught_from_year Int?
   taught_to_year   Int?

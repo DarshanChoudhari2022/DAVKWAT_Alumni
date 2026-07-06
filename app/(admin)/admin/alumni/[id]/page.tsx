@@ -127,13 +127,34 @@ export default async function AdminAlumniDetailPage({
               </>
             ) : (
               <>
-                <DetailRow icon={GraduationCap} label="Batch Year" value={String(alumni.batch_year)} />
                 <DetailRow icon={GraduationCap} label="Course" value={alumni.course} />
                 {alumni.education_level && (
-                  <DetailRow icon={GraduationCap} label="School Level" value={alumni.education_level.replaceAll('_', ' ')} />
+                  <DetailRow
+                    icon={GraduationCap}
+                    label="School Level"
+                    value={
+                      alumni.education_level === 'left_before_10th'
+                        ? 'Left before completing Secondary'
+                        : alumni.education_level === 'secondary'
+                        ? 'Secondary'
+                        : alumni.education_level === 'senior_secondary'
+                        ? 'Higher Secondary'
+                        : alumni.education_level === 'other'
+                        ? 'Other'
+                        : (alumni.education_level as string).replaceAll('_', ' ')
+                    }
+                  />
                 )}
                 {alumni.education_stream && (
                   <DetailRow icon={GraduationCap} label="Stream" value={alumni.education_stream} />
+                )}
+                {alumni.education_level === 'senior_secondary' ? (
+                  <>
+                    <DetailRow icon={GraduationCap} label="Secondary Passing Year" value={alumni.passing_year_10th ? String(alumni.passing_year_10th) : '—'} />
+                    <DetailRow icon={GraduationCap} label="Higher Secondary Passing Year" value={String(alumni.batch_year)} />
+                  </>
+                ) : (
+                  <DetailRow icon={GraduationCap} label="Passing/Leaving Year" value={String(alumni.batch_year)} />
                 )}
                 {alumni.roll_number && (
                   <DetailRow icon={GraduationCap} label="Roll Number" value={alumni.roll_number} />

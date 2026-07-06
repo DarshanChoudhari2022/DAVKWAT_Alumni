@@ -25,6 +25,7 @@ describe('registration profile type validation', () => {
       education_level: 'senior_secondary',
       education_stream: 'Science',
       passing_year: 2012,
+      passing_year_10th: 2010,
     });
 
     expect(parsed.success).toBe(true);
@@ -46,8 +47,8 @@ describe('registration profile type validation', () => {
       passing_year: 2008,
     });
 
-    expect(secondary.course).toBe('10th / Secondary');
-    expect(leftBefore10th.course).toBe('Left before completing 10th');
+    expect(secondary.course).toBe('Secondary');
+    expect(leftBefore10th.course).toBe('Left before completing Secondary');
   });
 
   it('validates faculty teaching years and subject', () => {
