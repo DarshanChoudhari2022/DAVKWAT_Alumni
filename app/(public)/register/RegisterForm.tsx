@@ -115,6 +115,23 @@ export function RegisterForm() {
   const [dobMonth, setDobMonth] = useState('');
   const [dobYear, setDobYear] = useState('');
   const [countryCode, setCountryCode] = useState('+91');
+  
+  // Left before 10th calculation states
+  const [leftClass, setLeftClass] = useState('');
+  const [leavingYear, setLeavingYear] = useState('');
+  const [batchYear, setBatchYear] = useState('');
+
+  // Automatically calculate batch year for left_before_10th
+  useEffect(() => {
+    if (educationLevel === 'left_before_10th' && leftClass && leavingYear) {
+      const match = leftClass.match(/(\d+)/);
+      const classNum = match?.[1] ? parseInt(match[1], 10) : null;
+      if (classNum && classNum >= 1 && classNum <= 9) {
+        const computed = Number(leavingYear) + (10 - classNum);
+        setBatchYear(String(computed));
+      }
+    }
+  }, [educationLevel, leftClass, leavingYear]);
 
   const [copiedUpi, setCopiedUpi] = useState(false);
   const handleCopyUpi = () => {
@@ -324,6 +341,8 @@ export function RegisterForm() {
               id="left_before_schooling_class"
               name="left_before_schooling_class"
               required
+              value={leftClass}
+              onChange={(e) => setLeftClass(e.target.value)}
               className="mt-1.5 flex h-10 w-full rounded-lg border border-slate-200 bg-white px-4 text-sm focus:outline-none focus:ring-2 focus:ring-[#0F2557]"
             >
               <option value="">Select class...</option>
@@ -409,24 +428,47 @@ export function RegisterForm() {
           </>
         )}
         {educationLevel === 'left_before_10th' && (
-          <div>
-            <Label htmlFor="passing_year">Year of leaving DAV Khagaul <span className="text-rose-600">*</span></Label>
-            <select
-              id="passing_year"
-              name="passing_year"
-              required
-              className="mt-1.5 flex h-10 w-full rounded-lg border border-slate-200 bg-white px-4 text-sm focus:outline-none focus:ring-2 focus:ring-[#0F2557]"
-            >
-              <option value="">Select year...</option>
-              {BATCH_YEARS.map((y) => (
-                <option key={y} value={y}>{y}</option>
-              ))}
-            </select>
-            <p className="mt-1 text-xs text-slate-500">
-              Your passout batch will be automatically calculated based on the class you studied till.
-            </p>
-            <FieldError message={fieldErrors?.passing_year} />
-          </div>
+          <>
+            <div>
+              <Label htmlFor="passing_year">Year of leaving DAV Khagaul <span className="text-rose-600">*</span></Label>
+              <select
+                id="passing_year"
+                name="passing_year"
+                required
+                value={leavingYear}
+                onChange={(e) => setLeavingYear(e.target.value)}
+                className="mt-1.5 flex h-10 w-full rounded-lg border border-slate-200 bg-white px-4 text-sm focus:outline-none focus:ring-2 focus:ring-[#0F2557]"
+              >
+                <option value="">Select year...</option>
+                {BATCH_YEARS.map((y) => (
+                  <option key={y} value={y}>{y}</option>
+                ))}
+              </select>
+              <FieldError message={fieldErrors?.passing_year} />
+            </div>
+            <div>
+              <Label htmlFor="batch_year">
+                10th equivalent passout batch <span className="text-rose-600">*</span>
+              </Label>
+              <select
+                id="batch_year"
+                name="batch_year"
+                required
+                value={batchYear}
+                onChange={(e) => setBatchYear(e.target.value)}
+                className="mt-1.5 flex h-10 w-full rounded-lg border border-slate-200 bg-white px-4 text-sm focus:outline-none focus:ring-2 focus:ring-[#0F2557]"
+              >
+                <option value="">Select batch year...</option>
+                {BATCH_YEARS.map((y) => (
+                  <option key={y} value={y}>{y}</option>
+                ))}
+              </select>
+              <p className="mt-1 text-xs text-slate-500">
+                Calculated automatically as Year of leaving + (10 - Class). You can modify it if needed.
+              </p>
+              <FieldError message={fieldErrors?.batch_year} />
+            </div>
+          </>
         )}
         {!educationLevel && (
           <div>

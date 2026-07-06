@@ -175,6 +175,7 @@ export async function completeRegistrationAction(
   const raw: Record<string, unknown> = Object.fromEntries(formData.entries());
   if (raw.passing_year) raw.passing_year = Number(raw.passing_year);
   if (raw.passing_year_10th) raw.passing_year_10th = Number(raw.passing_year_10th);
+  if (raw.batch_year) raw.batch_year = Number(raw.batch_year);
   raw.hide_email = formData.get('hide_email') === 'on';
   raw.hide_phone = formData.get('hide_phone') === 'on';
   raw.terms_accepted = formData.get('terms_accepted') === 'on';

@@ -102,6 +102,7 @@ export const alumniAcademicSchema = z
     left_before_schooling_class: z.string().trim().max(50).optional().or(z.literal('')),
     passing_year: yearSchema,
     passing_year_10th: yearSchema.optional().nullable(),
+    batch_year: yearSchema.optional().nullable(),
     roll_number: optionalText(VALIDATION_LIMITS.rollNumberMax),
   })
   .superRefine((data, ctx) => {
@@ -137,12 +138,24 @@ export const alumniAcademicSchema = z
       }
     }
   })
-  .transform((data) => ({
-    ...data,
-    profile_type: 'alumni' as const,
-    batch_year: calculateBatchYear(data.education_level, data.passing_year, data.left_before_schooling_class),
-    course: courseForEducationLevel(data.education_level, data.education_stream, data.left_before_schooling_class),
-  }));
+  .transform((data) => {
+    let finalBatchYear = data.batch_year;
+    if (!finalBatchYear) {
+      if (data.education_level === 'secondary') {
+        finalBatchYear = data.passing_year;
+      } else if (data.education_level === 'senior_secondary') {
+        finalBatchYear = data.passing_year_10th || (data.passing_year - 2);
+      } else {
+        finalBatchYear = calculateBatchYear(data.education_level, data.passing_year, data.left_before_schooling_class);
+      }
+    }
+    return {
+      ...data,
+      profile_type: 'alumni' as const,
+      batch_year: finalBatchYear,
+      course: courseForEducationLevel(data.education_level, data.education_stream, data.left_before_schooling_class),
+    };
+  });
 
 export const academicSchema = alumniAcademicSchema;
 

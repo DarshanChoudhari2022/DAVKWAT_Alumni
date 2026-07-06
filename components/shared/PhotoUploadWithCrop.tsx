@@ -39,6 +39,7 @@ export function PhotoUploadWithCrop({ name = 'profile_photo', required = false, 
   
   // Camera state
   const [isCameraActive, setIsCameraActive] = useState(false);
+  const [cameraPermissionStatus, setCameraPermissionStatus] = useState<'prompt' | 'requesting' | 'granted' | 'denied'>('prompt');
   const [cameraDevices, setCameraDevices] = useState<MediaDeviceInfo[]>([]);
   const [activeDeviceId, setActiveDeviceId] = useState<string>('');
 
@@ -69,11 +70,12 @@ export function PhotoUploadWithCrop({ name = 'profile_photo', required = false, 
     }
   }, [activeDeviceId]);
 
-  // Turn on camera
+  // Turn on camera (requests webcam access and sets status)
   const startCamera = useCallback(async () => {
     setIsCameraActive(true);
     setPhotoPreview(null);
     setImgSrc('');
+    setCameraPermissionStatus('requesting');
     
     // Reset file inputs
     if (fileInputRef.current) fileInputRef.current.value = '';
@@ -91,15 +93,21 @@ export function PhotoUploadWithCrop({ name = 'profile_photo', required = false, 
 
       const stream = await navigator.mediaDevices.getUserMedia(constraints);
       streamRef.current = stream;
-      if (videoRef.current) {
-        videoRef.current.srcObject = stream;
-      }
+      setCameraPermissionStatus('granted');
+      
+      // Allow video element to mount if not already present
+      setTimeout(() => {
+        if (videoRef.current) {
+          videoRef.current.srcObject = stream;
+        }
+      }, 50);
+
       // Load devices for switching after permission is granted
       loadDevices();
     } catch (err) {
       console.error('[camera] getUserMedia error:', err);
+      setCameraPermissionStatus('denied');
       toast.error('Could not access camera. Please check permissions.');
-      setIsCameraActive(false);
     }
   }, [activeDeviceId, loadDevices]);
 
@@ -110,6 +118,7 @@ export function PhotoUploadWithCrop({ name = 'profile_photo', required = false, 
       streamRef.current = null;
     }
     setIsCameraActive(false);
+    setCameraPermissionStatus('prompt');
   }, []);
 
   // Handle camera device switch
@@ -120,10 +129,10 @@ export function PhotoUploadWithCrop({ name = 'profile_photo', required = false, 
 
   // React to device change when camera is already active
   useEffect(() => {
-    if (isCameraActive && activeDeviceId) {
+    if (isCameraActive && activeDeviceId && cameraPermissionStatus === 'granted') {
       startCamera();
     }
-  }, [activeDeviceId, isCameraActive, startCamera]);
+  }, [activeDeviceId, isCameraActive, cameraPermissionStatus, startCamera]);
 
   // Cleanup camera stream
   useEffect(() => {
@@ -300,13 +309,30 @@ export function PhotoUploadWithCrop({ name = 'profile_photo', required = false, 
         {/* Profile photo preview/camera box */}
         <div className="relative flex h-28 w-28 shrink-0 items-center justify-center overflow-hidden rounded-full border-2 border-dashed border-slate-300 bg-slate-50 shadow-inner">
           {isCameraActive ? (
-            <video
-              ref={videoRef}
-              autoPlay
-              playsInline
-              muted
-              className="h-full w-full object-cover scale-x-[-1]"
-            />
+            cameraPermissionStatus === 'granted' ? (
+              <video
+                ref={videoRef}
+                autoPlay
+                playsInline
+                muted
+                className="h-full w-full object-cover scale-x-[-1]"
+              />
+            ) : cameraPermissionStatus === 'requesting' ? (
+              <div className="flex flex-col items-center gap-1 text-blue-500 animate-pulse">
+                <Camera className="h-7 w-7" />
+                <span className="text-[9px] font-bold text-center">Allowing...</span>
+              </div>
+            ) : cameraPermissionStatus === 'denied' ? (
+              <div className="flex flex-col items-center gap-1 text-rose-500">
+                <X className="h-7 w-7" />
+                <span className="text-[9px] font-bold text-center">No Access</span>
+              </div>
+            ) : (
+              <div className="flex flex-col items-center gap-1 text-slate-400">
+                <Camera className="h-7 w-7" />
+                <span className="text-[9px] font-bold text-center">Ready</span>
+              </div>
+            )
           ) : photoPreview ? (
             // eslint-disable-next-line @next/next/no-img-element
             <img src={photoPreview} alt="Profile photo" className="h-full w-full object-cover" />
@@ -339,7 +365,12 @@ export function PhotoUploadWithCrop({ name = 'profile_photo', required = false, 
               variant={isCameraActive ? 'destructive' : 'outline'}
               size="sm"
               className="flex items-center gap-1.5"
-              onClick={isCameraActive ? stopCamera : startCamera}
+              onClick={isCameraActive ? stopCamera : () => {
+                setIsCameraActive(true);
+                setPhotoPreview(null);
+                setImgSrc('');
+                setCameraPermissionStatus('prompt');
+              }}
             >
               <Camera className="h-4 w-4" />
               {isCameraActive ? 'Cancel Camera' : 'Take Photo'}
@@ -360,8 +391,39 @@ export function PhotoUploadWithCrop({ name = 'profile_photo', required = false, 
             )}
           </div>
 
+          {/* Camera Permission State Box */}
+          {isCameraActive && cameraPermissionStatus === 'prompt' && (
+            <div className="rounded-lg border border-slate-200 bg-slate-50 p-3 text-xs">
+              <p className="text-slate-600 mb-2">
+                Click below to request camera permission, then choose &quot;Allow&quot; when prompted by your browser.
+              </p>
+              <Button type="button" variant="primary" size="sm" onClick={startCamera}>
+                Enable Camera
+              </Button>
+            </div>
+          )}
+
+          {isCameraActive && cameraPermissionStatus === 'requesting' && (
+            <div className="rounded-lg border border-blue-200 bg-blue-50/50 p-3 text-xs">
+              <p className="text-blue-700 animate-pulse font-medium">
+                Awaiting camera access... Please click &quot;Allow&quot; on the browser prompt.
+              </p>
+            </div>
+          )}
+
+          {isCameraActive && cameraPermissionStatus === 'denied' && (
+            <div className="rounded-lg border border-rose-200 bg-rose-50 p-3 text-xs">
+              <p className="text-rose-700 mb-2 font-medium">
+                Camera access was denied or is blocked. Please check your browser settings or upload a file.
+              </p>
+              <Button type="button" variant="outline" size="sm" onClick={startCamera}>
+                Try Again
+              </Button>
+            </div>
+          )}
+
           {/* Device selection dropdown for multi-camera systems */}
-          {isCameraActive && cameraDevices.length > 1 && (
+          {isCameraActive && cameraPermissionStatus === 'granted' && cameraDevices.length > 1 && (
             <div className="max-w-[200px]">
               <select
                 id="camera-select"
@@ -379,7 +441,7 @@ export function PhotoUploadWithCrop({ name = 'profile_photo', required = false, 
           )}
 
           {/* Capture controls */}
-          {isCameraActive && (
+          {isCameraActive && cameraPermissionStatus === 'granted' && (
             <div className="mt-1">
               <Button
                 type="button"

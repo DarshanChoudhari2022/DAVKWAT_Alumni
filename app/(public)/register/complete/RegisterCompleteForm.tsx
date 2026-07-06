@@ -82,6 +82,8 @@ export function RegisterCompleteForm({ initialData }: RegisterCompleteFormProps)
   const [dobYear, setDobYear] = useState('');
   const [countryCode, setCountryCode] = useState('+91');
 
+
+
   function validateCurrentStep(): boolean {
     const stepDiv = document.getElementById(`step-${step}`);
     if (!stepDiv) return true;
