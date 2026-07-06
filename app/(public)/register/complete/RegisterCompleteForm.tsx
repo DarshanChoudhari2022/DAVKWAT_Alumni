@@ -1,6 +1,7 @@
 'use client';
 
-import { useActionState, useState, useRef } from 'react';
+import type React from 'react';
+import { useActionState, useRef, useState } from 'react';
 import { useFormStatus } from 'react-dom';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -19,7 +20,7 @@ function SubmitButton() {
   const { pending } = useFormStatus();
   return (
     <Button type="submit" variant="accent" disabled={pending}>
-      {pending ? 'Submitting…' : 'Submit registration'}
+      {pending ? 'Submitting...' : 'Submit registration'}
     </Button>
   );
 }
@@ -34,6 +35,7 @@ interface RegisterCompleteFormProps {
 export function RegisterCompleteForm({ initialData }: RegisterCompleteFormProps) {
   const [state, formAction] = useActionState(completeRegistrationAction, initialState);
   const [step, setStep] = useState(0);
+  const [educationLevel, setEducationLevel] = useState('');
   const [clientErrors, setClientErrors] = useState<Record<string, string>>({});
   const formRef = useRef<HTMLFormElement>(null);
   const maxBirthDate = todayIsoDate();
@@ -77,7 +79,6 @@ export function RegisterCompleteForm({ initialData }: RegisterCompleteFormProps)
 
   return (
     <form ref={formRef} action={handleSubmit} noValidate className="space-y-6">
-      {/* Progress */}
       <ol className="flex items-center justify-between" aria-label="Registration progress">
         {STEPS.map((label, i) => (
           <li key={label} className="flex flex-1 items-center">
@@ -112,7 +113,6 @@ export function RegisterCompleteForm({ initialData }: RegisterCompleteFormProps)
         </div>
       )}
 
-      {/* Step 1 — Academic & Verification */}
       <div id="step-0" className={cn('space-y-4', step !== 0 && 'hidden')}>
         <div>
           <Label htmlFor="email">Registered Email</Label>
@@ -121,7 +121,7 @@ export function RegisterCompleteForm({ initialData }: RegisterCompleteFormProps)
             type="email"
             value={initialData.email}
             disabled
-            className="mt-1.5 bg-slate-50 cursor-not-allowed text-slate-500"
+            className="mt-1.5 cursor-not-allowed bg-slate-50 text-slate-500"
           />
         </div>
         <Field
@@ -133,42 +133,72 @@ export function RegisterCompleteForm({ initialData }: RegisterCompleteFormProps)
           error={fieldErrors?.full_name}
         />
         <div>
-          <Label htmlFor="batch_year">Batch Year (graduation) <span className="text-rose-600">*</span></Label>
+          <Label htmlFor="education_level">
+            Highest level completed at DAV Khagaul <span className="text-rose-600">*</span>
+          </Label>
           <select
-            id="batch_year"
-            name="batch_year"
+            id="education_level"
+            name="education_level"
+            required
+            value={educationLevel}
+            onChange={(event) => setEducationLevel(event.target.value)}
+            className="mt-1.5 flex h-10 w-full rounded-lg border border-slate-200 bg-white px-4 text-sm focus:outline-none focus:ring-2 focus:ring-[#0F2557]"
+          >
+            <option value="">Select level...</option>
+            <option value="left_before_10th">Left before completing 10th</option>
+            <option value="secondary">10th / Secondary</option>
+            <option value="senior_secondary">12th / Senior Secondary</option>
+            <option value="other">Other</option>
+          </select>
+          <FieldError message={fieldErrors?.education_level} />
+        </div>
+        {educationLevel === 'senior_secondary' && (
+          <div>
+            <Label htmlFor="education_stream">Stream <span className="text-rose-600">*</span></Label>
+            <select
+              id="education_stream"
+              name="education_stream"
+              required
+              className="mt-1.5 flex h-10 w-full rounded-lg border border-slate-200 bg-white px-4 text-sm focus:outline-none focus:ring-2 focus:ring-[#0F2557]"
+            >
+              <option value="">Select stream...</option>
+              <option value="Science">Science</option>
+              <option value="Commerce">Commerce</option>
+              <option value="Arts">Arts</option>
+            </select>
+            <FieldError message={fieldErrors?.education_stream} />
+          </div>
+        )}
+        <div>
+          <Label htmlFor="passing_year">Year of passing <span className="text-rose-600">*</span></Label>
+          <select
+            id="passing_year"
+            name="passing_year"
             required
             className="mt-1.5 flex h-10 w-full rounded-lg border border-slate-200 bg-white px-4 text-sm focus:outline-none focus:ring-2 focus:ring-[#0F2557]"
           >
-            <option value="">Select year…</option>
+            <option value="">Select year...</option>
             {BATCH_YEARS.map((y) => (
               <option key={y} value={y}>{y}</option>
             ))}
           </select>
-          <FieldError message={fieldErrors?.batch_year} />
-        </div>
-        <div>
-          <Label htmlFor="course">Course <span className="text-rose-600">*</span></Label>
-          <select
-            id="course"
-            name="course"
-            required
-            className="mt-1.5 flex h-10 w-full rounded-lg border border-slate-200 bg-white px-4 text-sm focus:outline-none focus:ring-2 focus:ring-[#0F2557]"
-          >
-            <option value="">Select course…</option>
-            <option value="Science">Science</option>
-            <option value="Commerce">Commerce</option>
-            <option value="Arts">Arts</option>
-            <option value="Other">Other</option>
-          </select>
-          <FieldError message={fieldErrors?.course} />
+          <FieldError message={fieldErrors?.passing_year} />
         </div>
         <Field label="Roll Number (optional)" name="roll_number" maxLength={VALIDATION_LIMITS.rollNumberMax} />
       </div>
 
-      {/* Step 2 — Personal Details */}
       <div id="step-1" className={cn('space-y-4', step !== 1 && 'hidden')}>
-        <Field label="Phone (10-digit Indian mobile)" name="phone" type="tel" inputMode="numeric" maxLength={10} pattern={INPUT_PATTERNS.indianMobile} title="Enter a valid 10-digit Indian mobile number starting with 6, 7, 8, or 9" placeholder="9876543210" error={fieldErrors?.phone} />
+        <Field
+          label="Phone (10-digit Indian mobile)"
+          name="phone"
+          type="tel"
+          inputMode="numeric"
+          maxLength={10}
+          pattern={INPUT_PATTERNS.indianMobile}
+          title="Enter a valid 10-digit Indian mobile number starting with 6, 7, 8, or 9"
+          placeholder="9876543210"
+          error={fieldErrors?.phone}
+        />
         <div className="grid gap-4 sm:grid-cols-2">
           <Field label="City" name="current_city" maxLength={VALIDATION_LIMITS.placeMax} />
           <Field label="State" name="current_state" maxLength={VALIDATION_LIMITS.placeMax} />
@@ -188,7 +218,6 @@ export function RegisterCompleteForm({ initialData }: RegisterCompleteFormProps)
         </div>
       </div>
 
-      {/* Step 3 — Professional Profile */}
       <div id="step-2" className={cn('space-y-4', step !== 2 && 'hidden')}>
         <Field label="Occupation" name="occupation" maxLength={VALIDATION_LIMITS.professionalTextMax} />
         <div className="grid gap-4 sm:grid-cols-2">
@@ -232,7 +261,6 @@ export function RegisterCompleteForm({ initialData }: RegisterCompleteFormProps)
         <FieldError message={fieldErrors?.terms_accepted} />
       </div>
 
-      {/* Nav */}
       <div className="flex justify-between pt-4">
         <Button type="button" variant="outline" onClick={back} disabled={step === 0}>
           Back

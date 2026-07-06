@@ -13,9 +13,26 @@ export default function RegisterPage() {
           Register for DAVKAWT verification
         </h1>
         <p className="mt-2 text-sm text-slate-600">
-          Share your academic, contact, and professional details so the Trust can
-          verify your DAV Khagaul alumni status.
+          Choose the correct registration type so the Trust can verify your DAV
+          Khagaul connection accurately.
         </p>
+      </div>
+      <div className="mt-8 grid gap-3 sm:grid-cols-2">
+        <div className="rounded-2xl border-2 border-[#0F2557] bg-white p-4 shadow-sm">
+          <p className="text-sm font-semibold text-[#0F2557]">Register as Alumni</p>
+          <p className="mt-1 text-xs text-slate-600">
+            For former students: 10th, 12th, or left before completing 10th.
+          </p>
+        </div>
+        <Link
+          href="/register/faculty"
+          className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm transition hover:border-[#0F2557] hover:bg-slate-50"
+        >
+          <p className="text-sm font-semibold text-slate-900">Register as Faculty</p>
+          <p className="mt-1 text-xs text-slate-600">
+            For teachers: subject taught and teaching years at DAV Khagaul.
+          </p>
+        </Link>
       </div>
       <Card className="mt-8 p-6 sm:p-10">
         <RegisterForm />

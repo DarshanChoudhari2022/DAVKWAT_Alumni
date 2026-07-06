@@ -93,7 +93,7 @@ async function ApprovalsListRegion({ sp, page }: { sp: SearchParams; page: numbe
     let listQuery = supabase
       .from('profiles')
       .select(
-        'id, full_name, email, batch_year, course, current_city, phone, created_at, avatar_url',
+        'id, full_name, email, profile_type, batch_year, course, current_city, phone, created_at, avatar_url, taught_subject, taught_from_year, taught_to_year',
         { count: 'exact' }
       )
       .eq('approval_status', 'pending');
@@ -159,8 +159,25 @@ async function ApprovalsListRegion({ sp, page }: { sp: SearchParams; page: numbe
                       <h3 className="font-medium">{profile.full_name}</h3>
                       <p className="break-all text-sm text-slate-500 sm:break-normal">{profile.email}</p>
                       <div className="mt-1 flex flex-wrap gap-1.5">
-                        <Badge variant="primary">Batch {profile.batch_year}</Badge>
-                        <Badge variant="default">{profile.course}</Badge>
+                        <Badge variant="primary">
+                          {profile.profile_type === 'faculty' ? 'Faculty' : 'Alumni'}
+                        </Badge>
+                        {profile.profile_type === 'faculty' ? (
+                          <>
+                            {profile.taught_subject && (
+                              <Badge variant="default">{profile.taught_subject}</Badge>
+                            )}
+                            <Badge variant="default">
+                              {profile.taught_from_year}
+                              {profile.taught_to_year ? `-${profile.taught_to_year}` : '-Present'}
+                            </Badge>
+                          </>
+                        ) : (
+                          <>
+                            <Badge variant="default">Batch {profile.batch_year}</Badge>
+                            <Badge variant="default">{profile.course}</Badge>
+                          </>
+                        )}
                         {profile.current_city && (
                           <Badge variant="default">{profile.current_city}</Badge>
                         )}

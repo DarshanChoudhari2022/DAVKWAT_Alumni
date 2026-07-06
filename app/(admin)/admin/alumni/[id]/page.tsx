@@ -73,6 +73,9 @@ export default async function AdminAlumniDetailPage({
                 <Badge variant={alumni.is_paid_member ? 'success' : 'default'}>
                   {alumni.is_paid_member ? 'Paid Member' : 'Free'}
                 </Badge>
+                <Badge variant="default">
+                  {alumni.profile_type === 'faculty' ? 'Faculty' : 'Alumni'}
+                </Badge>
                 <Badge variant="primary">
                   {alumni.role}
                 </Badge>
@@ -110,14 +113,32 @@ export default async function AdminAlumniDetailPage({
           </dl>
         </Card>
 
-        {/* Academic */}
+        {/* Academic / Faculty */}
         <Card>
-          <h2 className="font-display text-lg font-semibold">Academic</h2>
+          <h2 className="font-display text-lg font-semibold">
+            {alumni.profile_type === 'faculty' ? 'Faculty Details' : 'Academic'}
+          </h2>
           <dl className="mt-4 space-y-3 text-sm">
-            <DetailRow icon={GraduationCap} label="Batch Year" value={String(alumni.batch_year)} />
-            <DetailRow icon={GraduationCap} label="Course" value={alumni.course} />
-            {alumni.roll_number && (
-              <DetailRow icon={GraduationCap} label="Roll Number" value={alumni.roll_number} />
+            {alumni.profile_type === 'faculty' ? (
+              <>
+                <DetailRow icon={GraduationCap} label="Subject Taught" value={alumni.taught_subject ?? '-'} />
+                <DetailRow icon={GraduationCap} label="Taught From" value={alumni.taught_from_year ? String(alumni.taught_from_year) : '-'} />
+                <DetailRow icon={GraduationCap} label="Taught Till" value={alumni.taught_to_year ? String(alumni.taught_to_year) : 'Present / not specified'} />
+              </>
+            ) : (
+              <>
+                <DetailRow icon={GraduationCap} label="Batch Year" value={String(alumni.batch_year)} />
+                <DetailRow icon={GraduationCap} label="Course" value={alumni.course} />
+                {alumni.education_level && (
+                  <DetailRow icon={GraduationCap} label="School Level" value={alumni.education_level.replaceAll('_', ' ')} />
+                )}
+                {alumni.education_stream && (
+                  <DetailRow icon={GraduationCap} label="Stream" value={alumni.education_stream} />
+                )}
+                {alumni.roll_number && (
+                  <DetailRow icon={GraduationCap} label="Roll Number" value={alumni.roll_number} />
+                )}
+              </>
             )}
           </dl>
         </Card>

@@ -3,19 +3,13 @@
 import { redirect } from 'next/navigation';
 import { createClient } from '@/lib/supabase/server';
 import { createAdminClient } from '@/lib/supabase/admin';
-import {
-  accountSchema,
-  academicSchema,
-  personalSchema,
-  professionalSchema,
-} from '@/lib/validations/registration';
+import { fullRegistrationSchema } from '@/lib/validations/registration';
 import { APP_URL } from '@/lib/resend/client';
 
-// Use .and() instead of .innerType().merge() to preserve the
-// .refine() that checks password === confirmPassword.
-const fullSchema = accountSchema.and(
-  academicSchema.merge(personalSchema).merge(professionalSchema)
-);
+const fullSchema = fullRegistrationSchema;
+type ProfileType = 'alumni' | 'faculty';
+type EducationLevel = 'left_before_10th' | 'secondary' | 'senior_secondary' | 'other';
+type EducationStream = 'Science' | 'Commerce' | 'Arts';
 
 export interface RegisterState {
   error?: string;
@@ -101,9 +95,13 @@ async function insertProfile(
     const { error } = await admin.from('profiles').insert({
       id: userId,
       email: data.email as string,
+      profile_type: ((data.profile_type as ProfileType | undefined) ?? 'alumni'),
       full_name: data.full_name as string,
       batch_year: data.batch_year as number,
       course: data.course as string,
+      education_level: (data.education_level as EducationLevel | undefined) ?? null,
+      education_stream: (data.education_stream as EducationStream | '' | undefined) || null,
+      passing_year: (data.passing_year as number) || (data.batch_year as number),
       roll_number: (data.roll_number as string) || null,
       phone: (data.phone as string) || null,
       current_city: (data.current_city as string) || null,
@@ -165,7 +163,7 @@ export async function registerAction(
 ): Promise<RegisterState> {
   // ---------- 1. Parse & validate ----------
   const raw: Record<string, unknown> = Object.fromEntries(formData.entries());
-  if (raw.batch_year) raw.batch_year = Number(raw.batch_year);
+  if (raw.passing_year) raw.passing_year = Number(raw.passing_year);
   raw.hide_email = formData.get('hide_email') === 'on';
   raw.hide_phone = formData.get('hide_phone') === 'on';
   raw.terms_accepted = formData.get('terms_accepted') === 'on';

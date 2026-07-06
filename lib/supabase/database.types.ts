@@ -14,6 +14,7 @@ export interface Database {
       profiles: {
         Row: {
           id: string;
+          profile_type: 'alumni' | 'faculty';
           full_name: string;
           display_name: string | null;
           avatar_url: string | null;
@@ -21,6 +22,12 @@ export interface Database {
           gender: string | null;
           batch_year: number;
           course: string;
+          education_level: 'left_before_10th' | 'secondary' | 'senior_secondary' | 'other' | null;
+          education_stream: 'Science' | 'Commerce' | 'Arts' | null;
+          passing_year: number | null;
+          taught_subject: string | null;
+          taught_from_year: number | null;
+          taught_to_year: number | null;
           roll_number: string | null;
           email: string;
           phone: string | null;
@@ -54,6 +61,7 @@ export interface Database {
         };
         Insert: {
           id: string;
+          profile_type?: 'alumni' | 'faculty';
           full_name: string;
           display_name?: string | null;
           avatar_url?: string | null;
@@ -61,6 +69,12 @@ export interface Database {
           gender?: string | null;
           batch_year: number;
           course: string;
+          education_level?: 'left_before_10th' | 'secondary' | 'senior_secondary' | 'other' | null;
+          education_stream?: 'Science' | 'Commerce' | 'Arts' | null;
+          passing_year?: number | null;
+          taught_subject?: string | null;
+          taught_from_year?: number | null;
+          taught_to_year?: number | null;
           roll_number?: string | null;
           email: string;
           phone?: string | null;

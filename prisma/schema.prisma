@@ -43,38 +43,45 @@ enum membership_type {
 // ─── PROFILES ───────────────────────────────────────────────────────
 
 model profiles {
-  id             String   @id @db.Uuid
-  full_name      String
-  display_name   String?
-  avatar_url     String?
-  date_of_birth  DateTime? @db.Date
-  gender         String?
+  id            String    @id @db.Uuid
+  full_name     String
+  display_name  String?
+  avatar_url    String?
+  date_of_birth DateTime? @db.Date
+  gender        String?
 
-  batch_year     Int
-  course         String
-  roll_number    String?
+  batch_year       Int
+  course           String
+  profile_type     String  @default("alumni")
+  education_level  String?
+  education_stream String?
+  passing_year     Int?
+  taught_subject   String?
+  taught_from_year Int?
+  taught_to_year   Int?
+  roll_number      String?
 
-  email          String
-  phone          String?
+  email           String
+  phone           String?
   alternate_phone String?
 
   current_city    String?
   current_state   String?
-  current_country String?  @default("India")
+  current_country String? @default("India")
   pincode         String?
 
-  occupation     String?
-  company        String?
-  job_title      String?
-  industry       String?
-  linkedin_url   String?
-  website_url    String?
+  occupation   String?
+  company      String?
+  job_title    String?
+  industry     String?
+  linkedin_url String?
+  website_url  String?
 
-  bio            String?
-  achievements   String?
+  bio          String?
+  achievements String?
 
-  hide_email     Boolean @default(false)
-  hide_phone     Boolean @default(false)
+  hide_email Boolean @default(false)
+  hide_phone Boolean @default(false)
 
   role             user_role       @default(pending)
   approval_status  approval_status @default(pending)
@@ -83,32 +90,34 @@ model profiles {
   rejection_reason String?
 
   membership_type       membership_type?
-  membership_expires_at DateTime?  @db.Date
-  is_paid_member        Boolean    @default(false)
+  membership_expires_at DateTime?        @db.Date
+  is_paid_member        Boolean          @default(false)
 
   created_at   DateTime  @default(now()) @db.Timestamptz(6)
-  updated_at   DateTime  @default(now()) @db.Timestamptz(6) @updatedAt
+  updated_at   DateTime  @default(now()) @updatedAt @db.Timestamptz(6)
   last_seen_at DateTime? @db.Timestamptz(6)
   is_active    Boolean   @default(true)
 
   // Self-relation: who approved this profile
-  approver          profiles?       @relation("ApprovedBy", fields: [approved_by], references: [id])
-  approved_profiles profiles[]      @relation("ApprovedBy")
+  approver          profiles?  @relation("ApprovedBy", fields: [approved_by], references: [id])
+  approved_profiles profiles[] @relation("ApprovedBy")
 
   // Relations
-  announcements     announcements[]
-  events_created    events[]
-  event_rsvps       event_rsvps[]
-  forum_threads     forum_threads[]
-  forum_replies     forum_replies[]
-  payments          payments[]
-  audit_logs        audit_log[]
-  forum_categories  forum_categories[]
-  site_settings     site_settings[]
+  announcements    announcements[]
+  events_created   events[]
+  event_rsvps      event_rsvps[]
+  forum_threads    forum_threads[]
+  forum_replies    forum_replies[]
+  payments         payments[]
+  audit_logs       audit_log[]
+  forum_categories forum_categories[]
+  site_settings    site_settings[]
 
   @@index([role])
   @@index([approval_status])
   @@index([batch_year])
+  @@index([profile_type])
+  @@index([passing_year])
   @@index([is_active])
   @@index([email])
 }
@@ -127,7 +136,7 @@ model announcements {
   published_at    DateTime? @db.Timestamptz(6)
   scheduled_for   DateTime? @db.Timestamptz(6)
   created_at      DateTime  @default(now()) @db.Timestamptz(6)
-  updated_at      DateTime  @default(now()) @db.Timestamptz(6) @updatedAt
+  updated_at      DateTime  @default(now()) @updatedAt @db.Timestamptz(6)
 
   author profiles @relation(fields: [author_id], references: [id])
 
@@ -152,7 +161,7 @@ model events {
   is_published          Boolean   @default(false)
   created_by            String    @db.Uuid
   created_at            DateTime  @default(now()) @db.Timestamptz(6)
-  updated_at            DateTime  @default(now()) @db.Timestamptz(6) @updatedAt
+  updated_at            DateTime  @default(now()) @updatedAt @db.Timestamptz(6)
 
   creator profiles      @relation(fields: [created_by], references: [id])
   rsvps   event_rsvps[]
@@ -185,7 +194,7 @@ model forum_categories {
   created_by    String?  @db.Uuid
   created_at    DateTime @default(now()) @db.Timestamptz(6)
 
-  creator profiles?      @relation(fields: [created_by], references: [id])
+  creator profiles?       @relation(fields: [created_by], references: [id])
   threads forum_threads[]
 }
 
@@ -200,7 +209,7 @@ model forum_threads {
   reply_count   Int       @default(0)
   last_reply_at DateTime? @db.Timestamptz(6)
   created_at    DateTime  @default(now()) @db.Timestamptz(6)
-  updated_at    DateTime  @default(now()) @db.Timestamptz(6) @updatedAt
+  updated_at    DateTime  @default(now()) @updatedAt @db.Timestamptz(6)
 
   category forum_categories @relation(fields: [category_id], references: [id], onDelete: Cascade)
   author   profiles         @relation(fields: [author_id], references: [id])
@@ -216,7 +225,7 @@ model forum_replies {
   content    String
   is_deleted Boolean  @default(false)
   created_at DateTime @default(now()) @db.Timestamptz(6)
-  updated_at DateTime @default(now()) @db.Timestamptz(6) @updatedAt
+  updated_at DateTime @default(now()) @updatedAt @db.Timestamptz(6)
 
   thread forum_threads @relation(fields: [thread_id], references: [id], onDelete: Cascade)
   author profiles      @relation(fields: [author_id], references: [id])
@@ -255,9 +264,9 @@ model payments {
   receipt_url         String?
   receipt_sent_at     DateTime?      @db.Timestamptz(6)
   created_at          DateTime       @default(now()) @db.Timestamptz(6)
-  updated_at          DateTime       @default(now()) @db.Timestamptz(6) @updatedAt
+  updated_at          DateTime       @default(now()) @updatedAt @db.Timestamptz(6)
 
-  alumni profiles         @relation(fields: [alumni_id], references: [id])
+  alumni profiles          @relation(fields: [alumni_id], references: [id])
   plan   membership_plans? @relation(fields: [plan_id], references: [id])
 
   @@index([alumni_id])

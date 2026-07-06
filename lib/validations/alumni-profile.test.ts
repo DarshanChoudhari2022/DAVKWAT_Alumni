@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { adminProfileUpdateSchema } from './admin';
-import { personalSchema, academicSchema } from './registration';
+import { personalSchema, alumniAcademicSchema } from './registration';
 import { profileUpdateSchema } from './profile';
 
 function validProfileUpdate(overrides: Record<string, unknown> = {}) {
@@ -38,14 +38,17 @@ describe('alumni profile validation hardening', () => {
   });
 
   it('normalizes names and bounds text fields before storage', () => {
-    const parsed = academicSchema.parse({
+    const parsed = alumniAcademicSchema.parse({
       full_name: '  Asha   Kumar  ',
-      batch_year: 2012,
-      course: 'Science',
+      education_level: 'senior_secondary',
+      education_stream: 'Science',
+      passing_year: 2012,
       roll_number: '  R-42  ',
     });
 
     expect(parsed.full_name).toBe('Asha Kumar');
     expect(parsed.roll_number).toBe('R-42');
+    expect(parsed.batch_year).toBe(2012);
+    expect(parsed.course).toBe('Science');
   });
 });

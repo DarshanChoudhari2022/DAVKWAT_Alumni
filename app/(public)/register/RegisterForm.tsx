@@ -1,6 +1,7 @@
 'use client';
 
 import Image from 'next/image';
+import type React from 'react';
 import { useActionState, useState, useRef } from 'react';
 import { useFormStatus } from 'react-dom';
 import { Button } from '@/components/ui/button';
@@ -34,6 +35,7 @@ function SubmitButton() {
 export function RegisterForm() {
   const [state, formAction] = useActionState(registerAction, initialState);
   const [step, setStep] = useState(0);
+  const [educationLevel, setEducationLevel] = useState('');
   const [clientErrors, setClientErrors] = useState<Record<string, string>>({});
   const formRef = useRef<HTMLFormElement>(null);
   const upiPaymentUrl = buildUpiPaymentUrl();
@@ -83,7 +85,7 @@ export function RegisterForm() {
     window.open(
       buildManualPaymentWhatsappUrl({
         fullName: getValue('full_name'),
-        batchYear: getValue('batch_year'),
+        batchYear: getValue('passing_year'),
         phone: getValue('phone'),
       }),
       '_blank',
@@ -142,35 +144,54 @@ export function RegisterForm() {
       <div id="step-1" className={cn('space-y-4', step !== 1 && 'hidden')}>
         <Field label="Full Name" name="full_name" maxLength={VALIDATION_LIMITS.nameMax} required error={fieldErrors?.full_name} />
         <div>
-          <Label htmlFor="batch_year">Batch Year (graduation) <span className="text-rose-600">*</span></Label>
+          <Label htmlFor="education_level">Highest level completed at DAV Khagaul <span className="text-rose-600">*</span></Label>
           <select
-            id="batch_year"
-            name="batch_year"
+            id="education_level"
+            name="education_level"
+            required
+            value={educationLevel}
+            onChange={(event) => setEducationLevel(event.target.value)}
+            className="mt-1.5 flex h-10 w-full rounded-lg border border-slate-200 bg-white px-4 text-sm focus:outline-none focus:ring-2 focus:ring-[#0F2557]"
+          >
+            <option value="">Select level...</option>
+            <option value="left_before_10th">Left before completing 10th</option>
+            <option value="secondary">10th / Secondary</option>
+            <option value="senior_secondary">12th / Senior Secondary</option>
+            <option value="other">Other</option>
+          </select>
+          <FieldError message={fieldErrors?.education_level} />
+        </div>
+        {educationLevel === 'senior_secondary' && (
+          <div>
+            <Label htmlFor="education_stream">Stream <span className="text-rose-600">*</span></Label>
+            <select
+              id="education_stream"
+              name="education_stream"
+              required
+              className="mt-1.5 flex h-10 w-full rounded-lg border border-slate-200 bg-white px-4 text-sm focus:outline-none focus:ring-2 focus:ring-[#0F2557]"
+            >
+              <option value="">Select stream...</option>
+              <option value="Science">Science</option>
+              <option value="Commerce">Commerce</option>
+              <option value="Arts">Arts</option>
+            </select>
+            <FieldError message={fieldErrors?.education_stream} />
+          </div>
+        )}
+        <div>
+          <Label htmlFor="passing_year">Year of passing <span className="text-rose-600">*</span></Label>
+          <select
+            id="passing_year"
+            name="passing_year"
             required
             className="mt-1.5 flex h-10 w-full rounded-lg border border-slate-200 bg-white px-4 text-sm focus:outline-none focus:ring-2 focus:ring-[#0F2557]"
           >
-            <option value="">Select year…</option>
+            <option value="">Select year...</option>
             {BATCH_YEARS.map((y) => (
               <option key={y} value={y}>{y}</option>
             ))}
           </select>
-          <FieldError message={fieldErrors?.batch_year} />
-        </div>
-        <div>
-          <Label htmlFor="course">Course <span className="text-rose-600">*</span></Label>
-          <select
-            id="course"
-            name="course"
-            required
-            className="mt-1.5 flex h-10 w-full rounded-lg border border-slate-200 bg-white px-4 text-sm focus:outline-none focus:ring-2 focus:ring-[#0F2557]"
-          >
-            <option value="">Select course…</option>
-            <option value="Science">Science</option>
-            <option value="Commerce">Commerce</option>
-            <option value="Arts">Arts</option>
-            <option value="Other">Other</option>
-          </select>
-          <FieldError message={fieldErrors?.course} />
+          <FieldError message={fieldErrors?.passing_year} />
         </div>
         <Field label="Roll Number (optional)" name="roll_number" maxLength={VALIDATION_LIMITS.rollNumberMax} />
       </div>

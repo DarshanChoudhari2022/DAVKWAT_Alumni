@@ -4,13 +4,16 @@ import { redirect } from 'next/navigation';
 import { createClient } from '@/lib/supabase/server';
 import { createAdminClient } from '@/lib/supabase/admin';
 import {
-  academicSchema,
+  alumniAcademicSchema,
   personalSchema,
   professionalSchema,
 } from '@/lib/validations/registration';
 import { APP_URL } from '@/lib/resend/client';
 
-const completeSchema = academicSchema.merge(personalSchema).merge(professionalSchema);
+const completeSchema = alumniAcademicSchema.and(personalSchema).and(professionalSchema);
+type ProfileType = 'alumni' | 'faculty';
+type EducationLevel = 'left_before_10th' | 'secondary' | 'senior_secondary' | 'other';
+type EducationStream = 'Science' | 'Commerce' | 'Arts';
 
 export interface CompleteState {
   error?: string;
@@ -28,9 +31,13 @@ async function insertProfile(
     const { error } = await admin.from('profiles').insert({
       id: userId,
       email: email,
+      profile_type: ((data.profile_type as ProfileType | undefined) ?? 'alumni'),
       full_name: data.full_name as string,
       batch_year: data.batch_year as number,
       course: data.course as string,
+      education_level: (data.education_level as EducationLevel | undefined) ?? null,
+      education_stream: (data.education_stream as EducationStream | '' | undefined) || null,
+      passing_year: (data.passing_year as number) || (data.batch_year as number),
       roll_number: (data.roll_number as string) || null,
       phone: (data.phone as string) || null,
       current_city: (data.current_city as string) || null,
@@ -96,7 +103,7 @@ export async function completeRegistrationAction(
 
   // ---------- 3. Parse & validate ----------
   const raw: Record<string, unknown> = Object.fromEntries(formData.entries());
-  if (raw.batch_year) raw.batch_year = Number(raw.batch_year);
+  if (raw.passing_year) raw.passing_year = Number(raw.passing_year);
   raw.hide_email = formData.get('hide_email') === 'on';
   raw.hide_phone = formData.get('hide_phone') === 'on';
   raw.terms_accepted = formData.get('terms_accepted') === 'on';
