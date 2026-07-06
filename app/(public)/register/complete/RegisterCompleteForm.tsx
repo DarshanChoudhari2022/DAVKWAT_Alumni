@@ -3,8 +3,6 @@
 import type React from 'react';
 import { useActionState, useRef, useState } from 'react';
 import { useFormStatus } from 'react-dom';
-import { Camera } from 'lucide-react';
-import { toast } from 'sonner';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -12,6 +10,7 @@ import { FieldError } from '@/components/shared/FieldError';
 import { cn } from '@/lib/utils/cn';
 import { VALIDATION_LIMITS } from '@/lib/validations/constraints';
 import { LEFT_BEFORE_CLASSES } from '@/lib/validations/registration';
+import { PhotoUploadWithCrop } from '@/components/shared/PhotoUploadWithCrop';
 import { completeRegistrationAction, type CompleteState } from './actions';
 
 const initialState: CompleteState = {};
@@ -82,7 +81,6 @@ export function RegisterCompleteForm({ initialData }: RegisterCompleteFormProps)
   const [dobMonth, setDobMonth] = useState('');
   const [dobYear, setDobYear] = useState('');
   const [countryCode, setCountryCode] = useState('+91');
-  const [photoPreview, setPhotoPreview] = useState<string | null>(null);
 
   function validateCurrentStep(): boolean {
     const stepDiv = document.getElementById(`step-${step}`);
@@ -135,22 +133,7 @@ export function RegisterCompleteForm({ initialData }: RegisterCompleteFormProps)
     formAction(fd);
   }
 
-  function handlePhotoChange(e: React.ChangeEvent<HTMLInputElement>) {
-    const file = e.target.files?.[0];
-    if (file) {
-      if (file.size > 5 * 1024 * 1024) {
-        toast.error('Photo must be under 5 MB');
-        e.target.value = '';
-        setPhotoPreview(null);
-        return;
-      }
-      const reader = new FileReader();
-      reader.onloadend = () => setPhotoPreview(reader.result as string);
-      reader.readAsDataURL(file);
-    } else {
-      setPhotoPreview(null);
-    }
-  }
+
 
   const fieldErrors = { ...clientErrors, ...state.fieldErrors };
 
@@ -367,29 +350,9 @@ export function RegisterCompleteForm({ initialData }: RegisterCompleteFormProps)
           <Label htmlFor="profile_photo">
             Profile Photo <span className="text-rose-600">*</span>
           </Label>
-          <div className="mt-1.5 flex items-center gap-4">
-            <div className="relative flex h-20 w-20 shrink-0 items-center justify-center overflow-hidden rounded-full border-2 border-dashed border-slate-300 bg-slate-50">
-              {photoPreview ? (
-                // eslint-disable-next-line @next/next/no-img-element
-                <img src={photoPreview} alt="Preview" className="h-full w-full object-cover" />
-              ) : (
-                <Camera className="h-6 w-6 text-slate-400" />
-              )}
-            </div>
-            <div className="flex-1">
-              <input
-                id="profile_photo"
-                name="profile_photo"
-                type="file"
-                accept="image/jpeg,image/png,image/webp"
-                required
-                onChange={handlePhotoChange}
-                className="block w-full text-sm text-slate-500 file:mr-3 file:rounded-lg file:border-0 file:bg-[#0F2557] file:px-4 file:py-2 file:text-sm file:font-semibold file:text-white hover:file:bg-indigo-800 file:cursor-pointer file:transition"
-              />
-              <p className="mt-1 text-xs text-slate-500">JPG, PNG or WebP. Max 5 MB.</p>
-            </div>
+          <div className="mt-1.5">
+            <PhotoUploadWithCrop name="profile_photo" required error={fieldErrors?.profile_photo} />
           </div>
-          <FieldError message={fieldErrors?.profile_photo} />
         </div>
 
         {/* Phone — International */}
