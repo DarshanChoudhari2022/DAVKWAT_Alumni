@@ -326,7 +326,7 @@ export async function registerAction(
   try {
     avatarUrl = await uploadProfilePhoto(userId, photoFile);
     console.log(`[register] profile photo uploaded successfully: ${avatarUrl}`);
-  } catch (uploadErr: any) {
+  } catch (uploadErr: unknown) {
     console.error('[register] profile photo upload failed:', uploadErr);
     // Roll back auth user
     try {
@@ -335,7 +335,8 @@ export async function registerAction(
     } catch (rollbackErr) {
       console.error('[register] rollback failed:', rollbackErr);
     }
-    return { error: `Failed to upload profile photo: ${uploadErr.message}. Please try again.` };
+    const uploadMsg = uploadErr instanceof Error ? uploadErr.message : 'Unknown error';
+    return { error: `Failed to upload profile photo: ${uploadMsg}. Please try again.` };
   }
 
   // ---------- 5. Insert profile via service role ----------

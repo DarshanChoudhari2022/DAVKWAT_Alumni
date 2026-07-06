@@ -479,7 +479,17 @@ export const getMembershipPlansForAlumni = unstable_cache(
       .select('id, name, description, amount, membership_type, duration_months')
       .eq('is_active', true)
       .order('amount', { ascending: true });
-    return (data ?? []) as MembershipPlanAlumni[];
+
+    const uniquePlans: MembershipPlanAlumni[] = [];
+    const seen = new Set<string>();
+    for (const plan of (data ?? [])) {
+      const key = `${plan.name}-${plan.membership_type}`;
+      if (!seen.has(key)) {
+        seen.add(key);
+        uniquePlans.push(plan);
+      }
+    }
+    return uniquePlans;
   },
   buildCacheKey(ALUMNI_CACHE_DESCRIPTORS.membershipPlansAlumni),
   {

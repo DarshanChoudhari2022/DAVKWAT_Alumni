@@ -1,6 +1,5 @@
 import { z } from 'zod';
 import {
-  nullableIndianMobile,
   nullableInternationalPhone,
   optionalProfileUrl,
   optionalText,

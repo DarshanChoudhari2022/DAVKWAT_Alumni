@@ -40,7 +40,17 @@ async function getPlans() {
     .eq('is_active', true)
     .order('amount', { ascending: true });
 
-  return data ?? [];
+  const uniquePlans: typeof data = [];
+  const seen = new Set<string>();
+  for (const plan of (data ?? [])) {
+    const key = `${plan.name}-${plan.membership_type}`;
+    if (!seen.has(key)) {
+      seen.add(key);
+      uniquePlans.push(plan);
+    }
+  }
+
+  return uniquePlans;
 }
 
 export default async function MembershipPlansPage() {

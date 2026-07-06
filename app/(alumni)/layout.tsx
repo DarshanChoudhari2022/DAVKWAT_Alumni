@@ -22,11 +22,11 @@ export default function AlumniLayout({ children }: { children: React.ReactNode }
   return (
     <div className="flex min-h-dvh flex-col lg:flex-row">
       {/* Desktop sidebar */}
-      <aside className="hidden lg:flex lg:w-64 lg:flex-col lg:border-r lg:border-slate-200 lg:bg-white">
+      <aside className="hidden lg:flex lg:h-screen lg:sticky lg:top-0 lg:w-64 lg:flex-col lg:border-r lg:border-slate-200 lg:bg-white">
         <div className="flex h-16 items-center px-6">
           <Logo />
         </div>
-        <nav className="flex-1 px-3 py-2" aria-label="Alumni navigation">
+        <nav className="flex-1 overflow-y-auto px-3 py-2" aria-label="Alumni navigation">
           <ul className="space-y-1">
             {NAV.map((item) => (
               <li key={item.href}>

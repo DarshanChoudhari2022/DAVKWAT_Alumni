@@ -39,12 +39,12 @@ export default async function AdminLayout({ children }: { children: React.ReactN
   return (
     <div className="flex min-h-dvh min-w-0">
       {/* Sidebar */}
-      <aside className="hidden w-64 flex-col border-r border-slate-200 bg-white lg:flex">
+      <aside className="hidden lg:h-screen lg:sticky lg:top-0 w-64 flex-col border-r border-slate-200 bg-white lg:flex">
         <div className="flex h-16 items-center gap-2 px-6">
           <Logo />
           <Badge variant="primary" className="ml-auto text-[10px]">Admin</Badge>
         </div>
-        <nav className="flex-1 px-3 py-2" aria-label="Admin navigation">
+        <nav className="flex-1 overflow-y-auto px-3 py-2" aria-label="Admin navigation">
           <ul className="space-y-1">
             {ADMIN_NAV.map((item) => (
               <li key={item.href}>

@@ -34,7 +34,7 @@ export const EDUCATION_LEVEL_LABELS: Record<(typeof EDUCATION_LEVELS)[number], s
  */
 export function extractClassNumber(classStr: string): number | null {
   const match = classStr.match(/(\d+)/);
-  return match ? parseInt(match[1], 10) : null;
+  return match?.[1] ? parseInt(match[1], 10) : null;
 }
 
 /**

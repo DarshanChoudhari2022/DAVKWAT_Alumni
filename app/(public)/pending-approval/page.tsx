@@ -33,11 +33,20 @@ export default async function PendingApprovalPage() {
     return (
       <div className="mx-auto max-w-2xl px-4 py-12 sm:px-6">
         <Card className="p-8">
-          <Badge variant="warning">Action Needed</Badge>
-          <h1 className="mt-3 font-sans text-2xl font-bold tracking-[-0.02em]">
-            We could not load your registration
-          </h1>
-          <p className="mt-3 text-sm text-slate-600">
+          <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+            <div className="space-y-1">
+              <Badge variant="warning">Action Needed</Badge>
+              <h1 className="font-sans text-2xl font-bold tracking-[-0.02em]">
+                We could not load your registration
+              </h1>
+            </div>
+            <form action={logoutAction} className="shrink-0">
+              <Button type="submit" variant="outline" size="sm">
+                Sign out
+              </Button>
+            </form>
+          </div>
+          <p className="mt-4 text-sm text-slate-600">
             Your sign-in succeeded, but the alumni profile linked to this account is missing or
             still syncing. Please try again shortly or email{' '}
             <a href="mailto:contact@davkawt.org" className="text-[#0F2557] underline">
@@ -45,11 +54,6 @@ export default async function PendingApprovalPage() {
             </a>
             .
           </p>
-          <form action={logoutAction} className="mt-8">
-            <Button type="submit" variant="outline">
-              Sign out
-            </Button>
-          </form>
         </Card>
       </div>
     );
@@ -64,22 +68,29 @@ export default async function PendingApprovalPage() {
   return (
     <div className="mx-auto max-w-2xl px-4 py-12 sm:px-6">
       <Card className="p-8">
-        <div className="flex items-center gap-3">
-          <div
-            className={`flex h-12 w-12 items-center justify-center rounded-full ${
-              isRejected ? 'bg-rose-50 text-rose-600' : 'bg-amber-50 text-amber-600'
-            }`}
-          >
-            <Clock className="h-6 w-6" />
+        <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+          <div className="flex items-start gap-3">
+            <div
+              className={`flex h-12 w-12 shrink-0 items-center justify-center rounded-full ${
+                isRejected ? 'bg-rose-50 text-rose-600' : 'bg-amber-50 text-amber-600'
+              }`}
+            >
+              <Clock className="h-6 w-6" />
+            </div>
+            <div>
+              <Badge variant={isRejected ? 'error' : 'warning'}>
+                {isRejected ? 'Rejected' : 'Pending Review'}
+              </Badge>
+              <h1 className="mt-1 font-sans text-2xl font-bold tracking-[-0.02em]">
+                {isRejected ? 'Registration not approved' : 'Your registration is under review'}
+              </h1>
+            </div>
           </div>
-          <div>
-            <Badge variant={isRejected ? 'error' : 'warning'}>
-              {isRejected ? 'Rejected' : 'Pending Review'}
-            </Badge>
-            <h1 className="mt-1 font-sans text-2xl font-bold tracking-[-0.02em]">
-              {isRejected ? 'Registration not approved' : 'Your registration is under review'}
-            </h1>
-          </div>
+          <form action={logoutAction} className="shrink-0">
+            <Button type="submit" variant="outline" size="sm" className="w-full sm:w-auto">
+              Sign out
+            </Button>
+          </form>
         </div>
 
         <div className="mt-6 space-y-2 rounded-lg bg-slate-50 p-4 text-sm">
@@ -107,12 +118,6 @@ export default async function PendingApprovalPage() {
             .
           </p>
         )}
-
-        <form action={logoutAction} className="mt-8">
-          <Button type="submit" variant="outline">
-            Sign out
-          </Button>
-        </form>
       </Card>
     </div>
   );

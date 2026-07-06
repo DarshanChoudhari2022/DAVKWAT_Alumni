@@ -12,7 +12,7 @@ import { APP_URL } from '@/lib/resend/client';
 
 const completeSchema = alumniAcademicSchema.and(personalSchema).and(professionalSchema);
 type ProfileType = 'alumni' | 'faculty';
-type EducationLevel = 'left_before_10th' | 'secondary' | 'senior_secondary' | 'other';
+type EducationLevel = 'left_before_10th' | 'secondary' | 'senior_secondary';
 type EducationStream = 'Science' | 'Commerce' | 'Arts';
 
 export interface CompleteState {
@@ -20,10 +20,53 @@ export interface CompleteState {
   fieldErrors?: Record<string, string>;
 }
 
+/**
+ * Upload profile photo to Supabase storage 'avatars' bucket.
+ * Creates the bucket if it does not exist.
+ */
+async function uploadProfilePhoto(userId: string, photoFile: File): Promise<string> {
+  const admin = createAdminClient();
+  const bucketName = 'avatars';
+
+  // Ensure bucket exists
+  try {
+    const { data: buckets } = await admin.storage.listBuckets();
+    if (!buckets?.find((b) => b.name === bucketName)) {
+      console.log(`[register/complete/upload] creating bucket "${bucketName}"`);
+      await admin.storage.createBucket(bucketName, {
+        public: true,
+        allowedMimeTypes: ['image/jpeg', 'image/png', 'image/webp'],
+        fileSizeLimit: 5 * 1024 * 1024,
+      });
+    }
+  } catch (e) {
+    console.warn('[register/complete/upload] bucket check/creation warning:', e);
+  }
+
+  const fileExt = photoFile.name.split('.').pop() || 'jpg';
+  const fileName = `${userId}-${Date.now()}.${fileExt}`;
+  const filePath = `profile-photos/${fileName}`;
+
+  const { error: uploadError } = await admin.storage
+    .from(bucketName)
+    .upload(filePath, photoFile, {
+      contentType: photoFile.type,
+      upsert: true,
+    });
+
+  if (uploadError) {
+    throw new Error(`Failed to upload photo: ${uploadError.message}`);
+  }
+
+  const { data: { publicUrl } } = admin.storage.from(bucketName).getPublicUrl(filePath);
+  return publicUrl;
+}
+
 async function insertProfile(
   userId: string,
   email: string,
   data: Record<string, unknown>,
+  avatarUrl: string | null,
   attempt = 1
 ): Promise<{ success: boolean; error?: string }> {
   try {
@@ -54,6 +97,7 @@ async function insertProfile(
       bio: (data.bio as string) || null,
       hide_email: data.hide_email as boolean,
       hide_phone: data.hide_phone as boolean,
+      avatar_url: avatarUrl,
       role: 'pending',
       approval_status: 'pending',
     });
@@ -70,7 +114,7 @@ async function insertProfile(
 
     if (attempt === 1 && msg.includes('connect')) {
       console.log('[register/complete] retrying profile insert...');
-      return insertProfile(userId, email, data, 2);
+      return insertProfile(userId, email, data, avatarUrl, 2);
     }
 
     return { success: false, error: msg };
@@ -102,7 +146,32 @@ export async function completeRegistrationAction(
     redirect('/dashboard');
   }
 
-  // ---------- 3. Parse & validate ----------
+  // ---------- 3. Check profile photo ----------
+  const photoFile = formData.get('profile_photo') as File | null;
+  if (!photoFile || photoFile.size === 0) {
+    return {
+      fieldErrors: {
+        profile_photo: 'Profile photo is required',
+      },
+    };
+  }
+  if (photoFile.size > 5 * 1024 * 1024) {
+    return {
+      fieldErrors: {
+        profile_photo: 'Photo must be under 5 MB',
+      },
+    };
+  }
+  const allowedTypes = ['image/jpeg', 'image/png', 'image/webp'];
+  if (!allowedTypes.includes(photoFile.type)) {
+    return {
+      fieldErrors: {
+        profile_photo: 'Only JPG, PNG or WebP images are allowed',
+      },
+    };
+  }
+
+  // ---------- 4. Parse & validate ----------
   const raw: Record<string, unknown> = Object.fromEntries(formData.entries());
   if (raw.passing_year) raw.passing_year = Number(raw.passing_year);
   if (raw.passing_year_10th) raw.passing_year_10th = Number(raw.passing_year_10th);
@@ -128,14 +197,25 @@ export async function completeRegistrationAction(
   const data = parsed.data;
   const userEmail = user.email!;
 
-  // ---------- 4. Insert Profile ----------
-  const profileResult = await insertProfile(user.id, userEmail, data);
+  // ---------- 5. Upload profile photo ----------
+  let avatarUrl: string | null = null;
+  try {
+    avatarUrl = await uploadProfilePhoto(user.id, photoFile);
+    console.log(`[register/complete] profile photo uploaded successfully: ${avatarUrl}`);
+  } catch (uploadErr: unknown) {
+    console.error('[register/complete] profile photo upload failed:', uploadErr);
+    const uploadMsg = uploadErr instanceof Error ? uploadErr.message : 'Unknown error';
+    return { error: `Failed to upload profile photo: ${uploadMsg}. Please try again.` };
+  }
+
+  // ---------- 6. Insert Profile ----------
+  const profileResult = await insertProfile(user.id, userEmail, data, avatarUrl);
 
   if (!profileResult.success) {
     return { error: `Failed to save your profile: ${profileResult.error}. Please try again.` };
   }
 
-  // ---------- 5. Send emails (non-blocking) ----------
+  // ---------- 7. Send emails (non-blocking) ----------
   try {
     const { getResend, FROM_EMAIL, ADMIN_EMAIL } = await import('@/lib/resend/client');
     const WelcomeEmail = (await import('@/emails/WelcomeEmail')).default;
