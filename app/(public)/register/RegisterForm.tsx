@@ -4,7 +4,7 @@ import Image from 'next/image';
 import type React from 'react';
 import { useActionState, useState, useRef, useEffect } from 'react';
 import { useFormStatus } from 'react-dom';
-import { Copy, Download, Check } from 'lucide-react';
+import { Copy, Download, Check, Upload } from 'lucide-react';
 import { toast } from 'sonner';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -25,7 +25,7 @@ import { registerAction, type RegisterState } from './actions';
 const initialState: RegisterState = {};
 const CURRENT_YEAR = new Date().getFullYear();
 const BATCH_YEARS = Array.from({ length: CURRENT_YEAR - 1959 }, (_, i) => CURRENT_YEAR - i);
-const STEPS = ['Account', 'Academic', 'Personal', 'Professional'] as const;
+const STEPS = ['Account', 'Academic', 'Personal', 'Professional', 'Payment & Documents'] as const;
 
 const MONTHS = [
   'January', 'February', 'March', 'April', 'May', 'June',
@@ -92,6 +92,9 @@ const FIELD_STEP_MAP: Record<string, number> = {
   hide_email: 3,
   hide_phone: 3,
   terms_accepted: 3,
+  school_document: 4,
+  payment_proof: 4,
+  selected_amount: 4,
 };
 
 function SubmitButton() {
@@ -109,7 +112,7 @@ export function RegisterForm() {
   const [educationLevel, setEducationLevel] = useState('');
   const [clientErrors, setClientErrors] = useState<Record<string, string>>({});
   const formRef = useRef<HTMLFormElement>(null);
-  const upiPaymentUrl = buildUpiPaymentUrl();
+  const [selectedAmount, setSelectedAmount] = useState<500 | 5000>(5000);
 
   const [dobDay, setDobDay] = useState('');
   const [dobMonth, setDobMonth] = useState('');
@@ -217,6 +220,14 @@ export function RegisterForm() {
       const photoInput = stepDiv.querySelector<HTMLInputElement>('input[name="profile_photo"]');
       if (photoInput && (!photoInput.files || photoInput.files.length === 0)) {
         errors['profile_photo'] = 'Profile photo is required';
+      }
+    }
+
+    // Custom validation for school document on Step 4 (Payment & Documents)
+    if (step === 4) {
+      const docInput = stepDiv.querySelector<HTMLInputElement>('input[name="school_document"]');
+      if (docInput && (!docInput.files || docInput.files.length === 0)) {
+        errors['school_document'] = 'School document is required';
       }
     }
 
@@ -636,48 +647,99 @@ export function RegisterForm() {
           </label>
         </div>
 
-        {/* Membership Pricing Info */}
+        <label className="flex items-start gap-2 text-sm text-slate-700">
+          <input type="checkbox" name="terms_accepted" className="mt-0.5 rounded border-slate-300" />
+          <span>
+            I confirm I am an alumnus of DAV Khagaul and I accept the{' '}
+            <a href="/terms" className="text-[#0F2557] underline">Terms</a> and{' '}
+            <a href="/privacy" className="text-[#0F2557] underline">Privacy Policy</a>.
+          </span>
+        </label>
+        <FieldError message={fieldErrors?.terms_accepted} />
+      </div>
+
+      {/* Step 5 — Payment & Documents */}
+      <div id="step-4" className={cn('space-y-5', step !== 4 && 'hidden')}>
+        {/* School Document Upload (Compulsory) */}
         <div className="rounded-2xl border border-blue-200 bg-gradient-to-br from-blue-50 to-indigo-50 p-5">
-          <p className="text-sm font-bold text-slate-900 mb-3">💳 Membership Fee Options</p>
+          <p className="text-sm font-bold text-slate-900 mb-1">📄 School Document <span className="text-rose-600">*</span></p>
+          <p className="text-xs text-slate-600 mb-3">
+            Upload a photo of any school document (ID card, marksheet, certificate, etc.) for verification.
+            Image will be auto-compressed.
+          </p>
+          <label
+            htmlFor="school_document"
+            className="flex cursor-pointer flex-col items-center justify-center gap-2 rounded-xl border-2 border-dashed border-slate-300 bg-white p-6 transition hover:border-[#0F2557] hover:bg-slate-50"
+          >
+            <Upload className="h-8 w-8 text-slate-400" />
+            <span className="text-sm font-medium text-slate-600">Click to upload school document</span>
+            <span className="text-xs text-slate-400">JPG, PNG or WebP — max 5 MB</span>
+            <input
+              type="file"
+              id="school_document"
+              name="school_document"
+              accept="image/jpeg,image/png,image/webp"
+              className="hidden"
+            />
+          </label>
+          <FieldError message={fieldErrors?.school_document} />
+        </div>
+
+        {/* Membership Amount Selection */}
+        <div className="rounded-2xl border border-blue-200 bg-gradient-to-br from-blue-50 to-indigo-50 p-5">
+          <p className="text-sm font-bold text-slate-900 mb-3">💳 Select Membership Plan</p>
           <div className="grid gap-3 sm:grid-cols-2 mb-4">
-            <div className="rounded-xl border border-slate-200 bg-white p-4 text-center shadow-sm">
+            <button
+              type="button"
+              onClick={() => setSelectedAmount(500)}
+              className={cn(
+                'rounded-xl border-2 p-4 text-center shadow-sm transition-all',
+                selectedAmount === 500
+                  ? 'border-[#0F2557] bg-[#0F2557]/5 ring-2 ring-[#0F2557]/20'
+                  : 'border-slate-200 bg-white hover:border-slate-300'
+              )}
+            >
               <p className="text-xs font-semibold uppercase tracking-wider text-slate-500">Annual</p>
               <p className="mt-1 text-2xl font-bold text-[#0F2557]">₹500</p>
               <p className="text-xs text-slate-500">per year</p>
-            </div>
-            <div className="relative rounded-xl border-2 border-[#0F2557] bg-white p-4 text-center shadow-sm">
+            </button>
+            <button
+              type="button"
+              onClick={() => setSelectedAmount(5000)}
+              className={cn(
+                'relative rounded-xl border-2 p-4 text-center shadow-sm transition-all',
+                selectedAmount === 5000
+                  ? 'border-[#0F2557] bg-[#0F2557]/5 ring-2 ring-[#0F2557]/20'
+                  : 'border-slate-200 bg-white hover:border-slate-300'
+              )}
+            >
               <span className="absolute -top-2.5 right-3 rounded-full bg-[#0F2557] px-2.5 py-0.5 text-[10px] font-bold uppercase tracking-wider text-white">
                 Recommended
               </span>
               <p className="text-xs font-semibold uppercase tracking-wider text-slate-500">Lifetime</p>
               <p className="mt-1 text-2xl font-bold text-[#0F2557]">₹5,000</p>
               <p className="text-xs text-slate-500">one-time payment</p>
-            </div>
+            </button>
           </div>
-          <Image
-            src="/membership-pricing.png"
-            alt="Membership pricing: Annual ₹500/year or Lifetime ₹5000 one-time"
-            width={800}
-            height={400}
-            className="w-full rounded-xl border border-slate-200 shadow-sm"
-          />
+          <input type="hidden" name="selected_amount" value={selectedAmount} />
         </div>
 
+        {/* UPI QR Code — changes based on selected amount */}
         <div className="rounded-2xl border border-amber-200 bg-amber-50 p-4">
           <div className="flex flex-col gap-4 sm:flex-row sm:items-start">
             <div className="mx-auto w-full max-w-[220px] shrink-0 sm:mx-0 flex flex-col items-center">
               <div className="overflow-hidden rounded-xl border border-white bg-white p-2 shadow-sm w-full">
                 <Image
-                  src={MANUAL_MEMBERSHIP_PAYMENT.qrImagePath}
-                  alt={`UPI QR code for ${MANUAL_MEMBERSHIP_PAYMENT.payeeName}`}
+                  src={selectedAmount === 500 ? MANUAL_MEMBERSHIP_PAYMENT.qrImage500 : MANUAL_MEMBERSHIP_PAYMENT.qrImage5000}
+                  alt={`UPI QR code for ₹${selectedAmount.toLocaleString('en-IN')}`}
                   width={1002}
                   height={1600}
                   className="h-auto w-full rounded-lg"
                 />
               </div>
               <a
-                href={MANUAL_MEMBERSHIP_PAYMENT.qrImagePath}
-                download="davkawt-upi-qr.jpeg"
+                href={selectedAmount === 500 ? MANUAL_MEMBERSHIP_PAYMENT.qrImage500 : MANUAL_MEMBERSHIP_PAYMENT.qrImage5000}
+                download={`davkawt-upi-qr-${selectedAmount}.jpeg`}
                 className="mt-2.5 inline-flex w-full items-center justify-center gap-1.5 rounded-lg border border-slate-200 bg-white px-3 py-2 text-xs font-semibold text-slate-700 shadow-sm transition hover:bg-slate-50 hover:scale-[1.02] active:scale-[0.98]"
               >
                 <Download className="h-3.5 w-3.5" />
@@ -687,12 +749,11 @@ export function RegisterForm() {
             <div className="flex-1 space-y-3">
               <div>
                 <p className="text-sm font-semibold text-slate-900">
-                  Pay membership fee by UPI
+                  Pay ₹{selectedAmount.toLocaleString('en-IN')} by UPI
                 </p>
                 <p className="mt-1 text-sm text-slate-700">
                   Scan this QR with any UPI app, or tap the button below on mobile.
-                  After payment, send the screenshot or transaction ID on WhatsApp
-                  for manual verification.
+                  After payment, upload the screenshot below.
                 </p>
               </div>
               <div className="rounded-lg bg-white/80 p-3 text-sm text-slate-700">
@@ -730,29 +791,44 @@ export function RegisterForm() {
                   variant="accent"
                   className="animate-pulse hover:animate-none hover:scale-105 active:scale-95 transition-all duration-300 shadow-md hover:shadow-lg hover:shadow-amber-500/20"
                 >
-                  <a href={upiPaymentUrl}>Open UPI app</a>
+                  <a href={buildUpiPaymentUrl(selectedAmount)}>Open UPI app (₹{selectedAmount.toLocaleString('en-IN')})</a>
                 </Button>
                 <Button type="button" variant="outline" onClick={openPaymentWhatsapp}>
-                  I have paid - WhatsApp proof
+                  I have paid — WhatsApp proof
                 </Button>
               </div>
-              <p className="text-xs leading-relaxed text-slate-600">
-                Payment is checked manually by the Trust team. Registration approval
-                is completed after alumni and payment verification.
-              </p>
             </div>
           </div>
         </div>
 
-        <label className="flex items-start gap-2 text-sm text-slate-700">
-          <input type="checkbox" name="terms_accepted" className="mt-0.5 rounded border-slate-300" />
-          <span>
-            I confirm I am an alumnus of DAV Khagaul and I accept the{' '}
-            <a href="/terms" className="text-[#0F2557] underline">Terms</a> and{' '}
-            <a href="/privacy" className="text-[#0F2557] underline">Privacy Policy</a>.
-          </span>
-        </label>
-        <FieldError message={fieldErrors?.terms_accepted} />
+        {/* Payment Proof Upload */}
+        <div className="rounded-2xl border border-emerald-200 bg-gradient-to-br from-emerald-50 to-green-50 p-5">
+          <p className="text-sm font-bold text-slate-900 mb-1">📸 Payment Proof Screenshot</p>
+          <p className="text-xs text-slate-600 mb-3">
+            Upload a screenshot of your UPI payment confirmation. This helps the admin verify your payment faster.
+          </p>
+          <label
+            htmlFor="payment_proof"
+            className="flex cursor-pointer flex-col items-center justify-center gap-2 rounded-xl border-2 border-dashed border-slate-300 bg-white p-6 transition hover:border-emerald-500 hover:bg-emerald-50/30"
+          >
+            <Upload className="h-8 w-8 text-slate-400" />
+            <span className="text-sm font-medium text-slate-600">Click to upload payment screenshot</span>
+            <span className="text-xs text-slate-400">JPG, PNG or WebP — max 5 MB</span>
+            <input
+              type="file"
+              id="payment_proof"
+              name="payment_proof"
+              accept="image/jpeg,image/png,image/webp"
+              className="hidden"
+            />
+          </label>
+          <FieldError message={fieldErrors?.payment_proof} />
+        </div>
+
+        <p className="text-xs leading-relaxed text-slate-600 rounded-lg bg-slate-50 p-3">
+          Payment is checked manually by the Trust team. Registration approval
+          is completed after alumni and payment verification.
+        </p>
       </div>
 
       {/* Nav */}

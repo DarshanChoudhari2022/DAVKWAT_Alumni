@@ -93,7 +93,7 @@ async function ApprovalsListRegion({ sp, page }: { sp: SearchParams; page: numbe
     let listQuery = supabase
       .from('profiles')
       .select(
-        'id, full_name, email, profile_type, batch_year, course, current_city, phone, created_at, avatar_url, taught_subject, taught_from_year, taught_to_year',
+        'id, full_name, email, profile_type, batch_year, course, current_city, phone, created_at, avatar_url, website_url, taught_subject, taught_from_year, taught_to_year',
         { count: 'exact' }
       )
       .eq('approval_status', 'pending');
@@ -180,6 +180,11 @@ async function ApprovalsListRegion({ sp, page }: { sp: SearchParams; page: numbe
                         )}
                         {profile.current_city && (
                           <Badge variant="default">{profile.current_city}</Badge>
+                        )}
+                        {profile.website_url && (
+                          <a href={profile.website_url} target="_blank" rel="noopener noreferrer">
+                            <Badge variant="primary">📄 School Doc</Badge>
+                          </a>
                         )}
                       </div>
                       <p className="mt-1 text-xs text-slate-400">

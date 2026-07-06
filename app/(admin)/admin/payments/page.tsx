@@ -46,6 +46,7 @@ interface PaymentRow {
   status: string;
   payment_mode: string | null;
   bank_ref_num: string | null;
+  receipt_url: string | null;
   created_at: string;
   alumni_id: string;
   profiles: { full_name: string; email: string };
@@ -204,7 +205,7 @@ async function PaymentsList({ sp, page }: { sp: SearchParams; page: number }) {
     let listQuery = supabase
       .from('payments')
       .select(
-        'id, txnid, amount, currency, status, payment_mode, bank_ref_num, created_at, alumni_id, profiles!inner(full_name, email)',
+        'id, txnid, amount, currency, status, payment_mode, bank_ref_num, receipt_url, created_at, alumni_id, profiles!inner(full_name, email)',
         { count: 'exact' }
       );
     if (sp.status && sp.status !== 'all') {
@@ -285,6 +286,13 @@ async function PaymentsList({ sp, page }: { sp: SearchParams; page: number }) {
                   <MobileInfoRow label="Amount">{formatINR(Number(p.amount))}</MobileInfoRow>
                   <MobileInfoRow label="Mode"><span className="capitalize">{p.payment_mode ?? '-'}</span></MobileInfoRow>
                   <MobileInfoRow label="Date">{formatDateTime(p.created_at)}</MobileInfoRow>
+                  {p.receipt_url && (
+                    <MobileInfoRow label="Proof">
+                      <a href={p.receipt_url} target="_blank" rel="noopener noreferrer" className="text-[#0F2557] underline text-xs">
+                        View Screenshot
+                      </a>
+                    </MobileInfoRow>
+                  )}
                 </div>
               </Card>
             );
@@ -303,6 +311,7 @@ async function PaymentsList({ sp, page }: { sp: SearchParams; page: number }) {
                 <th className="pb-2 pr-3">Amount</th>
                 <th className="pb-2 pr-3">Status</th>
                 <th className="pb-2 pr-3">Mode</th>
+                <th className="pb-2 pr-3">Proof</th>
                 <th className="pb-2">Date</th>
               </tr>
             </thead>
@@ -339,6 +348,15 @@ async function PaymentsList({ sp, page }: { sp: SearchParams; page: number }) {
                       </Badge>
                     </td>
                     <td className="py-3 pr-3 capitalize">{p.payment_mode ?? '—'}</td>
+                    <td className="py-3 pr-3">
+                      {p.receipt_url ? (
+                        <a href={p.receipt_url} target="_blank" rel="noopener noreferrer" className="text-[#0F2557] underline text-xs">
+                          View
+                        </a>
+                      ) : (
+                        <span className="text-slate-400">—</span>
+                      )}
+                    </td>
                     <td className="py-3">{formatDateTime(p.created_at)}</td>
                   </tr>
                 );

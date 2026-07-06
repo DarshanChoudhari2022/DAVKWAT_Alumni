@@ -1,19 +1,35 @@
 export const MANUAL_MEMBERSHIP_PAYMENT = {
   payeeName: 'Subhash Singh Thakur',
-  upiId: '9773695456@ptsbi',
+  upiId: 'thakursubhashsingh-1@okaxis',
   transactionNote: 'DAVKAWT Alumni Membership Fee',
   currency: 'INR',
-  whatsappNumber: '919373405399',
+  whatsappNumber: '919773695456',
+  /** QR image for the ₹500 annual plan */
+  qrImage500: '/500.jpeg',
+  /** QR image for the ₹5,000 lifetime plan */
+  qrImage5000: '/5000.jpeg',
+  /** Legacy single QR path (kept for backward compat) */
   qrImagePath: '/manual-membership-upi-qr.jpeg',
 } as const;
 
-export function buildUpiPaymentUrl() {
+export type MembershipAmount = 500 | 5000;
+
+/**
+ * Build a UPI deep-link for the selected membership amount.
+ * On mobile, this opens the user's UPI app with the amount pre-filled.
+ */
+export function buildUpiPaymentUrl(amount?: MembershipAmount) {
   const params: Array<[string, string]> = [
     ['pa', MANUAL_MEMBERSHIP_PAYMENT.upiId],
     ['pn', MANUAL_MEMBERSHIP_PAYMENT.payeeName],
     ['tn', MANUAL_MEMBERSHIP_PAYMENT.transactionNote],
     ['cu', MANUAL_MEMBERSHIP_PAYMENT.currency],
   ];
+
+  if (amount) {
+    params.push(['am', String(amount)]);
+  }
+
   const query = params
     .map(([key, value]) => `${key}=${encodeURIComponent(value)}`)
     .join('&');
@@ -25,22 +41,34 @@ export interface ManualPaymentWhatsappInput {
   fullName?: string;
   batchYear?: string;
   phone?: string;
+  amount?: MembershipAmount;
+  /** Supabase public URL of the uploaded payment proof screenshot */
+  paymentProofUrl?: string;
 }
 
+/**
+ * Build a WhatsApp deep-link for the user to send payment proof to Subhash Ji.
+ * Includes amount, user details, and a link to the uploaded screenshot in Supabase.
+ */
 export function buildManualPaymentWhatsappUrl({
   fullName,
   batchYear,
   phone,
+  amount,
+  paymentProofUrl,
 }: ManualPaymentWhatsappInput = {}) {
   const lines = [
-    'Hello DAVKAWT team, I have paid the alumni membership fee.',
+    'Namaskar Subhash Ji, I have paid the DAVKAWT alumni membership fee.',
     '',
+    `Amount: ₹${amount ? amount.toLocaleString('en-IN') : '___'}`,
     `UPI ID: ${MANUAL_MEMBERSHIP_PAYMENT.upiId}`,
     fullName ? `Name: ${fullName}` : 'Name:',
     batchYear ? `Batch year: ${batchYear}` : 'Batch year:',
     phone ? `Phone: ${phone}` : 'Phone:',
     '',
-    'I am sharing the payment screenshot/transaction ID for manual verification.',
+    paymentProofUrl
+      ? `Payment proof screenshot: ${paymentProofUrl}`
+      : 'I am sharing the payment screenshot/transaction ID for manual verification.',
   ];
 
   const text = encodeURIComponent(lines.join('\n'));

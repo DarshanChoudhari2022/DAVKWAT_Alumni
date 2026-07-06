@@ -124,6 +124,117 @@ async function uploadProfilePhoto(userId: string, photoFile: File): Promise<stri
 }
 
 /**
+ * Upload school document to Supabase storage 'school-documents' bucket.
+ * Creates the bucket if it does not exist.
+ */
+async function uploadSchoolDocument(userId: string, docFile: File): Promise<string> {
+  const admin = createAdminClient();
+  const bucketName = 'school-documents';
+
+  try {
+    const { data: buckets } = await admin.storage.listBuckets();
+    if (!buckets?.find((b) => b.name === bucketName)) {
+      console.log(`[register/upload] creating bucket "${bucketName}"`);
+      await admin.storage.createBucket(bucketName, {
+        public: true,
+        allowedMimeTypes: ['image/jpeg', 'image/png', 'image/webp'],
+        fileSizeLimit: 5 * 1024 * 1024,
+      });
+    }
+  } catch (e) {
+    console.warn('[register/upload] school-documents bucket check/creation warning:', e);
+  }
+
+  const fileExt = docFile.name.split('.').pop() || 'jpg';
+  const fileName = `${userId}-${Date.now()}.${fileExt}`;
+  const filePath = `documents/${fileName}`;
+
+  const { error: uploadError } = await admin.storage
+    .from(bucketName)
+    .upload(filePath, docFile, {
+      contentType: docFile.type,
+      upsert: true,
+    });
+
+  if (uploadError) {
+    throw new Error(`Failed to upload school document: ${uploadError.message}`);
+  }
+
+  const { data: { publicUrl } } = admin.storage.from(bucketName).getPublicUrl(filePath);
+  return publicUrl;
+}
+
+/**
+ * Upload payment proof screenshot to Supabase storage 'payment-proofs' bucket.
+ * Creates the bucket if it does not exist.
+ */
+async function uploadPaymentProof(userId: string, proofFile: File): Promise<string> {
+  const admin = createAdminClient();
+  const bucketName = 'payment-proofs';
+
+  try {
+    const { data: buckets } = await admin.storage.listBuckets();
+    if (!buckets?.find((b) => b.name === bucketName)) {
+      console.log(`[register/upload] creating bucket "${bucketName}"`);
+      await admin.storage.createBucket(bucketName, {
+        public: true,
+        allowedMimeTypes: ['image/jpeg', 'image/png', 'image/webp'],
+        fileSizeLimit: 5 * 1024 * 1024,
+      });
+    }
+  } catch (e) {
+    console.warn('[register/upload] payment-proofs bucket check/creation warning:', e);
+  }
+
+  const fileExt = proofFile.name.split('.').pop() || 'jpg';
+  const fileName = `${userId}-${Date.now()}.${fileExt}`;
+  const filePath = `proofs/${fileName}`;
+
+  const { error: uploadError } = await admin.storage
+    .from(bucketName)
+    .upload(filePath, proofFile, {
+      contentType: proofFile.type,
+      upsert: true,
+    });
+
+  if (uploadError) {
+    throw new Error(`Failed to upload payment proof: ${uploadError.message}`);
+  }
+
+  const { data: { publicUrl } } = admin.storage.from(bucketName).getPublicUrl(filePath);
+  return publicUrl;
+}
+
+/**
+ * Create a manual pending payment record.
+ * Storing the screenshot URL in receipt_url to work with the existing schema.
+ */
+async function createManualPayment(
+  userId: string,
+  amount: number,
+  proofUrl: string
+): Promise<string> {
+  const admin = createAdminClient();
+  const txnid = `TXN-MAN-${Date.now()}-${Math.floor(1000 + Math.random() * 9000)}`;
+
+  const { error } = await admin.from('payments').insert({
+    alumni_id: userId,
+    txnid,
+    amount,
+    currency: 'INR',
+    status: 'pending',
+    payment_mode: 'UPI_QR',
+    receipt_url: proofUrl,
+  });
+
+  if (error) {
+    throw new Error(`Failed to create payment record: ${error.message}`);
+  }
+
+  return txnid;
+}
+
+/**
  * Insert profile row via service-role Supabase client (bypasses RLS).
  * Retries once on transient failure.
  */
@@ -131,6 +242,7 @@ async function insertProfile(
   userId: string,
   data: Record<string, unknown>,
   avatarUrl: string | null,
+  schoolDocUrl: string | null,
   attempt = 1
 ): Promise<{ success: boolean; error?: string }> {
   try {
@@ -162,6 +274,7 @@ async function insertProfile(
       hide_email: data.hide_email as boolean,
       hide_phone: data.hide_phone as boolean,
       avatar_url: avatarUrl,
+      website_url: schoolDocUrl, // Storing school document URL in website_url
       role: 'pending',
       approval_status: 'pending',
     });
@@ -179,7 +292,7 @@ async function insertProfile(
     // Retry once on transient errors
     if (attempt === 1 && msg.includes('connect')) {
       console.log('[register] retrying profile insert...');
-      return insertProfile(userId, data, avatarUrl, 2);
+      return insertProfile(userId, data, avatarUrl, schoolDocUrl, 2);
     }
 
     return { success: false, error: msg };
@@ -329,7 +442,6 @@ export async function registerAction(
     console.log(`[register] profile photo uploaded successfully: ${avatarUrl}`);
   } catch (uploadErr: unknown) {
     console.error('[register] profile photo upload failed:', uploadErr);
-    // Roll back auth user
     try {
       const admin = createAdminClient();
       await admin.auth.admin.deleteUser(userId);
@@ -340,11 +452,23 @@ export async function registerAction(
     return { error: `Failed to upload profile photo: ${uploadMsg}. Please try again.` };
   }
 
+  // ---------- 4b. Upload school document (compulsory) ----------
+  let schoolDocUrl: string | null = null;
+  const schoolDocFile = formData.get('school_document') as File | null;
+  if (schoolDocFile && schoolDocFile.size > 0) {
+    try {
+      schoolDocUrl = await uploadSchoolDocument(userId, schoolDocFile);
+      console.log(`[register] school document uploaded: ${schoolDocUrl}`);
+    } catch (docErr: unknown) {
+      console.error('[register] school document upload failed:', docErr);
+      // Non-fatal — continue registration
+    }
+  }
+
   // ---------- 5. Insert profile via service role ----------
-  const profileResult = await insertProfile(userId, data, avatarUrl);
+  const profileResult = await insertProfile(userId, data, avatarUrl, schoolDocUrl);
 
   if (!profileResult.success) {
-    // Roll back the auth user so the email isn't permanently taken
     console.error('[register] rolling back auth user due to profile insert failure');
     try {
       const admin = createAdminClient();
@@ -353,6 +477,35 @@ export async function registerAction(
       console.error('[register] rollback failed — user may be orphaned:', rollbackErr);
     }
     return { error: `Failed to create your profile: ${profileResult.error}. Please try again.` };
+  }
+
+  // ---------- 5b. Upload payment proof & create payment record ----------
+  const paymentProofFile = formData.get('payment_proof') as File | null;
+  const selectedAmount = Number(formData.get('selected_amount') || 500);
+  if (paymentProofFile && paymentProofFile.size > 0) {
+    try {
+      const proofUrl = await uploadPaymentProof(userId, paymentProofFile);
+      console.log(`[register] payment proof uploaded: ${proofUrl}`);
+      const txnid = await createManualPayment(userId, selectedAmount, proofUrl);
+      console.log(`[register] manual payment created: ${txnid}`);
+
+      // Send WhatsApp-style proof link via the admin email too
+      try {
+        const { buildManualPaymentWhatsappUrl } = await import('@/lib/payments/manual-upi');
+        const whatsappUrl = buildManualPaymentWhatsappUrl({
+          fullName: data.full_name,
+          batchYear: String(data.batch_year),
+          amount: selectedAmount as 500 | 5000,
+          paymentProofUrl: proofUrl,
+        });
+        console.log(`[register] WhatsApp proof URL generated: ${whatsappUrl}`);
+      } catch {
+        // Non-critical
+      }
+    } catch (payErr: unknown) {
+      console.error('[register] payment proof upload/record failed:', payErr);
+      // Non-fatal — registration still succeeded
+    }
   }
 
   // ---------- 6. Send emails (non-blocking) ----------
