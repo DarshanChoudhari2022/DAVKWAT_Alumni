@@ -29,6 +29,7 @@ function SubmitButton() {
 export function FacultyRegisterForm() {
   const [state, action] = useActionState(facultyRegisterAction, initialState);
   const [hasSchoolDoc, setHasSchoolDoc] = useState(false);
+  const [clientErrors, setClientErrors] = useState<Record<string, string>>({});
   const formRef = useRef<HTMLFormElement>(null);
   const saveTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
@@ -57,7 +58,7 @@ export function FacultyRegisterForm() {
       const draft: Record<string, unknown> = {};
 
       for (const [key, value] of fd.entries()) {
-        if (key === 'password' || key === 'confirmPassword') {
+        if (key === 'password' || key === 'confirmPassword' || value instanceof File) {
           continue;
         }
         draft[key] = value;
@@ -98,7 +99,7 @@ export function FacultyRegisterForm() {
           if (input) {
             if (input.type === 'checkbox') {
               (input as HTMLInputElement).checked = !!value;
-            } else {
+            } else if (input.type !== 'file') {
               input.value = String(value);
             }
           }
@@ -116,29 +117,46 @@ export function FacultyRegisterForm() {
     };
   }, []);
 
+  const handleSubmit = (fd: FormData) => {
+    setClientErrors({});
+    if (!hasSchoolDoc) {
+      setClientErrors({ school_document: 'Proof of ID is required' });
+      setTimeout(() => {
+        const errorEl = document.getElementsByName('school_document')[0] || document.getElementById('school_document');
+        if (errorEl) {
+          errorEl.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        }
+      }, 50);
+      return;
+    }
+    action(fd);
+  };
+
+  const fieldErrors = { ...clientErrors, ...state.fieldErrors };
+
   return (
-    <form ref={formRef} action={action} onChange={saveFormDraft} onInput={saveFormDraft} className="space-y-5">
+    <form ref={formRef} action={handleSubmit} onChange={saveFormDraft} onInput={saveFormDraft} className="space-y-5">
       {state.error && (
         <div role="alert" className="rounded-lg border border-rose-200 bg-rose-50 p-3 text-sm text-rose-700">
           {state.error}
         </div>
       )}
 
-      <Field label="Email" name="email" type="email" autoComplete="email" maxLength={VALIDATION_LIMITS.emailMax} required error={state.fieldErrors?.email} />
-      <Field label="Password" name="password" type="password" autoComplete="new-password" maxLength={VALIDATION_LIMITS.passwordMax} required error={state.fieldErrors?.password} />
-      <Field label="Confirm Password" name="confirmPassword" type="password" autoComplete="new-password" maxLength={VALIDATION_LIMITS.passwordMax} required error={state.fieldErrors?.confirmPassword} />
-      <Field label="Full Name" name="full_name" maxLength={VALIDATION_LIMITS.nameMax} required error={state.fieldErrors?.full_name} />
-      <Field label="Phone (10-digit Indian mobile)" name="phone" type="tel" inputMode="numeric" maxLength={10} pattern={INPUT_PATTERNS.indianMobile} title="Enter a valid 10-digit Indian mobile number starting with 6, 7, 8, or 9" error={state.fieldErrors?.phone} />
+      <Field label="Email" name="email" type="email" autoComplete="email" maxLength={VALIDATION_LIMITS.emailMax} required error={fieldErrors?.email} />
+      <Field label="Password" name="password" type="password" autoComplete="new-password" maxLength={VALIDATION_LIMITS.passwordMax} required error={fieldErrors?.password} />
+      <Field label="Confirm Password" name="confirmPassword" type="password" autoComplete="new-password" maxLength={VALIDATION_LIMITS.passwordMax} required error={fieldErrors?.confirmPassword} />
+      <Field label="Full Name" name="full_name" maxLength={VALIDATION_LIMITS.nameMax} required error={fieldErrors?.full_name} />
+      <Field label="Phone (10-digit Indian mobile)" name="phone" type="tel" inputMode="numeric" maxLength={10} pattern={INPUT_PATTERNS.indianMobile} title="Enter a valid 10-digit Indian mobile number starting with 6, 7, 8, or 9" error={fieldErrors?.phone} />
 
       <div>
         <Label htmlFor="taught_subject">Subject taught <span className="text-rose-600">*</span></Label>
         <Input id="taught_subject" name="taught_subject" required maxLength={VALIDATION_LIMITS.professionalTextMax} className="mt-1.5" />
-        <FieldError message={state.fieldErrors?.taught_subject} />
+        <FieldError message={fieldErrors?.taught_subject} />
       </div>
 
       <div className="grid gap-4 sm:grid-cols-2">
-        <YearField label="Taught from year" name="taught_from_year" required error={state.fieldErrors?.taught_from_year} />
-        <YearField label="Taught till year" name="taught_to_year" error={state.fieldErrors?.taught_to_year} />
+        <YearField label="Taught from year" name="taught_from_year" required error={fieldErrors?.taught_from_year} />
+        <YearField label="Taught till year" name="taught_to_year" error={fieldErrors?.taught_to_year} />
       </div>
 
       {/* Proof of Identity Upload (Compulsory) */}
@@ -147,7 +165,7 @@ export function FacultyRegisterForm() {
           name="school_document"
           label="Proof of Identity (School ID card, Appointment Letter, Salary Slip, any School Document showing your name and role, etc.)"
           required
-          error={state.fieldErrors?.school_document}
+          error={fieldErrors?.school_document}
           maxRawSize={10 * 1024 * 1024}
           targetCompressedSize={350 * 1024}
           onChange={(f) => setHasSchoolDoc(!!f)}
@@ -169,7 +187,7 @@ export function FacultyRegisterForm() {
           maxLength={VALIDATION_LIMITS.bioMax}
           className="mt-1.5 flex w-full rounded-lg border border-slate-200 bg-white px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-[#0F2557]"
         />
-        <FieldError message={state.fieldErrors?.bio} />
+        <FieldError message={fieldErrors?.bio} />
       </div>
 
       <div className="space-y-2 rounded-lg bg-slate-50 p-4">
@@ -192,7 +210,7 @@ export function FacultyRegisterForm() {
           <a href="/privacy" className="text-[#0F2557] underline">Privacy Policy</a>.
         </span>
       </label>
-      <FieldError message={state.fieldErrors?.terms_accepted} />
+      <FieldError message={fieldErrors?.terms_accepted} />
 
       <SubmitButton />
     </form>
