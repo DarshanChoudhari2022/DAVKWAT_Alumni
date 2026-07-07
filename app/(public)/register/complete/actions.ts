@@ -9,6 +9,7 @@ import {
   professionalSchema,
 } from '@/lib/validations/registration';
 import { APP_URL } from '@/lib/resend/client';
+import { getCleanMimeType, isValidImage } from '@/lib/utils/image-validation';
 
 const completeSchema = alumniAcademicSchema.and(personalSchema).and(professionalSchema);
 type ProfileType = 'alumni' | 'faculty';
@@ -47,10 +48,12 @@ async function uploadProfilePhoto(userId: string, photoFile: File): Promise<stri
   const fileName = `${userId}-${Date.now()}.${fileExt}`;
   const filePath = `profile-photos/${fileName}`;
 
+  const cleanMimeType = getCleanMimeType(photoFile);
+
   const { error: uploadError } = await admin.storage
     .from(bucketName)
     .upload(filePath, photoFile, {
-      contentType: photoFile.type,
+      contentType: cleanMimeType,
       upsert: true,
     });
 
@@ -162,8 +165,7 @@ export async function completeRegistrationAction(
       },
     };
   }
-  const allowedTypes = ['image/jpeg', 'image/png', 'image/webp'];
-  if (!allowedTypes.includes(photoFile.type)) {
+  if (!isValidImage(photoFile)) {
     return {
       fieldErrors: {
         profile_photo: 'Only JPG, PNG or WebP images are allowed',

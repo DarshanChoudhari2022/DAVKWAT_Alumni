@@ -35,7 +35,7 @@ export function DocumentUpload({
   maxRawSize = 10 * 1024 * 1024,
   targetCompressedSize = 500 * 1024,
   maxDimension = 1400,
-  accept = 'image/jpeg,image/png,image/webp',
+  accept = 'image/jpeg,image/png,image/webp,image/heic,image/heif,.heic,.heif',
   onChange,
 }: DocumentUploadProps) {
   const [preview, setPreview] = useState<string | null>(null);
@@ -47,7 +47,21 @@ export function DocumentUpload({
 
   const processFile = useCallback(
     async (file: File) => {
-      if (!file.type.startsWith('image/')) {
+      const fileNameLower = file.name.toLowerCase();
+      const isHeic =
+        file.type.includes('heic') ||
+        file.type.includes('heif') ||
+        fileNameLower.endsWith('.heic') ||
+        fileNameLower.endsWith('.heif');
+      const isAllowedImage =
+        file.type.startsWith('image/') ||
+        isHeic ||
+        fileNameLower.endsWith('.jpg') ||
+        fileNameLower.endsWith('.jpeg') ||
+        fileNameLower.endsWith('.png') ||
+        fileNameLower.endsWith('.webp');
+
+      if (!isAllowedImage) {
         toast.error('Please upload an image file (JPG, PNG, or WebP)');
         return;
       }
@@ -84,16 +98,62 @@ export function DocumentUpload({
           toast.success(`Compressed: saved ${savedKB} KB`);
         }
       } catch (err) {
-        console.error('Compression failed:', err);
+        console.error('Compression failed, attempting fallback:', err);
+        
         const fileNameLower = file.name.toLowerCase();
-        if (
+        const isHeic =
           file.type.includes('heic') ||
           file.type.includes('heif') ||
           fileNameLower.endsWith('.heic') ||
-          fileNameLower.endsWith('.heif')
-        ) {
+          fileNameLower.endsWith('.heif');
+
+        // Check if the file is a valid web image (JPG, PNG, WebP) by mime type or extension
+        const isAllowedWebImage =
+          file.type.startsWith('image/') ||
+          fileNameLower.endsWith('.jpg') ||
+          fileNameLower.endsWith('.jpeg') ||
+          fileNameLower.endsWith('.png') ||
+          fileNameLower.endsWith('.webp');
+
+        if (isAllowedWebImage && !isHeic) {
+          // Normalize the mime type for standard web image uploads (e.g. converting image/jpg or empty mime to image/jpeg)
+          let cleanMimeType = 'image/jpeg';
+          const fileExt = file.name.split('.').pop()?.toLowerCase();
+          if (fileExt === 'png') {
+            cleanMimeType = 'image/png';
+          } else if (fileExt === 'webp') {
+            cleanMimeType = 'image/webp';
+          } else if (file.type.toLowerCase() === 'image/png') {
+            cleanMimeType = 'image/png';
+          } else if (file.type.toLowerCase() === 'image/webp') {
+            cleanMimeType = 'image/webp';
+          }
+
+          const fallbackFile = file.type === cleanMimeType 
+            ? file 
+            : new File([file], file.name, {
+                type: cleanMimeType,
+                lastModified: file.lastModified,
+              });
+
+          // Fallback: Set preview with original file
+          const reader = new FileReader();
+          reader.onload = () => setPreview(reader.result as string);
+          reader.readAsDataURL(fallbackFile);
+
+          setFileName(fallbackFile.name);
+
+          // Put the normalized fallback file into the hidden file input via DataTransfer
+          const dt = new DataTransfer();
+          dt.items.add(fallbackFile);
+          if (hiddenInputRef.current) {
+            hiddenInputRef.current.files = dt.files;
+          }
+          onChange?.(fallbackFile);
+          toast.success('Uploaded original image without compression');
+        } else if (isHeic) {
           toast.error(
-            'HEIC/HEIF images are not supported on this browser. Please upload a JPG, PNG, or WebP image, or use Safari.'
+            'HEIC/HEIF images could not be converted on this browser. Please upload a JPG, PNG, or WebP image.'
           );
         } else {
           toast.error('Failed to process image. Please try another file.');

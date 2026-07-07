@@ -5,6 +5,7 @@ import { createClient } from '@/lib/supabase/server';
 import { createAdminClient } from '@/lib/supabase/admin';
 import { fullRegistrationSchema } from '@/lib/validations/registration';
 import { APP_URL } from '@/lib/resend/client';
+import { getCleanMimeType, isValidImage } from '@/lib/utils/image-validation';
 
 const fullSchema = fullRegistrationSchema;
 type ProfileType = 'alumni' | 'faculty';
@@ -108,10 +109,12 @@ async function uploadProfilePhoto(userId: string, photoFile: File): Promise<stri
   const fileName = `${userId}-${Date.now()}.${fileExt}`;
   const filePath = `profile-photos/${fileName}`;
 
+  const cleanMimeType = getCleanMimeType(photoFile);
+
   const { error: uploadError } = await admin.storage
     .from(bucketName)
     .upload(filePath, photoFile, {
-      contentType: photoFile.type,
+      contentType: cleanMimeType,
       upsert: true,
     });
 
@@ -149,10 +152,12 @@ export async function uploadSchoolDocument(userId: string, docFile: File): Promi
   const fileName = `${userId}-${Date.now()}.${fileExt}`;
   const filePath = `documents/${fileName}`;
 
+  const cleanMimeType = getCleanMimeType(docFile);
+
   const { error: uploadError } = await admin.storage
     .from(bucketName)
     .upload(filePath, docFile, {
-      contentType: docFile.type,
+      contentType: cleanMimeType,
       upsert: true,
     });
 
@@ -190,10 +195,12 @@ async function uploadPaymentProof(userId: string, proofFile: File): Promise<stri
   const fileName = `${userId}-${Date.now()}.${fileExt}`;
   const filePath = `proofs/${fileName}`;
 
+  const cleanMimeType = getCleanMimeType(proofFile);
+
   const { error: uploadError } = await admin.storage
     .from(bucketName)
     .upload(filePath, proofFile, {
-      contentType: proofFile.type,
+      contentType: cleanMimeType,
       upsert: true,
     });
 
@@ -336,8 +343,7 @@ export async function registerAction(
       },
     };
   }
-  const allowedTypes = ['image/jpeg', 'image/png', 'image/webp'];
-  if (!allowedTypes.includes(photoFile.type)) {
+  if (!isValidImage(photoFile)) {
     return {
       fieldErrors: {
         profile_photo: 'Only JPG, PNG or WebP images are allowed',
@@ -361,7 +367,7 @@ export async function registerAction(
       },
     };
   }
-  if (!allowedTypes.includes(schoolDocFile.type)) {
+  if (!isValidImage(schoolDocFile)) {
     return {
       fieldErrors: {
         school_document: 'Only JPG, PNG or WebP images are allowed',
@@ -385,7 +391,7 @@ export async function registerAction(
       },
     };
   }
-  if (!allowedTypes.includes(paymentProofFile.type)) {
+  if (!isValidImage(paymentProofFile)) {
     return {
       fieldErrors: {
         payment_proof: 'Only JPG, PNG or WebP images are allowed',

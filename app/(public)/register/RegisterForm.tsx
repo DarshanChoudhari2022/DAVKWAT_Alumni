@@ -418,7 +418,13 @@ export function RegisterForm() {
       }
     }
 
-    setStep((s) => Math.min(s + 1, STEPS.length - 1));
+    setStep((s) => {
+      const nextStep = Math.min(s + 1, STEPS.length - 1);
+      if (nextStep !== s) {
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+      }
+      return nextStep;
+    });
   }
 
   function back() {

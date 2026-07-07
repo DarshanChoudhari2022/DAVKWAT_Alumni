@@ -20,9 +20,37 @@ export async function compressImage(
 ): Promise<File> {
   const { maxDimension = 1200, quality = 0.7, targetMaxBytes = 500 * 1024 } = options;
 
+  let actualFile = file;
+  const fileNameLower = file.name.toLowerCase();
+  const isHeic =
+    file.type.includes('heic') ||
+    file.type.includes('heif') ||
+    fileNameLower.endsWith('.heic') ||
+    fileNameLower.endsWith('.heif');
+
+  if (isHeic && typeof window !== 'undefined') {
+    try {
+      const heic2any = (await import('heic2any')).default;
+      const conversionResult = await heic2any({
+        blob: file,
+        toType: 'image/jpeg',
+        quality: 0.8,
+      });
+      const blob = Array.isArray(conversionResult) ? conversionResult[0] : conversionResult;
+      if (blob) {
+        actualFile = new File([blob], file.name.replace(/\.[^/.]+$/, '.jpg'), {
+          type: 'image/jpeg',
+          lastModified: new Date().getTime(),
+        });
+      }
+    } catch (err) {
+      console.warn('HEIC conversion failed:', err);
+    }
+  }
+
   // If the file is already small enough and is JPEG, skip compression
-  if (file.size <= targetMaxBytes && file.type === 'image/jpeg') {
-    return file;
+  if (actualFile.size <= targetMaxBytes && actualFile.type === 'image/jpeg') {
+    return actualFile;
   }
 
   // 1. Try modern OffscreenCanvas + createImageBitmap first if available
@@ -32,7 +60,7 @@ export async function compressImage(
     typeof window.OffscreenCanvas === 'function'
   ) {
     try {
-      const bitmap = await createImageBitmap(file);
+      const bitmap = await createImageBitmap(actualFile);
       const { width, height } = bitmap;
 
       let newWidth = width;
@@ -60,7 +88,7 @@ export async function compressImage(
         } while (currentQuality >= MIN_QUALITY);
 
         if (blob) {
-          const baseName = file.name.replace(/\.[^.]+$/, '');
+          const baseName = actualFile.name.replace(/\.[^.]+$/, '');
           return new File([blob], `${baseName}.jpg`, { type: 'image/jpeg' });
         }
       }
@@ -76,7 +104,7 @@ export async function compressImage(
 
   return new Promise((resolve, reject) => {
     const img = document.createElement('img');
-    const objectUrl = URL.createObjectURL(file);
+    const objectUrl = URL.createObjectURL(actualFile);
 
     img.onload = async () => {
       try {
@@ -122,7 +150,7 @@ export async function compressImage(
           throw new Error('Canvas toBlob returned null');
         }
 
-        const baseName = file.name.replace(/\.[^.]+$/, '');
+        const baseName = actualFile.name.replace(/\.[^.]+$/, '');
         resolve(new File([blob], `${baseName}.jpg`, { type: 'image/jpeg' }));
       } catch (err) {
         URL.revokeObjectURL(objectUrl);

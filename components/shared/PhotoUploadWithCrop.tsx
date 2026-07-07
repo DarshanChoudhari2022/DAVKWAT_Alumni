@@ -150,15 +150,44 @@ export function PhotoUploadWithCrop({
   }, []);
 
   // Handle file select
-  const onFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const onFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files.length > 0) {
       stopCamera();
-      const file = e.target.files[0];
+      let file = e.target.files[0];
       if (!file) return;
       if (file.size > 10 * 1024 * 1024) {
         toast.error('File is too large. Max 10MB.');
         return;
       }
+
+      const fileNameLower = file.name.toLowerCase();
+      const isHeic =
+        file.type.includes('heic') ||
+        file.type.includes('heif') ||
+        fileNameLower.endsWith('.heic') ||
+        fileNameLower.endsWith('.heif');
+
+      if (isHeic) {
+        try {
+          const heic2any = (await import('heic2any')).default;
+          toast.info('Converting HEIC image...');
+          const conversionResult = await heic2any({
+            blob: file,
+            toType: 'image/jpeg',
+            quality: 0.8,
+          });
+          const blob = Array.isArray(conversionResult) ? conversionResult[0] : conversionResult;
+          if (blob) {
+            file = new File([blob], file.name.replace(/\.[^/.]+$/, '.jpg'), {
+              type: 'image/jpeg',
+              lastModified: new Date().getTime(),
+            });
+          }
+        } catch (err) {
+          console.warn('HEIC conversion failed for profile photo:', err);
+        }
+      }
+
       const reader = new FileReader();
       reader.addEventListener('load', () => {
         setImgSrc(reader.result?.toString() || '');
@@ -474,7 +503,7 @@ export function PhotoUploadWithCrop({
       <input
         ref={fileInputRef}
         type="file"
-        accept="image/jpeg,image/png,image/webp"
+        accept="image/jpeg,image/png,image/webp,image/heic,image/heif,.heic,.heif"
         onChange={onFileChange}
         className="hidden"
       />

@@ -6,6 +6,7 @@ import { createClient } from '@/lib/supabase/server';
 import { facultyRegistrationSchema } from '@/lib/validations/registration';
 import { APP_URL } from '@/lib/resend/client';
 import { uploadSchoolDocument } from '../actions';
+import { isValidImage } from '@/lib/utils/image-validation';
 
 
 export interface FacultyRegisterState {
@@ -75,8 +76,7 @@ export async function facultyRegisterAction(
       },
     };
   }
-  const allowedTypes = ['image/jpeg', 'image/png', 'image/webp'];
-  if (!allowedTypes.includes(schoolDocFile.type)) {
+  if (!isValidImage(schoolDocFile)) {
     return {
       fieldErrors: {
         school_document: 'Only JPG, PNG or WebP images are allowed',
