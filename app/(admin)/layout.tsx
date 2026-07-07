@@ -12,9 +12,9 @@ import {
 } from 'lucide-react';
 import { Logo } from '@/components/shared/Logo';
 import { Badge } from '@/components/ui/badge';
-import { Button } from '@/components/ui/button';
 import { adminLogoutAction } from '@/app/(public)/admin-login/actions';
 import { requireAdminAccess } from '@/lib/auth/admin-access';
+import { SignOutButton } from '@/components/shared/SignOutButton';
 import { getPendingApprovalsCount } from '@/lib/cache/admin-cache';
 import { AdminMobileNav } from './AdminMobileNav';
 
@@ -66,11 +66,9 @@ export default async function AdminLayout({ children }: { children: React.ReactN
         </nav>
         <div className="border-t border-slate-200 p-3">
           <p className="mb-2 truncate px-3 text-xs text-slate-500">{adminAccess.displayName}</p>
-          <form action={adminLogoutAction}>
-            <Button type="submit" variant="ghost" size="sm" className="w-full justify-start">
-              Sign out
-            </Button>
-          </form>
+          <SignOutButton action={adminLogoutAction} variant="ghost" size="sm" className="w-full justify-start">
+            Sign out
+          </SignOutButton>
         </div>
       </aside>
 

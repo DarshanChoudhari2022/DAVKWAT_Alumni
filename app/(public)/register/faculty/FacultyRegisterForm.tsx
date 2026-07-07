@@ -1,7 +1,7 @@
 'use client';
 
 import type React from 'react';
-import { useActionState, useRef, useEffect } from 'react';
+import { useState, useActionState, useRef, useEffect } from 'react';
 import { useFormStatus } from 'react-dom';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -10,6 +10,7 @@ import { FieldError } from '@/components/shared/FieldError';
 import { PasswordInput } from '@/components/shared/PasswordInput';
 import { INPUT_PATTERNS, VALIDATION_LIMITS } from '@/lib/validations/constraints';
 import { facultyRegisterAction, type FacultyRegisterState } from './actions';
+import { DocumentUpload } from '@/components/shared/DocumentUpload';
 
 const initialState: FacultyRegisterState = {};
 const CURRENT_YEAR = new Date().getFullYear();
@@ -18,14 +19,15 @@ const YEARS = Array.from({ length: CURRENT_YEAR - 1949 }, (_, i) => CURRENT_YEAR
 function SubmitButton() {
   const { pending } = useFormStatus();
   return (
-    <Button type="submit" variant="accent" disabled={pending}>
-      {pending ? 'Submitting...' : 'Submit faculty registration'}
+    <Button type="submit" variant="accent" loading={pending}>
+      Submit faculty registration
     </Button>
   );
 }
 
 export function FacultyRegisterForm() {
   const [state, action] = useActionState(facultyRegisterAction, initialState);
+  const [hasSchoolDoc, setHasSchoolDoc] = useState(false);
   const formRef = useRef<HTMLFormElement>(null);
   const saveTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
@@ -121,6 +123,19 @@ export function FacultyRegisterForm() {
       <div className="grid gap-4 sm:grid-cols-2">
         <YearField label="Taught from year" name="taught_from_year" required error={state.fieldErrors?.taught_from_year} />
         <YearField label="Taught till year" name="taught_to_year" error={state.fieldErrors?.taught_to_year} />
+      </div>
+
+      {/* Proof of Identity Upload (Compulsory) */}
+      <div className="mt-4 rounded-2xl border border-amber-200 bg-gradient-to-br from-amber-50 to-orange-50 p-5">
+        <DocumentUpload
+          name="school_document"
+          label="Proof of Identity (School ID card, Appointment Letter, Salary Slip, any School Document showing your name and role, etc.)"
+          required
+          error={state.fieldErrors?.school_document}
+          maxRawSize={10 * 1024 * 1024}
+          targetCompressedSize={350 * 1024}
+          onChange={(f) => setHasSchoolDoc(!!f)}
+        />
       </div>
 
       <div className="grid gap-4 sm:grid-cols-3">

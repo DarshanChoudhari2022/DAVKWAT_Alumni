@@ -127,7 +127,7 @@ async function uploadProfilePhoto(userId: string, photoFile: File): Promise<stri
  * Upload school document to Supabase storage 'school-documents' bucket.
  * Creates the bucket if it does not exist.
  */
-async function uploadSchoolDocument(userId: string, docFile: File): Promise<string> {
+export async function uploadSchoolDocument(userId: string, docFile: File): Promise<string> {
   const admin = createAdminClient();
   const bucketName = 'school-documents';
 

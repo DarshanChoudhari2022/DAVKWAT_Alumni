@@ -143,8 +143,8 @@ export function SiteSettingsForm({ initial }: SiteSettingsFormProps) {
       {error && <p className="text-sm text-rose-600">{error}</p>}
       {success && <p className="text-sm text-emerald-600">{success}</p>}
 
-      <Button type="submit" disabled={isPending}>
-        {isPending ? 'Saving...' : 'Save site settings'}
+      <Button type="submit" loading={isPending}>
+        Save site settings
       </Button>
     </form>
   );

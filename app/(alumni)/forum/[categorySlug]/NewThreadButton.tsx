@@ -105,8 +105,8 @@ export function NewThreadButton({ categoryId, categorySlug: _categorySlug }: New
           >
             Cancel
           </Button>
-          <Button type="submit" disabled={isPending}>
-            {isPending ? 'Posting…' : 'Post Thread'}
+          <Button type="submit" loading={isPending}>
+            Post Thread
           </Button>
         </div>
       </form>

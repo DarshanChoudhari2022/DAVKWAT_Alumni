@@ -3,6 +3,7 @@ import { LayoutDashboard, Users, Calendar, MessageSquare, Megaphone, CreditCard,
 import { Logo } from '@/components/shared/Logo';
 import { logoutAction } from '@/app/(public)/login/actions';
 import { Button } from '@/components/ui/button';
+import { SignOutButton } from '@/components/shared/SignOutButton';
 import { getTrustedUserId } from '@/lib/auth/trusted-identity';
 
 const NAV = [
@@ -61,22 +62,18 @@ export default async function AlumniLayout({ children }: { children: React.React
           </ul>
         </nav>
         <div className="border-t border-slate-200 p-3">
-          <form action={logoutAction}>
-            <Button type="submit" variant="ghost" size="sm" className="w-full justify-start">
-              Sign out
-            </Button>
-          </form>
+          <SignOutButton action={logoutAction} variant="ghost" size="sm" className="w-full justify-start">
+            Sign out
+          </SignOutButton>
         </div>
       </aside>
 
       {/* Mobile top bar */}
       <header className="sticky top-0 z-30 flex h-14 items-center justify-between border-b border-slate-200 bg-white px-4 lg:hidden">
         <Logo />
-        <form action={logoutAction}>
-          <Button type="submit" variant="ghost" size="sm">
-            Sign out
-          </Button>
-        </form>
+        <SignOutButton action={logoutAction} variant="ghost" size="sm">
+          Sign out
+        </SignOutButton>
       </header>
 
       <main id="main" className="flex-1 pb-20 lg:pb-0">

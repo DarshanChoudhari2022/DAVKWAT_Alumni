@@ -59,6 +59,7 @@ export interface Database {
           updated_at: string;
           last_seen_at: string | null;
           is_active: boolean;
+          school_document_url: string | null;
         };
         Insert: {
           id: string;
@@ -107,6 +108,7 @@ export interface Database {
           updated_at?: string;
           last_seen_at?: string | null;
           is_active?: boolean;
+          school_document_url?: string | null;
         };
         Update: Record<string, unknown>;
         Relationships: [];

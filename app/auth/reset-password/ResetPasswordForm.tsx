@@ -116,8 +116,8 @@ export function ResetPasswordForm({ recoveryCode }: { recoveryCode?: string }) {
           className="mt-1.5"
         />
       </div>
-      <Button type="submit" className="w-full" disabled={isPending || isPreparingSession}>
-        {isPending ? 'Updating…' : 'Update password'}
+      <Button type="submit" className="w-full" loading={isPending} disabled={isPreparingSession}>
+        Update password
       </Button>
     </form>
   );

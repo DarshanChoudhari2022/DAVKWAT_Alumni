@@ -13,8 +13,8 @@ const initial: ForgotState = {};
 function Submit() {
   const { pending } = useFormStatus();
   return (
-    <Button type="submit" className="w-full" disabled={pending}>
-      {pending ? 'Sending…' : 'Send reset link'}
+    <Button type="submit" className="w-full" loading={pending}>
+      Send reset link
     </Button>
   );
 }

@@ -273,8 +273,8 @@ export function EventForm({ initial }: EventFormProps) {
         </div>
 
         <div className="grid gap-3 sm:flex">
-          <Button type="submit" disabled={isPending} className="w-full sm:w-auto">
-            {isPending ? 'Saving...' : isEdit ? 'Update Event' : 'Create Event'}
+          <Button type="submit" loading={isPending} className="w-full sm:w-auto">
+            {isEdit ? 'Update Event' : 'Create Event'}
           </Button>
           <Button type="button" variant="outline" onClick={() => router.push('/admin/events')} className="w-full sm:w-auto">
             Cancel

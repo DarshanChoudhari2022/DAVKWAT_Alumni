@@ -10,6 +10,7 @@ import { SectionError } from '@/components/shared/SectionError';
 import { requireAlumniAccess } from '@/lib/auth/alumni-access';
 import { logoutAction } from '@/app/(public)/login/actions';
 import { formatDate } from '@/lib/utils/format';
+import { SignOutButton } from '@/components/shared/SignOutButton';
 
 export const metadata: Metadata = { title: 'Dashboard' };
 
@@ -46,16 +47,16 @@ export default async function DashboardPage() {
       {/* Shell: heading + welcome (synchronous) */}
       <div className="mb-8 flex items-center justify-between">
         <div>
-          <Badge variant="primary">Alumni</Badge>
+          <Badge variant="primary">
+            {profile.profile_type === 'faculty' ? 'Faculty' : 'Alumni'}
+          </Badge>
           <h1 className="mt-2 font-display text-3xl font-semibold tracking-tight">
             Welcome, {profile.full_name.split(' ')[0]}
           </h1>
         </div>
-        <form action={logoutAction}>
-          <Button type="submit" variant="outline" size="sm">
-            Sign out
-          </Button>
-        </form>
+        <SignOutButton action={logoutAction} variant="outline" size="sm">
+          Sign out
+        </SignOutButton>
       </div>
 
       {/* Stats region (async) */}

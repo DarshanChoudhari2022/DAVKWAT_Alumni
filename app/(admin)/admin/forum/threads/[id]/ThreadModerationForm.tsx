@@ -82,8 +82,8 @@ export function ThreadModerationForm({ thread }: ThreadModerationFormProps) {
       {error && <p className="text-sm text-rose-600">{error}</p>}
       {success && <p className="text-sm text-emerald-600">{success}</p>}
 
-      <Button type="submit" disabled={isPending} className="w-full sm:w-auto">
-        {isPending ? 'Saving...' : 'Save moderation changes'}
+      <Button type="submit" loading={isPending} className="w-full sm:w-auto">
+        Save moderation changes
       </Button>
     </form>
   );

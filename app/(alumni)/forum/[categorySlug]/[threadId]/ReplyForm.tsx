@@ -52,8 +52,8 @@ export function ReplyForm({ threadId, categorySlug: _categorySlug }: ReplyFormPr
         />
         <div className="mt-1 flex items-center justify-between">
           <span className="text-xs text-slate-400">{content.length}/2000</span>
-          <Button type="submit" disabled={isPending} size="sm">
-            {isPending ? 'Posting…' : 'Reply'}
+          <Button type="submit" loading={isPending} size="sm">
+            Reply
           </Button>
         </div>
       </form>

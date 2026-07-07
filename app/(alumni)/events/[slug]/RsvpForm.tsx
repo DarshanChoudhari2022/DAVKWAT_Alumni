@@ -19,8 +19,8 @@ const initial: RsvpState = {};
 function SubmitButton({ label }: { label: string }) {
   const { pending } = useFormStatus();
   return (
-    <Button type="submit" disabled={pending} size="sm">
-      {pending ? 'Saving…' : label}
+    <Button type="submit" loading={pending} size="sm">
+      {label}
     </Button>
   );
 }

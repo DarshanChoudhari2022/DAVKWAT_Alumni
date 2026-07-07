@@ -19,8 +19,8 @@ import {
 } from 'lucide-react';
 import { Logo } from '@/components/shared/Logo';
 import { Badge } from '@/components/ui/badge';
-import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils/cn';
+import { SignOutButton } from '@/components/shared/SignOutButton';
 
 const ADMIN_NAV = [
   { href: '/admin', label: 'Dashboard', icon: LayoutDashboard, exact: true },
@@ -131,11 +131,9 @@ export function AdminMobileNav({ displayName, pendingCount, logoutAction }: Admi
 
               <div className="border-t border-slate-200 p-3">
                 <p className="mb-2 truncate px-3 text-xs text-slate-500">{displayName}</p>
-                <form action={logoutAction}>
-                  <Button type="submit" variant="outline" size="sm" className="w-full justify-center">
-                    Sign out
-                  </Button>
-                </form>
+                <SignOutButton action={logoutAction} variant="outline" size="sm" className="w-full justify-center">
+                  Sign out
+                </SignOutButton>
               </div>
             </Dialog.Content>
           </Dialog.Portal>
@@ -146,9 +144,7 @@ export function AdminMobileNav({ displayName, pendingCount, logoutAction }: Admi
         </span>
       </div>
 
-      <form action={logoutAction}>
-        <Button type="submit" variant="ghost" size="sm">Sign out</Button>
-      </form>
+      <SignOutButton action={logoutAction} variant="ghost" size="sm">Sign out</SignOutButton>
     </header>
   );
 }

@@ -57,8 +57,8 @@ const COUNTRY_CODES = [
 function SubmitButton() {
   const { pending } = useFormStatus();
   return (
-    <Button type="submit" variant="accent" disabled={pending}>
-      {pending ? 'Submitting...' : 'Submit registration'}
+    <Button type="submit" variant="accent" loading={pending}>
+      Submit registration
     </Button>
   );
 }

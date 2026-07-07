@@ -62,9 +62,9 @@ export function ConfirmDialog({
           variant={variant === 'destructive' ? 'destructive' : 'primary'}
           size="sm"
           onClick={onConfirm}
-          disabled={isPending}
+          loading={isPending}
         >
-          {isPending ? 'Processing…' : confirmLabel}
+          {confirmLabel}
         </Button>
       </div>
     </dialog>

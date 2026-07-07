@@ -3,11 +3,11 @@ import { redirect } from 'next/navigation';
 import { Clock } from 'lucide-react';
 import { Card } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { Button } from '@/components/ui/button';
 import { createClient } from '@/lib/supabase/server';
 import { getDefaultSignedInPath } from '@/lib/utils/auth-routing';
 import { logoutAction } from '../login/actions';
 import { formatDate } from '@/lib/utils/format';
+import { SignOutButton } from '@/components/shared/SignOutButton';
 
 export const metadata: Metadata = { title: 'Pending Approval' };
 
@@ -40,11 +40,9 @@ export default async function PendingApprovalPage() {
                 We could not load your registration
               </h1>
             </div>
-            <form action={logoutAction} className="shrink-0">
-              <Button type="submit" variant="outline" size="sm">
-                Sign out
-              </Button>
-            </form>
+            <SignOutButton action={logoutAction} variant="outline" size="sm" className="shrink-0">
+              Sign out
+            </SignOutButton>
           </div>
           <p className="mt-4 text-sm text-slate-600">
             Your sign-in succeeded, but the alumni profile linked to this account is missing or
@@ -94,11 +92,9 @@ export default async function PendingApprovalPage() {
               </h1>
             </div>
           </div>
-          <form action={logoutAction} className="shrink-0">
-            <Button type="submit" variant="outline" size="sm" className="w-full sm:w-auto">
-              Sign out
-            </Button>
-          </form>
+          <SignOutButton action={logoutAction} variant="outline" size="sm" className="w-full sm:w-auto">
+            Sign out
+          </SignOutButton>
         </div>
 
         <div className="mt-6 space-y-2 rounded-lg bg-slate-50 p-4 text-sm">

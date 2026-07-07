@@ -5,6 +5,8 @@ import { createAdminClient } from '@/lib/supabase/admin';
 import { createClient } from '@/lib/supabase/server';
 import { facultyRegistrationSchema } from '@/lib/validations/registration';
 import { APP_URL } from '@/lib/resend/client';
+import { uploadSchoolDocument } from '../actions';
+
 
 export interface FacultyRegisterState {
   error?: string;
@@ -57,6 +59,31 @@ export async function facultyRegisterAction(
     return { fieldErrors };
   }
 
+  // ---------- Validate document file ----------
+  const schoolDocFile = formData.get('school_document') as File | null;
+  if (!schoolDocFile || schoolDocFile.size === 0) {
+    return {
+      fieldErrors: {
+        school_document: 'Proof of ID is required',
+      },
+    };
+  }
+  if (schoolDocFile.size > 5 * 1024 * 1024) {
+    return {
+      fieldErrors: {
+        school_document: 'Document must be under 5 MB',
+      },
+    };
+  }
+  const allowedTypes = ['image/jpeg', 'image/png', 'image/webp'];
+  if (!allowedTypes.includes(schoolDocFile.type)) {
+    return {
+      fieldErrors: {
+        school_document: 'Only JPG, PNG or WebP images are allowed',
+      },
+    };
+  }
+
   const data = parsed.data;
   const supabase = await createClient();
   const signUp = await signUpUser(supabase, data.email, data.password, data.full_name);
@@ -66,6 +93,19 @@ export async function facultyRegisterAction(
   }
 
   const userId = signUp.data.user.id;
+
+  // Upload proof of schooling / ID document
+  let schoolDocUrl: string | null = null;
+  try {
+    schoolDocUrl = await uploadSchoolDocument(userId, schoolDocFile);
+    console.log(`[faculty/register] proof document uploaded successfully: ${schoolDocUrl}`);
+  } catch (uploadErr: unknown) {
+    console.error('[faculty/register] proof document upload failed:', uploadErr);
+    await deleteAuthUser(userId);
+    const uploadMsg = uploadErr instanceof Error ? uploadErr.message : 'Unknown error';
+    return { error: `Failed to upload proof document: ${uploadMsg}. Please try again.` };
+  }
+
   const { error } = await createAdminClient().from('profiles').insert({
     id: userId,
     email: data.email,
@@ -85,6 +125,7 @@ export async function facultyRegisterAction(
     hide_phone: data.hide_phone,
     role: 'pending',
     approval_status: 'pending',
+    school_document_url: schoolDocUrl,
   });
 
   if (error) {

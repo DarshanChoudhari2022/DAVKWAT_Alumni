@@ -19,8 +19,8 @@ const BATCH_YEARS = Array.from({ length: CURRENT_YEAR - 1959 }, (_, i) => CURREN
 function SaveButton() {
   const { pending } = useFormStatus();
   return (
-    <Button type="submit" disabled={pending}>
-      {pending ? 'Saving…' : 'Save changes'}
+    <Button type="submit" loading={pending}>
+      Save changes
     </Button>
   );
 }

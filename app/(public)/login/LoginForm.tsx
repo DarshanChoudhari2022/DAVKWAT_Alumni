@@ -1,8 +1,7 @@
 'use client';
 
 import Link from 'next/link';
-import { useActionState } from 'react';
-import { useFormStatus } from 'react-dom';
+import { useActionState, useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -16,17 +15,29 @@ interface LoginFormProps {
   redirectTo?: string;
 }
 
-function SubmitButton() {
-  const { pending } = useFormStatus();
+function SubmitButton({ loading }: { loading: boolean }) {
   return (
-    <Button type="submit" className="w-full" disabled={pending}>
-      {pending ? 'Signing in…' : 'Sign in'}
+    <Button type="submit" className="w-full" loading={loading}>
+      Sign in
     </Button>
   );
 }
 
 export function LoginForm({ redirectTo }: LoginFormProps) {
-  const [state, formAction] = useActionState(loginAction, initialState);
+  const [isPending, setIsPending] = useState(false);
+  const [state, formAction] = useActionState(async (prevState: AuthState, formData: FormData) => {
+    setIsPending(true);
+    try {
+      const res = await loginAction(prevState, formData);
+      if (res?.error || res?.fieldErrors) {
+        setIsPending(false);
+      }
+      return res;
+    } catch (err) {
+      setIsPending(false);
+      throw err;
+    }
+  }, initialState);
   const isAdminLogin = redirectTo?.startsWith('/admin');
 
 
@@ -80,7 +91,7 @@ export function LoginForm({ redirectTo }: LoginFormProps) {
           <FieldError id="password-error" message={state.fieldErrors?.password} />
         </div>
 
-        <SubmitButton />
+        <SubmitButton loading={isPending} />
       </form>
 
 

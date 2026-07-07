@@ -1,7 +1,6 @@
 'use client';
 
-import { useActionState } from 'react';
-import { useFormStatus } from 'react-dom';
+import { useActionState, useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -11,18 +10,29 @@ import { adminLoginAction, type AdminAuthState } from './actions';
 
 const initialState: AdminAuthState = {};
 
-function SubmitButton() {
-  const { pending } = useFormStatus();
-
+function SubmitButton({ loading }: { loading: boolean }) {
   return (
-    <Button type="submit" className="w-full" disabled={pending}>
-      {pending ? 'Signing in...' : 'Sign in'}
+    <Button type="submit" className="w-full" loading={loading}>
+      Sign in
     </Button>
   );
 }
 
 export function AdminLoginForm({ redirectTo }: { redirectTo?: string }) {
-  const [state, formAction] = useActionState(adminLoginAction, initialState);
+  const [isPending, setIsPending] = useState(false);
+  const [state, formAction] = useActionState(async (prevState: AdminAuthState, formData: FormData) => {
+    setIsPending(true);
+    try {
+      const res = await adminLoginAction(prevState, formData);
+      if (res?.error || res?.fieldErrors) {
+        setIsPending(false);
+      }
+      return res;
+    } catch (err) {
+      setIsPending(false);
+      throw err;
+    }
+  }, initialState);
 
   return (
     <form action={formAction} className="mt-6 space-y-4">
@@ -65,7 +75,7 @@ export function AdminLoginForm({ redirectTo }: { redirectTo?: string }) {
         <FieldError id="password-error" message={state.fieldErrors?.password} />
       </div>
 
-      <SubmitButton />
+      <SubmitButton loading={isPending} />
     </form>
   );
 }

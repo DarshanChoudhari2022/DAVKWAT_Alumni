@@ -16,6 +16,7 @@ export const metadata: Metadata = { title: 'Pending Approvals - Admin' };
 const PAGE_SIZE = 20;
 
 interface SearchParams {
+  type?: string;
   filter?: string;
   page?: string;
 }
@@ -50,7 +51,9 @@ export default async function ApprovalsPage({
             <a
               key={filter.value}
               href={
-                filter.value ? `/admin/approvals?filter=${filter.value}` : '/admin/approvals'
+                filter.value 
+                  ? `/admin/approvals?type=${sp.type ?? 'alumni'}&filter=${filter.value}` 
+                  : `/admin/approvals?type=${sp.type ?? 'alumni'}`
               }
               className={`shrink-0 rounded-md px-3 py-1.5 text-sm font-medium ${
                 (sp.filter ?? '') === filter.value
@@ -88,6 +91,24 @@ async function ApprovalsListRegion({ sp, page }: { sp: SearchParams; page: numbe
 
     const { database: supabase } = await requireAdminAccess();
 
+    const activeType = sp.type === 'faculty' ? 'faculty' : 'alumni';
+
+    // Get counts for badges (non-blocking, parallel)
+    const [alumniCountRes, facultyCountRes] = await Promise.all([
+      supabase
+        .from('profiles')
+        .select('id', { count: 'exact', head: true })
+        .eq('approval_status', 'pending')
+        .eq('profile_type', 'alumni'),
+      supabase
+        .from('profiles')
+        .select('id', { count: 'exact', head: true })
+        .eq('approval_status', 'pending')
+        .eq('profile_type', 'faculty'),
+    ]);
+    const alumniCount = alumniCountRes.count ?? 0;
+    const facultyCount = facultyCountRes.count ?? 0;
+
     // Real list query — same select / .eq / date filter / .order / .range as
     // before, just without count:'exact' (the count is resolved separately, Req 5.1).
     let listQuery = supabase
@@ -96,7 +117,8 @@ async function ApprovalsListRegion({ sp, page }: { sp: SearchParams; page: numbe
         'id, full_name, email, profile_type, batch_year, course, current_city, phone, created_at, avatar_url, website_url, taught_subject, taught_from_year, taught_to_year',
         { count: 'exact' }
       )
-      .eq('approval_status', 'pending');
+      .eq('approval_status', 'pending')
+      .eq('profile_type', activeType);
 
     if (sp.filter === 'today') {
       listQuery = listQuery.gte('created_at', startOfToday);
@@ -137,8 +159,43 @@ async function ApprovalsListRegion({ sp, page }: { sp: SearchParams; page: numbe
 
     return (
       <>
+        {/* Tab Selection */}
+        <div className="mt-6 border-b border-slate-200">
+          <nav className="-mb-px flex gap-6" aria-label="Approval Types">
+            {[
+              { label: 'Alumni', type: 'alumni', count: alumniCount },
+              { label: 'Faculty', type: 'faculty', count: facultyCount },
+            ].map((tab) => {
+              const isActive = activeType === tab.type;
+              const href = sp.filter 
+                ? `/admin/approvals?type=${tab.type}&filter=${sp.filter}` 
+                : `/admin/approvals?type=${tab.type}`;
+              return (
+                <a
+                  key={tab.type}
+                  href={href}
+                  className={`whitespace-nowrap border-b-2 pb-4 text-sm font-medium transition-colors flex items-center gap-2 ${
+                    isActive
+                      ? 'border-[#0F2557] text-[#0F2557]'
+                      : 'border-transparent text-slate-500 hover:border-slate-300 hover:text-slate-700'
+                  }`}
+                >
+                  <span>{tab.label}</span>
+                  {tab.count > 0 && (
+                    <span className={`inline-flex items-center justify-center rounded-full px-2 py-0.5 text-xs font-semibold ${
+                      isActive ? 'bg-[#0F2557] text-white' : 'bg-slate-100 text-slate-600'
+                    }`}>
+                      {tab.count}
+                    </span>
+                  )}
+                </a>
+              );
+            })}
+          </nav>
+        </div>
+
         <p className="mt-6 text-sm text-slate-500">
-          {formatCount(countResult)} alumni waiting for approval.
+          {formatCount(countResult)} {activeType === 'faculty' ? 'faculty' : 'alumni'} waiting for approval.
         </p>
 
         <ul className="mt-6 space-y-3">
@@ -210,7 +267,7 @@ async function ApprovalsListRegion({ sp, page }: { sp: SearchParams; page: numbe
           page={page}
           totalPages={totalPages}
           basePath="/admin/approvals"
-          searchParams={{ filter: sp.filter }}
+          searchParams={{ type: sp.type ?? 'alumni', filter: sp.filter }}
         />
       </>
     );

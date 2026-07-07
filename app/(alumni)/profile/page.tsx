@@ -21,7 +21,7 @@ export default async function ProfilePage() {
         <div>
           <h1 className="font-display text-3xl font-semibold tracking-tight">{profile.full_name}</h1>
           <p className="mt-1 text-sm text-slate-500">
-            Batch {profile.batch_year} · {profile.course} · {profile.email}
+            {profile.profile_type === 'faculty' ? 'Faculty' : `Batch ${profile.batch_year} · ${profile.course}`} · {profile.email}
           </p>
         </div>
       </header>

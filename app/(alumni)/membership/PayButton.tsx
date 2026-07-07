@@ -75,14 +75,17 @@ export function PayButton({
 
   return (
     <div>
-      <Button onClick={handleSubmitRequest} disabled={isPending} className="w-full" variant="primary">
-        {isPending
-          ? 'Submitting request...'
-          : `Request ${new Intl.NumberFormat('en-IN', {
-              style: 'currency',
-              currency: 'INR',
-              maximumFractionDigits: 0,
-            }).format(amount)} plan`}
+      <Button
+        onClick={handleSubmitRequest}
+        loading={isPending}
+        className="w-full"
+        variant="primary"
+      >
+        Request {new Intl.NumberFormat('en-IN', {
+          style: 'currency',
+          currency: 'INR',
+          maximumFractionDigits: 0,
+        }).format(amount)} plan
       </Button>
       {success && (
         <p className="mt-2 text-center text-sm text-emerald-600" role="status">

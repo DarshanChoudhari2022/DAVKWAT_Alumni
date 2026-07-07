@@ -116,8 +116,8 @@ export function MembershipPlanForm() {
       </div>
 
       <div className="flex items-end sm:col-span-2">
-        <Button type="submit" disabled={isPending}>
-          {isPending ? 'Creating…' : 'Create Plan'}
+        <Button type="submit" loading={isPending}>
+          Create Plan
         </Button>
       </div>
 
