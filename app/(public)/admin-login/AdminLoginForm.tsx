@@ -1,6 +1,6 @@
 'use client';
 
-import { useActionState, useState } from 'react';
+import { useRef, useState, useTransition } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -8,34 +8,28 @@ import { FieldError } from '@/components/shared/FieldError';
 import { PasswordInput } from '@/components/shared/PasswordInput';
 import { adminLoginAction, type AdminAuthState } from './actions';
 
-const initialState: AdminAuthState = {};
-
-function SubmitButton({ loading }: { loading: boolean }) {
-  return (
-    <Button type="submit" className="w-full" loading={loading}>
-      Sign in
-    </Button>
-  );
-}
-
 export function AdminLoginForm({ redirectTo }: { redirectTo?: string }) {
-  const [isPending, setIsPending] = useState(false);
-  const [state, formAction] = useActionState(async (prevState: AdminAuthState, formData: FormData) => {
-    setIsPending(true);
-    try {
-      const res = await adminLoginAction(prevState, formData);
+  const [isPending, startTransition] = useTransition();
+  const [state, setState] = useState<AdminAuthState>({});
+  const formRef = useRef<HTMLFormElement>(null);
+
+  const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+    const formData = new FormData(e.currentTarget);
+
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+
+    startTransition(async () => {
+      const res = await adminLoginAction({}, formData);
       if (res?.error || res?.fieldErrors) {
-        setIsPending(false);
+        setState(res);
+        window.scrollTo({ top: 0, behavior: 'smooth' });
       }
-      return res;
-    } catch (err) {
-      setIsPending(false);
-      throw err;
-    }
-  }, initialState);
+    });
+  };
 
   return (
-    <form action={formAction} className="mt-6 space-y-4">
+    <form ref={formRef} onSubmit={handleSubmit} className="mt-6 space-y-4">
       {redirectTo && <input type="hidden" name="redirect" value={redirectTo} />}
 
       <div className="rounded-lg border border-blue-200 bg-blue-50 p-3 text-sm text-blue-700">
@@ -75,7 +69,10 @@ export function AdminLoginForm({ redirectTo }: { redirectTo?: string }) {
         <FieldError id="password-error" message={state.fieldErrors?.password} />
       </div>
 
-      <SubmitButton loading={isPending} />
+      <Button type="submit" className="w-full" loading={isPending}>
+        Sign in
+      </Button>
     </form>
   );
 }
+

@@ -1,7 +1,7 @@
 'use client';
 
 import Link from 'next/link';
-import { useActionState, useState } from 'react';
+import { useRef, useState, useTransition } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -9,42 +9,34 @@ import { FieldError } from '@/components/shared/FieldError';
 import { PasswordInput } from '@/components/shared/PasswordInput';
 import { loginAction, type AuthState } from './actions';
 
-const initialState: AuthState = {};
-
 interface LoginFormProps {
   redirectTo?: string;
 }
 
-function SubmitButton({ loading }: { loading: boolean }) {
-  return (
-    <Button type="submit" className="w-full" loading={loading}>
-      Sign in
-    </Button>
-  );
-}
-
 export function LoginForm({ redirectTo }: LoginFormProps) {
-  const [isPending, setIsPending] = useState(false);
-  const [state, formAction] = useActionState(async (prevState: AuthState, formData: FormData) => {
-    setIsPending(true);
-    try {
-      const res = await loginAction(prevState, formData);
-      if (res?.error || res?.fieldErrors) {
-        setIsPending(false);
-      }
-      return res;
-    } catch (err) {
-      setIsPending(false);
-      throw err;
-    }
-  }, initialState);
+  const [isPending, startTransition] = useTransition();
+  const [state, setState] = useState<AuthState>({});
+  const formRef = useRef<HTMLFormElement>(null);
   const isAdminLogin = redirectTo?.startsWith('/admin');
 
+  const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+    const formData = new FormData(e.currentTarget);
 
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+
+    startTransition(async () => {
+      const res = await loginAction({}, formData);
+      if (res?.error || res?.fieldErrors) {
+        setState(res);
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+      }
+    });
+  };
 
   return (
     <div className="mt-6 space-y-4">
-      <form action={formAction} className="space-y-4">
+      <form ref={formRef} onSubmit={handleSubmit} className="space-y-4">
         {redirectTo && <input type="hidden" name="redirect" value={redirectTo} />}
 
         {isAdminLogin && (
@@ -91,10 +83,11 @@ export function LoginForm({ redirectTo }: LoginFormProps) {
           <FieldError id="password-error" message={state.fieldErrors?.password} />
         </div>
 
-        <SubmitButton loading={isPending} />
+        <Button type="submit" className="w-full" loading={isPending}>
+          Sign in
+        </Button>
       </form>
-
-
     </div>
   );
 }
+
