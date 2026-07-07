@@ -84,7 +84,19 @@ export function DocumentUpload({
         }
       } catch (err) {
         console.error('Compression failed:', err);
-        toast.error('Failed to process image. Please try another file.');
+        const fileNameLower = file.name.toLowerCase();
+        if (
+          file.type.includes('heic') ||
+          file.type.includes('heif') ||
+          fileNameLower.endsWith('.heic') ||
+          fileNameLower.endsWith('.heif')
+        ) {
+          toast.error(
+            'HEIC/HEIF images are not supported on this browser. Please upload a JPG, PNG, or WebP image, or use Safari.'
+          );
+        } else {
+          toast.error('Failed to process image. Please try another file.');
+        }
       } finally {
         setIsCompressing(false);
       }
