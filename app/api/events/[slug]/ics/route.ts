@@ -1,7 +1,6 @@
 import { NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
 import { buildICS } from '@/lib/utils/ics';
-import { APP_URL } from '@/lib/resend/client';
 
 export async function GET(
   req: Request,

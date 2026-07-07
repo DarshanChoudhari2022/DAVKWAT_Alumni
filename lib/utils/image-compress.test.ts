@@ -2,8 +2,9 @@ import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { compressImage } from './image-compress';
 
 describe('compressImage', () => {
-  let originalCreateObjectURL: any;
-  let originalRevokeObjectURL: any;
+  let originalCreateObjectURL: typeof window.URL.createObjectURL;
+  let originalRevokeObjectURL: typeof window.URL.revokeObjectURL;
+  const originalCreateElement = document.createElement.bind(document);
 
   beforeEach(() => {
     // Save original URL methods
@@ -15,15 +16,19 @@ describe('compressImage', () => {
     window.URL.revokeObjectURL = vi.fn();
 
     // Mock OffscreenCanvas if it exists, or ensure it doesn't interfere
+    const mutableWindow = window as Window & {
+      OffscreenCanvas?: typeof OffscreenCanvas;
+      createImageBitmap?: typeof createImageBitmap;
+    };
     if ('OffscreenCanvas' in window) {
-      delete (window as any).OffscreenCanvas;
+      Reflect.deleteProperty(mutableWindow, 'OffscreenCanvas');
     }
     if ('createImageBitmap' in window) {
-      delete (window as any).createImageBitmap;
+      Reflect.deleteProperty(mutableWindow, 'createImageBitmap');
     }
 
     // Mock document.createElement for 'canvas' and 'img'
-    vi.spyOn(document, 'createElement').mockImplementation((tagName: string) => {
+    vi.spyOn(document, 'createElement').mockImplementation((tagName: string): HTMLElement => {
       if (tagName === 'canvas') {
         return {
           width: 0,
@@ -34,19 +39,26 @@ describe('compressImage', () => {
           toBlob: vi.fn().mockImplementation((callback) => {
             callback(new Blob(['compressed-data'], { type: 'image/jpeg' }));
           }),
-        } as any;
+        } as unknown as HTMLElement;
       }
       if (tagName === 'img') {
-        const img = {
+        const img: {
+          _src?: string;
+          src: string;
+          width: number;
+          height: number;
+          onload: (() => void) | null;
+          onerror: (() => void) | null;
+        } = {
           src: '',
           width: 800,
           height: 600,
-          onload: null as any,
-          onerror: null as any,
+          onload: null,
+          onerror: null,
         };
         // Trigger onload asynchronously when src is set
         Object.defineProperty(img, 'src', {
-          set(val) {
+          set(val: string) {
             this._src = val;
             setTimeout(() => {
               if (this.onload) this.onload();
@@ -56,13 +68,11 @@ describe('compressImage', () => {
             return this._src;
           },
         });
-        return img as any;
+        return img as unknown as HTMLElement;
       }
       return originalCreateElement(tagName);
     });
   });
-
-  const originalCreateElement = document.createElement.bind(document);
 
   afterEach(() => {
     window.URL.createObjectURL = originalCreateObjectURL;

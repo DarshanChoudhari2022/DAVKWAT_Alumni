@@ -24,7 +24,9 @@ export async function generateMetadata({
     .from('events')
     .select('title, description')
     .eq('slug', slug)
+    .eq('is_published', true)
     .single();
+  if (!data) notFound();
   return { title: data?.title ?? 'Event', description: data?.description ?? undefined };
 }
 

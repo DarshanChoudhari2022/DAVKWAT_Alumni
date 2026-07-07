@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState, useRef, useCallback } from 'react';
+import Image from 'next/image';
 import { Upload, X, FileImage, Loader2 } from 'lucide-react';
 import { toast } from 'sonner';
 import { compressImage } from '@/lib/utils/image-compress';
@@ -143,9 +144,12 @@ export function DocumentUpload({
         /* Preview state */
         <div className="relative rounded-xl border border-slate-200 bg-white p-3">
           <div className="flex items-start gap-3">
-            <img
+            <Image
               src={preview}
               alt="Upload preview"
+              width={80}
+              height={80}
+              unoptimized
               className="h-20 w-20 rounded-lg border border-slate-100 object-cover"
             />
             <div className="flex-1 min-w-0">
