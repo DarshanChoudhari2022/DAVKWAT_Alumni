@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Share2, Link as LinkIcon, Check } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 
@@ -11,13 +11,20 @@ interface ShareButtonsProps {
 
 export function ShareButtons({ eventTitle, eventUrl }: ShareButtonsProps) {
   const [copied, setCopied] = useState(false);
+  const [shareUrl, setShareUrl] = useState(eventUrl);
 
-  const shareText = `Hey, check out this upcoming alumni event: "${eventTitle}". View details and register here: ${eventUrl}`;
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      setShareUrl(window.location.href);
+    }
+  }, []);
+
+  const shareText = `Hey, check out this upcoming alumni event: "${eventTitle}". View details and register here: ${shareUrl}`;
   const whatsappUrl = `https://wa.me/?text=${encodeURIComponent(shareText)}`;
 
   async function handleCopyLink() {
     try {
-      await navigator.clipboard.writeText(eventUrl);
+      await navigator.clipboard.writeText(shareUrl);
       setCopied(true);
       setTimeout(() => setCopied(false), 2000);
     } catch (err) {

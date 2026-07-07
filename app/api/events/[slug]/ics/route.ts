@@ -4,7 +4,7 @@ import { buildICS } from '@/lib/utils/ics';
 import { APP_URL } from '@/lib/resend/client';
 
 export async function GET(
-  _req: Request,
+  req: Request,
   { params }: { params: Promise<{ slug: string }> }
 ) {
   const { slug } = await params;
@@ -21,6 +21,7 @@ export async function GET(
     return new NextResponse('Event not found', { status: 404 });
   }
 
+  const origin = new URL(req.url).origin;
   const location = event.venue ?? null;
   const ics = buildICS({
     uid: event.id,
@@ -29,7 +30,7 @@ export async function GET(
     location,
     startsAt: new Date(event.starts_at),
     endsAt: event.ends_at ? new Date(event.ends_at) : null,
-    url: `${APP_URL}/events/${event.slug}`,
+    url: `${origin}/events/${event.slug}`,
   });
 
   return new NextResponse(ics, {

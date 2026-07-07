@@ -9,8 +9,8 @@ import {
 } from '@/lib/payments/membership';
 import { verifyPaymentHash } from '@/lib/easebuzz/verify';
 
-function membershipRedirect(path: string) {
-  return new URL(path, process.env.NEXT_PUBLIC_APP_URL ?? 'http://localhost:3000');
+function membershipRedirect(origin: string, path: string) {
+  return new URL(path, origin);
 }
 
 /**
@@ -18,6 +18,7 @@ function membershipRedirect(path: string) {
  * Receives form data with payment result.
  */
 export async function POST(req: Request) {
+  const origin = new URL(req.url).origin;
   try {
     const formData = await req.formData();
     const params: Record<string, string> = {};
@@ -46,7 +47,7 @@ export async function POST(req: Request) {
     } = params;
 
     if (!txnid || !status || !hash) {
-      return NextResponse.redirect(membershipRedirect('/membership?error=invalid_response'));
+      return NextResponse.redirect(membershipRedirect(origin, '/membership?error=invalid_response'));
     }
 
     const isValid = verifyPaymentHash({
@@ -67,7 +68,7 @@ export async function POST(req: Request) {
 
     if (!isValid) {
       console.error('[payments/verify] hash verification failed for txnid:', txnid);
-      return NextResponse.redirect(membershipRedirect('/membership?error=hash_mismatch'));
+      return NextResponse.redirect(membershipRedirect(origin, '/membership?error=hash_mismatch'));
     }
 
     const admin = createAdminClient();
@@ -85,7 +86,7 @@ export async function POST(req: Request) {
       // transaction — skip the side effects so membership isn't double-granted
       // and the receipt email isn't sent twice.
       if (alreadyProcessed) {
-        return NextResponse.redirect(membershipRedirect('/membership?status=success'));
+        return NextResponse.redirect(membershipRedirect(origin, '/membership?status=success'));
       }
 
       const alumniId = udf1;
@@ -125,7 +126,7 @@ export async function POST(req: Request) {
       // Invalidate payments + dashboard stat caches (design Section 4).
       invalidateAfterAction('payment_status');
 
-      return NextResponse.redirect(membershipRedirect('/membership?status=success'));
+      return NextResponse.redirect(membershipRedirect(origin, '/membership?status=success'));
     }
 
     await admin
@@ -141,9 +142,9 @@ export async function POST(req: Request) {
     // Committed failed-status mark also shifts the payments aggregates.
     invalidateAfterAction('payment_status');
 
-    return NextResponse.redirect(membershipRedirect('/membership?status=failed'));
+    return NextResponse.redirect(membershipRedirect(origin, '/membership?status=failed'));
   } catch (err) {
     console.error('[payments/verify] unexpected error:', err);
-    return NextResponse.redirect(membershipRedirect('/membership?error=server_error'));
+    return NextResponse.redirect(membershipRedirect(origin, '/membership?error=server_error'));
   }
 }
