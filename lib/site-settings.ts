@@ -18,7 +18,7 @@ export interface SiteSettings {
 
 export const DEFAULT_SITE_SETTINGS: SiteSettings = {
   trustName: 'DAV Khagaul Alumni Welfare Trust',
-  contactEmail: 'contact@davkawt.org',
+  contactEmail: 'davkawt.admin@gmail.com',
   contactPhone: '',
   aboutShort:
     'DAV Khagaul Alumni Welfare Trust connects generations of alumni through trusted networking, events, mentorship, and member services.',

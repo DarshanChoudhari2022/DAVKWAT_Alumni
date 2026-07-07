@@ -67,8 +67,8 @@ export function MembershipRenewalEmail({
         <Text className="m-0 text-sm text-slate-500">
           If you've already renewed, please disregard this email. For any questions,
           contact us at{' '}
-          <Link href="mailto:admin@davkawt.org" className="text-[#0F2557] underline">
-            admin@davkawt.org
+          <Link href="mailto:davkawt.admin@gmail.com" className="text-[#0F2557] underline">
+            davkawt.admin@gmail.com
           </Link>.
         </Text>
       </Section>

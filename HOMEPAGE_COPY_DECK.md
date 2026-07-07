@@ -344,7 +344,7 @@ Brand: DAV Khagaul Alumni Welfare Trust
 Description: Connecting generations of DAV Khagaul alumni from Khagaul, Bihar —
 fostering community, mentorship, reunions, and lasting friendships.
 
-Contact: contact@davkawt.org
+Contact: davkawt.admin@gmail.com
 
 Column — Portal:
 - About the Trust
@@ -355,7 +355,7 @@ Column — Portal:
 
 Column — Contact:
 - [Add Trust office address — PLACEHOLDER]
-- contact@davkawt.org
+- davkawt.admin@gmail.com
 - [Social links — add from Admin Settings when available]
 
 Column — Legal:
@@ -427,7 +427,7 @@ email.
 Payment pending / failed:
 Your payment didn't go through.
 No amount has been deducted. You can try again, or contact us at
-contact@davkawt.org for help.
+davkawt.admin@gmail.com for help.
 ```
 
 ## Empty states

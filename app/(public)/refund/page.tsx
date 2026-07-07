@@ -41,8 +41,8 @@ export default function RefundPage() {
           <h2>3. How to Request a Refund</h2>
           <p>
             To request a refund, email{' '}
-            <a href="mailto:admin@davkawt.org" className="text-[#0F2557] hover:underline">
-              admin@davkawt.org
+            <a href="mailto:davkawt.admin@gmail.com" className="text-[#0F2557] hover:underline">
+              davkawt.admin@gmail.com
             </a>{' '}
             with:
           </p>
@@ -70,8 +70,8 @@ export default function RefundPage() {
           <h2>6. Contact</h2>
           <p>
             For any questions about refunds, contact us at{' '}
-            <a href="mailto:admin@davkawt.org" className="text-[#0F2557] hover:underline">
-              admin@davkawt.org
+            <a href="mailto:davkawt.admin@gmail.com" className="text-[#0F2557] hover:underline">
+              davkawt.admin@gmail.com
             </a>
             .
           </p>

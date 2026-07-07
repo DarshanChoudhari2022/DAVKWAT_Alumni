@@ -16,7 +16,7 @@ ON CONFLICT DO NOTHING;
 -- Default site settings
 INSERT INTO site_settings (key, value) VALUES
   ('trust_name', '"DAV Khagaul Alumni Welfare Trust"'::jsonb),
-  ('contact_email', '"contact@davkawt.org"'::jsonb),
+  ('contact_email', '"davkawt.admin@gmail.com"'::jsonb),
   ('contact_phone', '""'::jsonb),
   ('social_links', '{"facebook":"","twitter":"","linkedin":"","instagram":""}'::jsonb),
   ('about_short', '"DAV Khagaul Alumni Welfare Trust connects generations of alumni from DAV Khagaul, Bihar — fostering community, mentorship, and lasting friendships."'::jsonb)

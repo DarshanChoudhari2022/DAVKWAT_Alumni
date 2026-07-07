@@ -47,8 +47,8 @@ export default async function PendingApprovalPage() {
           <p className="mt-4 text-sm text-slate-600">
             Your sign-in succeeded, but the alumni profile linked to this account is missing or
             still syncing. Please try again shortly or email{' '}
-            <a href="mailto:contact@davkawt.org" className="text-[#0F2557] underline">
-              contact@davkawt.org
+            <a href="mailto:davkawt.admin@gmail.com" className="text-[#0F2557] underline">
+              davkawt.admin@gmail.com
             </a>
             .
           </p>
@@ -116,8 +116,8 @@ export default async function PendingApprovalPage() {
             We typically review registrations within 2-3 working days. You&apos;ll receive an email
             once approved, along with the next membership fee instructions if applicable. If you
             have questions, write to{' '}
-            <a href="mailto:contact@davkawt.org" className="text-[#0F2557] underline">
-              contact@davkawt.org
+            <a href="mailto:davkawt.admin@gmail.com" className="text-[#0F2557] underline">
+              davkawt.admin@gmail.com
             </a>
             .
           </p>

@@ -61,8 +61,8 @@ export function PaymentReceiptEmail({
         </Text>
         <Text className="mt-3 text-sm text-slate-600">
           If you have questions about this payment, contact us at{' '}
-          <Link href="mailto:admin@davkawt.org" className="text-[#0F2557] underline">
-            admin@davkawt.org
+          <Link href="mailto:davkawt.admin@gmail.com" className="text-[#0F2557] underline">
+            davkawt.admin@gmail.com
           </Link>.
         </Text>
       </Section>

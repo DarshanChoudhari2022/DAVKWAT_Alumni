@@ -13,5 +13,5 @@ export function getResend(): Resend {
 }
 
 export const FROM_EMAIL = process.env.RESEND_FROM_EMAIL ?? 'noreply@davkawt.org';
-export const ADMIN_EMAIL = process.env.ADMIN_NOTIFICATION_EMAIL ?? 'admin@davkawt.org';
+export const ADMIN_EMAIL = process.env.ADMIN_NOTIFICATION_EMAIL ?? 'davkawt.admin@gmail.com';
 export const APP_URL = process.env.NEXT_PUBLIC_APP_URL ?? 'http://localhost:3000';

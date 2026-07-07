@@ -23,7 +23,7 @@ INSERT INTO auth.users (
 VALUES (
   gen_random_uuid(),
   '00000000-0000-0000-0000-000000000000',
-  'admin@davkawt.org',                          -- ← Change to your admin email
+  'davkawt.admin@gmail.com',                          -- ← Change to your admin email
   crypt('Admin@123456', gen_salt('bf')),         -- ← Change to your desired password
   NOW(),
   NOW(),
@@ -55,7 +55,7 @@ INSERT INTO public.profiles (
 SELECT
   id,
   'DAVKAWT Admin',                              -- ← Change display name if needed
-  'admin@davkawt.org',                          -- ← Must match the email above
+  'davkawt.admin@gmail.com',                          -- ← Must match the email above
   2000,                                         -- ← Set a batch year (required field)
   'Admin',                                      -- ← Set a course (required field)
   'super_admin'::user_role,
@@ -65,7 +65,7 @@ SELECT
   NOW(),
   NOW()
 FROM auth.users
-WHERE email = 'admin@davkawt.org'               -- ← Must match the email above
+WHERE email = 'davkawt.admin@gmail.com'               -- ← Must match the email above
 ORDER BY created_at DESC
 LIMIT 1;
 
@@ -75,7 +75,7 @@ LIMIT 1;
 
 SELECT id, full_name, email, role, approval_status
 FROM public.profiles
-WHERE email = 'admin@davkawt.org'               -- ← Must match the email above
+WHERE email = 'davkawt.admin@gmail.com'               -- ← Must match the email above
   AND role = 'super_admin';
 
 -- ============================================================

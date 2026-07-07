@@ -70,8 +70,8 @@ export default function TermsPage() {
           <h2>9. Contact</h2>
           <p>
             For questions regarding these terms, contact us at{' '}
-            <a href="mailto:admin@davkawt.org" className="text-[#0F2557] hover:underline">
-              admin@davkawt.org
+            <a href="mailto:davkawt.admin@gmail.com" className="text-[#0F2557] hover:underline">
+              davkawt.admin@gmail.com
             </a>
             .
           </p>
