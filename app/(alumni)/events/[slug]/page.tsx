@@ -2,7 +2,7 @@
 import type { Metadata } from 'next';
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
-import { ArrowLeft, Calendar, MapPin, Users, Download, Lock, Crown, AlertCircle } from 'lucide-react';
+import { ArrowLeft, Calendar, MapPin, Users, Lock, Crown, AlertCircle } from 'lucide-react';
 import { Card } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -361,15 +361,6 @@ export default async function EventDetailPage({
       <div className="mt-8 border-t border-slate-100 pt-6">
         <h3 className="font-display text-sm font-semibold text-slate-700 mb-3">Share Event with Alumni</h3>
         <ShareButtons eventTitle={event.title} eventUrl={eventUrl} />
-      </div>
-
-      <div className="mt-6 flex flex-wrap gap-3">
-        <Button asChild variant="outline" size="sm">
-          <a href={`/api/events/${event.slug}/ics`} download>
-            <Download aria-hidden className="h-4 w-4" />
-            Add to calendar
-          </a>
-        </Button>
       </div>
     </article>
   );

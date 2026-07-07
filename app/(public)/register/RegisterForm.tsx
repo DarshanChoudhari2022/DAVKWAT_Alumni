@@ -512,7 +512,7 @@ export function RegisterForm() {
         <div className="mt-4 rounded-2xl border border-blue-200 bg-gradient-to-br from-blue-50 to-indigo-50 p-5">
           <DocumentUpload
             name="school_document"
-            label="Proof of Schooling"
+            label="Proof of Schooling (Passing Certificate, School Report Card, School Leaving Certificate, ID card etc)"
             required
             error={fieldErrors?.school_document}
             maxRawSize={10 * 1024 * 1024}
