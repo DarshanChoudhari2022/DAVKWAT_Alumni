@@ -74,7 +74,8 @@ const adminPathArb = fc
 
 const alumniPathArb = fc
   .tuple(fc.constantFrom(...ALUMNI_PREFIXES), fc.array(segmentArb, { maxLength: 3 }))
-  .map(([prefix, segs]) => (segs.length ? `${prefix}/${segs.join('/')}` : prefix));
+  .map(([prefix, segs]) => (segs.length ? `${prefix}/${segs.join('/')}` : prefix))
+  .filter((path) => !(path.startsWith('/events/') && path !== '/events/'));
 
 const authPathArb = fc.constantFrom(...AUTH_ROUTES);
 

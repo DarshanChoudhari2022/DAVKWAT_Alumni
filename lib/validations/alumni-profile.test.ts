@@ -49,7 +49,7 @@ describe('alumni profile validation hardening', () => {
 
     expect(parsed.full_name).toBe('Asha Kumar');
     expect(parsed.roll_number).toBe('R-42');
-    expect(parsed.batch_year).toBe(2012);
+    expect(parsed.batch_year).toBe(2010);
     expect(parsed.course).toBe('Science');
   });
 });

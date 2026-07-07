@@ -13,6 +13,7 @@ interface PhotoUploadWithCropProps {
   name?: string;
   required?: boolean;
   error?: string;
+  onChange?: (file: File | null) => void;
 }
 
 function centerAspectCrop(mediaWidth: number, mediaHeight: number, aspect: number) {
@@ -31,7 +32,12 @@ function centerAspectCrop(mediaWidth: number, mediaHeight: number, aspect: numbe
   );
 }
 
-export function PhotoUploadWithCrop({ name = 'profile_photo', required = false, error }: PhotoUploadWithCropProps) {
+export function PhotoUploadWithCrop({
+  name = 'profile_photo',
+  required = false,
+  error,
+  onChange,
+}: PhotoUploadWithCropProps) {
   const [imgSrc, setImgSrc] = useState<string>('');
   const [crop, setCrop] = useState<Crop>();
   const [completedCrop, setCompletedCrop] = useState<PixelCrop | null>(null);
@@ -275,6 +281,7 @@ export function PhotoUploadWithCrop({ name = 'profile_photo', required = false, 
           setPhotoPreview(previewUrl);
           setIsDialogOpen(false);
           toast.success('Photo cropped and compressed successfully!');
+          onChange?.(file);
         }
       },
       'image/jpeg',
@@ -290,6 +297,7 @@ export function PhotoUploadWithCrop({ name = 'profile_photo', required = false, 
     if (hiddenFileInputRef.current) {
       hiddenFileInputRef.current.value = '';
     }
+    onChange?.(null);
   };
 
   return (

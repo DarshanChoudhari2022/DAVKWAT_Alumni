@@ -21,7 +21,7 @@ import { VALIDATION_LIMITS } from '@/lib/validations/constraints';
 import { LEFT_BEFORE_CLASSES } from '@/lib/validations/registration';
 import { PhotoUploadWithCrop } from '@/components/shared/PhotoUploadWithCrop';
 import { DocumentUpload } from '@/components/shared/DocumentUpload';
-import { registerAction, type RegisterState } from './actions';
+import { registerAction, checkEmailExists, type RegisterState } from './actions';
 
 const initialState: RegisterState = {};
 const CURRENT_YEAR = new Date().getFullYear();
@@ -114,6 +114,10 @@ export function RegisterForm() {
   const [clientErrors, setClientErrors] = useState<Record<string, string>>({});
   const formRef = useRef<HTMLFormElement>(null);
   const [selectedAmount, setSelectedAmount] = useState<500 | 5000>(5000);
+  const [checkingEmail, setCheckingEmail] = useState(false);
+  const [hasPhoto, setHasPhoto] = useState(false);
+  const [hasSchoolDoc, setHasSchoolDoc] = useState(false);
+  const [hasPaymentProof, setHasPaymentProof] = useState(false);
 
   const [dobDay, setDobDay] = useState('');
   const [dobMonth, setDobMonth] = useState('');
@@ -217,35 +221,47 @@ export function RegisterForm() {
     }
 
     // Custom validation for profile photo on Step 2 (Personal)
-    if (step === 2) {
-      const photoInput = stepDiv.querySelector<HTMLInputElement>('input[name="profile_photo"]');
-      if (photoInput && (!photoInput.files || photoInput.files.length === 0)) {
-        errors['profile_photo'] = 'Profile photo is required';
-      }
+    if (step === 2 && !hasPhoto) {
+      errors['profile_photo'] = 'Profile photo is required';
     }
 
-    // Custom validation for proof of schooling on Step 2 (Academic)
-    if (step === 1) {
-      const docInput = stepDiv.querySelector<HTMLInputElement>('input[name="school_document"]');
-      if (docInput && (!docInput.files || docInput.files.length === 0)) {
-        errors['school_document'] = 'Proof of schooling is required';
-      }
+    // Custom validation for proof of schooling on Step 1 (Academic)
+    if (step === 1 && !hasSchoolDoc) {
+      errors['school_document'] = 'Proof of schooling is required';
     }
 
-    // Custom validation for payment proof on Step 5 (Payment & Documents)
-    if (step === 4) {
-      const proofInput = stepDiv.querySelector<HTMLInputElement>('input[name="payment_proof"]');
-      if (proofInput && (!proofInput.files || proofInput.files.length === 0)) {
-        errors['payment_proof'] = 'Proof of payment is required';
-      }
+    // Custom validation for payment proof on Step 4 (Payment & Documents)
+    if (step === 4 && !hasPaymentProof) {
+      errors['payment_proof'] = 'Proof of payment is required';
     }
 
     setClientErrors(errors);
     return Object.keys(errors).length === 0;
   }
 
-  function next() {
+  async function next() {
     if (!validateCurrentStep()) return;
+
+    // On Step 0 (Account), check if email already exists before proceeding
+    if (step === 0) {
+      const emailInput = document.querySelector<HTMLInputElement>('input[name="email"]');
+      const emailValue = emailInput?.value?.trim().toLowerCase();
+      if (emailValue) {
+        setCheckingEmail(true);
+        try {
+          const exists = await checkEmailExists(emailValue);
+          if (exists) {
+            setClientErrors({ email: 'An account with this email already exists. Please log in instead.' });
+            setCheckingEmail(false);
+            return;
+          }
+        } catch (err) {
+          console.error('[register] email check failed:', err);
+        }
+        setCheckingEmail(false);
+      }
+    }
+
     setStep((s) => Math.min(s + 1, STEPS.length - 1));
   }
 
@@ -517,6 +533,7 @@ export function RegisterForm() {
             error={fieldErrors?.school_document}
             maxRawSize={10 * 1024 * 1024}
             targetCompressedSize={350 * 1024}
+            onChange={(f) => setHasSchoolDoc(!!f)}
           />
         </div>
       </div>
@@ -529,7 +546,7 @@ export function RegisterForm() {
             Profile Photo <span className="text-rose-600">*</span>
           </Label>
           <div className="mt-1.5">
-            <PhotoUploadWithCrop name="profile_photo" required error={fieldErrors?.profile_photo} />
+            <PhotoUploadWithCrop name="profile_photo" required error={fieldErrors?.profile_photo} onChange={(f) => setHasPhoto(!!f)} />
           </div>
         </div>
 
@@ -806,11 +823,12 @@ export function RegisterForm() {
             error={fieldErrors?.payment_proof}
             maxRawSize={10 * 1024 * 1024}
             targetCompressedSize={350 * 1024}
+            onChange={(f) => setHasPaymentProof(!!f)}
           />
         </div>
 
         <p className="text-xs leading-relaxed text-slate-600 rounded-lg bg-slate-50 p-3">
-          Payment is checked manually by the Trust team. Registration approval
+          Payment and proof of schooling is checked manually by the Trust team. Registration approval
           is completed after alumni and payment verification.
         </p>
       </div>
@@ -821,8 +839,8 @@ export function RegisterForm() {
           Back
         </Button>
         {step < STEPS.length - 1 ? (
-          <Button type="button" onClick={next}>
-            Next
+          <Button type="button" onClick={next} disabled={checkingEmail}>
+            {checkingEmail ? 'Checking…' : 'Next'}
           </Button>
         ) : (
           <SubmitButton />

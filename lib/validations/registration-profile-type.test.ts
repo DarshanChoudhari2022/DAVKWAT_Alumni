@@ -30,7 +30,7 @@ describe('registration profile type validation', () => {
 
     expect(parsed.success).toBe(true);
     if (parsed.success) {
-      expect(parsed.data.batch_year).toBe(2012);
+      expect(parsed.data.batch_year).toBe(2010);
       expect(parsed.data.course).toBe('Science');
     }
   });

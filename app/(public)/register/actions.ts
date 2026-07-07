@@ -601,9 +601,27 @@ export async function registerAction(
 
   if (emailConfirmed) {
     console.log('[register] email auto-confirmed, redirecting to pending-approval');
-    redirect('/pending-approval');
+    redirect('/pending-approval?registered=true');
   } else {
     console.log('[register] email not confirmed, redirecting to verify-email');
-    redirect('/verify-email');
+    redirect('/verify-email?registered=true');
   }
+}
+
+/**
+ * Check if an email is already registered in the profiles table.
+ */
+export async function checkEmailExists(email: string): Promise<boolean> {
+  const admin = createAdminClient();
+  const { data, error } = await admin
+    .from('profiles')
+    .select('id')
+    .eq('email', email.trim().toLowerCase())
+    .maybeSingle();
+
+  if (error) {
+    console.error('[register] checkEmailExists error:', error);
+    return false;
+  }
+  return !!data;
 }

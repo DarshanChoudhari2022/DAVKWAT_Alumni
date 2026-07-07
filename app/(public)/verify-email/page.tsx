@@ -3,12 +3,34 @@ import Link from 'next/link';
 import { MailCheck } from 'lucide-react';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
+import { ToastTrigger } from '@/components/shared/ToastTrigger';
 
 export const metadata: Metadata = { title: 'Verify Your Email - DAVKAWT' };
 
-export default function VerifyEmailPage() {
+export default function VerifyEmailPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ registered?: string }>;
+}) {
+  // Note: We don't actually await searchParams here since we use it inline
+  return (
+    <VerifyEmailContent searchParams={searchParams} />
+  );
+}
+
+async function VerifyEmailContent({
+  searchParams,
+}: {
+  searchParams: Promise<{ registered?: string }>;
+}) {
+  const params = await searchParams;
+  const isNewRegistration = params?.registered === 'true';
+
   return (
     <div className="flex min-h-[60vh] items-center justify-center px-4 py-16">
+      {isNewRegistration && (
+        <ToastTrigger message="Registration submitted successfully! Please verify your email." type="success" />
+      )}
       <Card className="mx-auto max-w-md text-center">
         <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-full bg-emerald-100">
           <MailCheck className="h-8 w-8 text-emerald-600" />

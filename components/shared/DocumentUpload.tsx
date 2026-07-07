@@ -22,6 +22,8 @@ interface DocumentUploadProps {
   maxDimension?: number;
   /** Accept attribute for the file input */
   accept?: string;
+  /** Callback fired when a file is selected or removed */
+  onChange?: (file: File | null) => void;
 }
 
 export function DocumentUpload({
@@ -33,6 +35,7 @@ export function DocumentUpload({
   targetCompressedSize = 500 * 1024,
   maxDimension = 1400,
   accept = 'image/jpeg,image/png,image/webp',
+  onChange,
 }: DocumentUploadProps) {
   const [preview, setPreview] = useState<string | null>(null);
   const [fileName, setFileName] = useState<string | null>(null);
@@ -73,6 +76,7 @@ export function DocumentUpload({
         if (hiddenInputRef.current) {
           hiddenInputRef.current.files = dt.files;
         }
+        onChange?.(compressed);
 
         const savedKB = Math.round((file.size - compressed.size) / 1024);
         if (savedKB > 10) {
@@ -85,7 +89,7 @@ export function DocumentUpload({
         setIsCompressing(false);
       }
     },
-    [maxRawSize, targetCompressedSize, maxDimension]
+    [maxRawSize, targetCompressedSize, maxDimension, onChange]
   );
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -111,6 +115,7 @@ export function DocumentUpload({
       const dt = new DataTransfer();
       hiddenInputRef.current.files = dt.files;
     }
+    onChange?.(null);
   };
 
   return (
