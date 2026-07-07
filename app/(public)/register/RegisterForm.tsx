@@ -346,14 +346,44 @@ export function RegisterForm() {
       }
     }
 
-    // Custom validation for profile photo on Step 2 (Personal)
-    if (step === 2 && !hasPhoto) {
-      errors['profile_photo'] = 'Profile photo is required';
+    // Step 0 (Account) — password strength + confirm match
+    if (step === 0) {
+      const pwInput = stepDiv.querySelector<HTMLInputElement>('input[name="password"]');
+      const cpInput = stepDiv.querySelector<HTMLInputElement>('input[name="confirmPassword"]');
+      const pw = pwInput?.value ?? '';
+      const cp = cpInput?.value ?? '';
+
+      if (pw && pw.length < 8) {
+        errors['password'] = 'Minimum 8 characters';
+      } else if (pw && !/[A-Z]/.test(pw)) {
+        errors['password'] = 'Must contain an uppercase letter';
+      } else if (pw && !/[a-z]/.test(pw)) {
+        errors['password'] = 'Must contain a lowercase letter';
+      } else if (pw && !/[0-9]/.test(pw)) {
+        errors['password'] = 'Must contain a number';
+      }
+
+      if (pw && cp && pw !== cp) {
+        errors['confirmPassword'] = 'Passwords do not match';
+      }
     }
 
     // Custom validation for proof of schooling on Step 1 (Academic)
     if (step === 1 && !hasSchoolDoc) {
       errors['school_document'] = 'Proof of schooling is required';
+    }
+
+    // Custom validation for profile photo on Step 2 (Personal)
+    if (step === 2 && !hasPhoto) {
+      errors['profile_photo'] = 'Profile photo is required';
+    }
+
+    // Step 3 (Professional) — terms must be accepted
+    if (step === 3) {
+      const termsCheckbox = stepDiv.querySelector<HTMLInputElement>('input[name="terms_accepted"]');
+      if (termsCheckbox && !termsCheckbox.checked) {
+        errors['terms_accepted'] = 'You must accept the terms to continue';
+      }
     }
 
     // Custom validation for payment proof on Step 4 (Payment & Documents)
