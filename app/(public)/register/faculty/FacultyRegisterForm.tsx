@@ -3,6 +3,7 @@
 import type React from 'react';
 import { useState, useActionState, useRef, useEffect } from 'react';
 import { useFormStatus } from 'react-dom';
+import { toast } from 'sonner';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -30,6 +31,21 @@ export function FacultyRegisterForm() {
   const [hasSchoolDoc, setHasSchoolDoc] = useState(false);
   const formRef = useRef<HTMLFormElement>(null);
   const saveTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  const lastHandledStateRef = useRef<FacultyRegisterState>(initialState);
+
+  // Auto scroll to top on submit error
+  useEffect(() => {
+    if (state === lastHandledStateRef.current) return;
+    lastHandledStateRef.current = state;
+
+    if (state.error || (state.fieldErrors && Object.keys(state.fieldErrors).length > 0)) {
+      if (state.error) {
+        toast.error(state.error);
+      }
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+  }, [state]);
 
   const saveFormDraft = () => {
     if (saveTimeoutRef.current) {

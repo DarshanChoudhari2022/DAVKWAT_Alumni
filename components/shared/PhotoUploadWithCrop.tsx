@@ -39,6 +39,7 @@ export function PhotoUploadWithCrop({
   onChange,
 }: PhotoUploadWithCropProps) {
   const [imgSrc, setImgSrc] = useState<string>('');
+  const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [crop, setCrop] = useState<Crop>();
   const [completedCrop, setCompletedCrop] = useState<PixelCrop | null>(null);
   const [photoPreview, setPhotoPreview] = useState<string | null>(null);
@@ -188,6 +189,7 @@ export function PhotoUploadWithCrop({
         }
       }
 
+      setSelectedFile(file);
       const reader = new FileReader();
       reader.addEventListener('load', () => {
         setImgSrc(reader.result?.toString() || '');
@@ -235,6 +237,14 @@ export function PhotoUploadWithCrop({
         
         const dataUrl = canvas.toDataURL('image/jpeg', 0.95);
         setImgSrc(dataUrl);
+        
+        canvas.toBlob((blob) => {
+          if (blob) {
+            const file = new File([blob], 'camera-capture.jpg', { type: 'image/jpeg' });
+            setSelectedFile(file);
+          }
+        }, 'image/jpeg', 0.95);
+
         stopCamera();
         setIsDialogOpen(true);
       }
@@ -243,14 +253,18 @@ export function PhotoUploadWithCrop({
 
   // Initial crop settings when image loads
   const onImageLoad = (e: React.SyntheticEvent<HTMLImageElement>) => {
-    const { width, height } = e.currentTarget;
-    setCrop(centerAspectCrop(width, height, 1)); // Circular / square aspect ratio 1:1
+    // Let user decide which section to crop by dragging (no default center crop selection box)
   };
 
   // Save the cropped & compressed file to input
   const saveCroppedPhoto = async (useCrop: boolean) => {
     const image = imgRef.current;
     if (!image) return;
+
+    if (useCrop && (!completedCrop || completedCrop.width === 0 || completedCrop.height === 0)) {
+      toast.error('Please drag on the image to select a crop area, or click "Use Original Photo".');
+      return;
+    }
 
     const canvas = document.createElement('canvas');
     const scaleX = image.naturalWidth / image.width;
@@ -267,27 +281,39 @@ export function PhotoUploadWithCrop({
       sx = completedCrop.x * scaleX;
       sy = completedCrop.y * scaleY;
     } else {
-      // Use center square if they skipped cropping
-      const minDim = Math.min(image.naturalWidth, image.naturalHeight);
-      sWidth = minDim;
-      sHeight = minDim;
-      sx = (image.naturalWidth - minDim) / 2;
-      sy = (image.naturalHeight - minDim) / 2;
+      // Use original photo dimensions (no cropping)
+      sWidth = image.naturalWidth;
+      sHeight = image.naturalHeight;
+      sx = 0;
+      sy = 0;
     }
 
-    // Output dimension (max 500x500 pixels for compression/speed)
-    const outDim = Math.min(500, Math.min(sWidth, sHeight));
-    canvas.width = outDim;
-    canvas.height = outDim;
+    // Output dimension (keep aspect ratio, max 500px width/height)
+    let outWidth = sWidth;
+    let outHeight = sHeight;
+    const maxDim = 500;
+    
+    if (sWidth > maxDim || sHeight > maxDim) {
+      if (sWidth > sHeight) {
+        outWidth = maxDim;
+        outHeight = Math.round((sHeight * maxDim) / sWidth);
+      } else {
+        outHeight = maxDim;
+        outWidth = Math.round((sWidth * maxDim) / sHeight);
+      }
+    }
+    
+    canvas.width = outWidth;
+    canvas.height = outHeight;
 
     const ctx = canvas.getContext('2d');
     if (!ctx) {
-      toast.error('Failed to crop photo');
+      toast.error('Failed to process photo');
       return;
     }
 
     // Draw the image
-    ctx.drawImage(image, sx, sy, sWidth, sHeight, 0, 0, outDim, outDim);
+    ctx.drawImage(image, sx, sy, sWidth, sHeight, 0, 0, outWidth, outHeight);
 
     // Export as compressed JPEG blob
     canvas.toBlob(
@@ -307,9 +333,14 @@ export function PhotoUploadWithCrop({
           
           // Re-trigger visual change
           const previewUrl = URL.createObjectURL(file);
+          setSelectedFile(file); // Keep reference to prevent GC of the file and its object URL
           setPhotoPreview(previewUrl);
           setIsDialogOpen(false);
-          toast.success('Photo cropped and compressed successfully!');
+          if (useCrop) {
+            toast.success('Photo cropped and compressed successfully!');
+          } else {
+            toast.success('Original photo compressed and uploaded successfully!');
+          }
           onChange?.(file);
         }
       },
@@ -321,6 +352,9 @@ export function PhotoUploadWithCrop({
   const removePhoto = () => {
     setPhotoPreview(null);
     setImgSrc('');
+    setSelectedFile(null);
+    setCrop(undefined);
+    setCompletedCrop(null);
     stopCamera();
     if (fileInputRef.current) fileInputRef.current.value = '';
     if (hiddenFileInputRef.current) {
@@ -568,7 +602,7 @@ export function PhotoUploadWithCrop({
             onClick={() => saveCroppedPhoto(false)}
             className="w-full sm:w-auto"
           >
-            Use Original (Square Centered)
+            Use Original Photo
           </Button>
           <Button
             type="button"

@@ -326,6 +326,7 @@ export async function registerAction(
   _prev: RegisterState,
   formData: FormData
 ): Promise<RegisterState> {
+  let redirectPath: string | null = null;
   try {
   // ---------- 1. Check profile photo file first ----------
   const photoFile = formData.get('profile_photo') as File | null;
@@ -608,28 +609,21 @@ export async function registerAction(
 
   if (emailConfirmed) {
     console.log('[register] email auto-confirmed, redirecting to pending-approval');
-    redirect('/pending-approval?registered=true');
+    redirectPath = '/pending-approval?registered=true';
   } else {
     console.log('[register] email not confirmed, redirecting to verify-email');
-    redirect('/verify-email?registered=true');
+    redirectPath = '/verify-email?registered=true';
   }
   } catch (err: unknown) {
-    // Next.js redirect() throws a special NEXT_REDIRECT error — let it propagate
-    if (err instanceof Error && err.message === 'NEXT_REDIRECT') throw err;
-    // Also check the digest property used by Next.js
-    if (
-      typeof err === 'object' &&
-      err !== null &&
-      'digest' in err &&
-      typeof (err as Record<string, unknown>).digest === 'string' &&
-      ((err as Record<string, unknown>).digest as string).startsWith('NEXT_REDIRECT')
-    ) {
-      throw err;
-    }
     console.error('[register] unexpected error:', err);
     const msg = err instanceof Error ? err.message : 'Unknown error';
     return { error: `Registration failed: ${msg}. Please try again.` };
   }
+
+  if (redirectPath) {
+    redirect(redirectPath);
+  }
+  return {};
 }
 
 /**

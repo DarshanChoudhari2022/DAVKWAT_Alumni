@@ -1,8 +1,9 @@
 'use client';
 
 import type React from 'react';
-import { useActionState, useRef, useState } from 'react';
+import { useActionState, useRef, useState, useEffect } from 'react';
 import { useFormStatus } from 'react-dom';
+import { toast } from 'sonner';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -81,6 +82,21 @@ export function RegisterCompleteForm({ initialData }: RegisterCompleteFormProps)
   const [dobMonth, setDobMonth] = useState('');
   const [dobYear, setDobYear] = useState('');
   const [countryCode, setCountryCode] = useState('+91');
+
+  const lastHandledStateRef = useRef<CompleteState>(initialState);
+
+  // Auto scroll to top on submit error
+  useEffect(() => {
+    if (state === lastHandledStateRef.current) return;
+    lastHandledStateRef.current = state;
+
+    if (state.error || (state.fieldErrors && Object.keys(state.fieldErrors).length > 0)) {
+      if (state.error) {
+        toast.error(state.error);
+      }
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+  }, [state]);
 
 
 

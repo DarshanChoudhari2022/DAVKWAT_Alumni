@@ -42,7 +42,9 @@ export async function facultyRegisterAction(
   _prev: FacultyRegisterState,
   formData: FormData
 ): Promise<FacultyRegisterState> {
-  const raw: Record<string, unknown> = Object.fromEntries(formData.entries());
+  let redirectPath: string | null = null;
+  try {
+    const raw: Record<string, unknown> = Object.fromEntries(formData.entries());
   if (raw.taught_from_year) raw.taught_from_year = Number(raw.taught_from_year);
   if (raw.taught_to_year) raw.taught_to_year = Number(raw.taught_to_year);
   raw.hide_email = formData.get('hide_email') === 'on';
@@ -133,9 +135,19 @@ export async function facultyRegisterAction(
     return { error: `Failed to save faculty profile: ${error.message}` };
   }
 
-  if (signUp.data.user.email_confirmed_at) {
-    redirect('/pending-approval');
+    if (signUp.data.user.email_confirmed_at) {
+      redirectPath = '/pending-approval';
+    } else {
+      redirectPath = '/verify-email';
+    }
+  } catch (err: unknown) {
+    console.error('[register/faculty] unexpected error:', err);
+    const msg = err instanceof Error ? err.message : 'Unknown error';
+    return { error: `Faculty registration failed: ${msg}. Please try again.` };
   }
 
-  redirect('/verify-email');
+  if (redirectPath) {
+    redirect(redirectPath);
+  }
+  return {};
 }

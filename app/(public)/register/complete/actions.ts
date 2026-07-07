@@ -128,26 +128,29 @@ export async function completeRegistrationAction(
   _prev: CompleteState,
   formData: FormData
 ): Promise<CompleteState> {
-  // ---------- 1. Check Auth Session ----------
-  const supabase = await createClient();
-  const { data: { user }, error: authError } = await supabase.auth.getUser();
+  let redirectPath: string | null = null;
+  try {
+    // ---------- 1. Check Auth Session ----------
+    const supabase = await createClient();
+    const { data: { user }, error: authError } = await supabase.auth.getUser();
 
-  if (authError || !user) {
-    console.error('[register/complete] auth error:', authError);
-    return { error: 'You must be signed in to complete registration.' };
-  }
+    if (authError || !user) {
+      console.error('[register/complete] auth error:', authError);
+      return { error: 'You must be signed in to complete registration.' };
+    }
 
-  // ---------- 2. Check If Profile Already Exists ----------
-  const admin = createAdminClient();
-  const { data: existingProfile } = await admin
-    .from('profiles')
-    .select('id')
-    .eq('id', user.id)
-    .maybeSingle();
+    // ---------- 2. Check If Profile Already Exists ----------
+    const admin = createAdminClient();
+    const { data: existingProfile } = await admin
+      .from('profiles')
+      .select('id')
+      .eq('id', user.id)
+      .maybeSingle();
 
-  if (existingProfile) {
-    redirect('/dashboard');
-  }
+    if (existingProfile) {
+      redirectPath = '/dashboard';
+      return {};
+    }
 
   // ---------- 3. Check profile photo ----------
   const photoFile = formData.get('profile_photo') as File | null;
@@ -259,5 +262,15 @@ export async function completeRegistrationAction(
     console.error('[register/complete] email module failed:', e);
   }
 
-  redirect('/pending-approval');
+  redirectPath = '/pending-approval';
+  } catch (err: unknown) {
+    console.error('[register/complete] unexpected error:', err);
+    const msg = err instanceof Error ? err.message : 'Unknown error';
+    return { error: `Registration completion failed: ${msg}. Please try again.` };
+  }
+
+  if (redirectPath) {
+    redirect(redirectPath);
+  }
+  return {};
 }

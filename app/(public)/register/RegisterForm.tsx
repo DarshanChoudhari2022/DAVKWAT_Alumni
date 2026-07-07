@@ -294,12 +294,7 @@ export function RegisterForm({ step, setStep }: RegisterFormProps) {
 
     if (state.error) {
       toast.error(state.error);
-      setTimeout(() => {
-        const errorEl = document.getElementById('register-error-alert');
-        if (errorEl) {
-          errorEl.scrollIntoView({ behavior: 'smooth', block: 'center' });
-        }
-      }, 50);
+      window.scrollTo({ top: 0, behavior: 'smooth' });
     } else if (state.fieldErrors && Object.keys(state.fieldErrors).length > 0) {
       const firstErrorKey = Object.keys(state.fieldErrors)[0];
       if (firstErrorKey) {
@@ -1002,15 +997,22 @@ export function RegisterForm({ step, setStep }: RegisterFormProps) {
                   <span className="text-slate-800">{MANUAL_MEMBERSHIP_PAYMENT.payeeName}</span>
                 </p>
               </div>
-              <div className="grid gap-2 sm:grid-cols-2">
+              <div className="flex flex-col gap-2 sm:flex-row">
                 <Button
                   asChild
                   variant="accent"
-                  className="animate-pulse hover:animate-none hover:scale-105 active:scale-95 transition-all duration-300 shadow-md hover:shadow-lg hover:shadow-amber-500/20"
+                  className="w-full sm:w-1/2 whitespace-normal h-auto py-2.5 text-center animate-pulse hover:animate-none hover:scale-105 active:scale-95 transition-all duration-300 shadow-md hover:shadow-lg hover:shadow-amber-500/20"
                 >
-                  <a href={buildUpiPaymentUrl(selectedAmount)}>Open UPI app (₹{selectedAmount.toLocaleString('en-IN')})</a>
+                  <a href={buildUpiPaymentUrl(selectedAmount)} className="flex items-center justify-center min-h-[40px] w-full">
+                    Open UPI app (₹{selectedAmount.toLocaleString('en-IN')})
+                  </a>
                 </Button>
-                <Button type="button" variant="outline" onClick={openPaymentWhatsapp}>
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={openPaymentWhatsapp}
+                  className="w-full sm:w-1/2 whitespace-normal h-auto py-2.5 text-center min-h-[40px] flex items-center justify-center"
+                >
                   I have paid — WhatsApp proof
                 </Button>
               </div>
