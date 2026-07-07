@@ -107,9 +107,13 @@ function SubmitButton() {
   );
 }
 
-export function RegisterForm() {
+export interface RegisterFormProps {
+  step: number;
+  setStep: React.Dispatch<React.SetStateAction<number>>;
+}
+
+export function RegisterForm({ step, setStep }: RegisterFormProps) {
   const [state, formAction] = useActionState(registerAction, initialState);
-  const [step, setStep] = useState(0);
   const [educationLevel, setEducationLevel] = useState('');
   const [clientErrors, setClientErrors] = useState<Record<string, string>>({});
   const formRef = useRef<HTMLFormElement>(null);
