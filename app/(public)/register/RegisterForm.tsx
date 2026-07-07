@@ -242,6 +242,11 @@ export function RegisterForm() {
             }
           }
         });
+
+        // After restoring inputs, validate and correct restored step index
+        const restoredStep = typeof draft.step === 'number' ? draft.step : 0;
+        const validStep = getFirstInvalidStep(restoredStep);
+        setStep(validStep);
       }, 100);
     } catch (e) {
       console.error('[register] failed to restore draft:', e);
@@ -329,10 +334,9 @@ export function RegisterForm() {
     }
   }, [step]);
 
-  /** Validate all visible inputs in the current step div */
-  function validateCurrentStep(): boolean {
-    const stepDiv = document.getElementById(`step-${step}`);
-    if (!stepDiv) return true;
+  function validateStep(s: number): Record<string, string> {
+    const stepDiv = document.getElementById(`step-${s}`);
+    if (!stepDiv) return {};
 
     const errors: Record<string, string> = {};
     const inputs = stepDiv.querySelectorAll<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>(
@@ -347,7 +351,7 @@ export function RegisterForm() {
     }
 
     // Step 0 (Account) — password strength + confirm match
-    if (step === 0) {
+    if (s === 0) {
       const pwInput = stepDiv.querySelector<HTMLInputElement>('input[name="password"]');
       const cpInput = stepDiv.querySelector<HTMLInputElement>('input[name="confirmPassword"]');
       const pw = pwInput?.value ?? '';
@@ -369,17 +373,17 @@ export function RegisterForm() {
     }
 
     // Custom validation for proof of schooling on Step 1 (Academic)
-    if (step === 1 && !hasSchoolDoc) {
+    if (s === 1 && !hasSchoolDoc) {
       errors['school_document'] = 'Proof of schooling is required';
     }
 
     // Custom validation for profile photo on Step 2 (Personal)
-    if (step === 2 && !hasPhoto) {
+    if (s === 2 && !hasPhoto) {
       errors['profile_photo'] = 'Profile photo is required';
     }
 
     // Step 3 (Professional) — terms must be accepted
-    if (step === 3) {
+    if (s === 3) {
       const termsCheckbox = stepDiv.querySelector<HTMLInputElement>('input[name="terms_accepted"]');
       if (termsCheckbox && !termsCheckbox.checked) {
         errors['terms_accepted'] = 'You must accept the terms to continue';
@@ -387,15 +391,40 @@ export function RegisterForm() {
     }
 
     // Custom validation for payment proof on Step 4 (Payment & Documents)
-    if (step === 4 && !hasPaymentProof) {
+    if (s === 4 && !hasPaymentProof) {
       errors['payment_proof'] = 'Proof of payment is required';
     }
 
+    return errors;
+  }
+
+  function getFirstInvalidStep(maxStep: number): number {
+    for (let s = 0; s <= maxStep; s++) {
+      const errors = validateStep(s);
+      if (Object.keys(errors).length > 0) {
+        return s;
+      }
+    }
+    return maxStep;
+  }
+
+  /** Validate all visible inputs in the current step div */
+  function validateCurrentStep(): boolean {
+    const errors = validateStep(step);
     setClientErrors(errors);
     return Object.keys(errors).length === 0;
   }
 
   async function next() {
+    // Validate all steps up to the current step to prevent proceeding if previous steps are invalid
+    const firstInvalid = getFirstInvalidStep(step);
+    if (firstInvalid < step) {
+      setStep(firstInvalid);
+      const errors = validateStep(firstInvalid);
+      setClientErrors(errors);
+      return;
+    }
+
     if (!validateCurrentStep()) return;
 
     // On Step 0 (Account), check if email already exists before proceeding
@@ -433,6 +462,15 @@ export function RegisterForm() {
   }
 
   function handleSubmit(fd: FormData) {
+    // Validate all steps up to the final step to block submit if any previous step is invalid
+    const firstInvalid = getFirstInvalidStep(STEPS.length - 1);
+    if (firstInvalid < STEPS.length - 1) {
+      setStep(firstInvalid);
+      const errors = validateStep(firstInvalid);
+      setClientErrors(errors);
+      return;
+    }
+
     // Validate Step 4 fields before sending to server
     if (!validateCurrentStep()) return;
     // Combine country code + phone number into a single "phone" field
