@@ -253,7 +253,20 @@ export function PhotoUploadWithCrop({
 
   // Initial crop settings when image loads
   const onImageLoad = (e: React.SyntheticEvent<HTMLImageElement>) => {
-    // Let user decide which section to crop by dragging (no default center crop selection box)
+    const { width, height } = e.currentTarget;
+    if (width === 0 || height === 0) return;
+    const initialCrop = centerAspectCrop(width, height, 1);
+    setCrop(initialCrop);
+    
+    // Set default completedCrop (PixelCrop) so clicking Apply Crop immediately works
+    const pixelCrop: PixelCrop = {
+      unit: 'px',
+      x: (initialCrop.x * width) / 100,
+      y: (initialCrop.y * height) / 100,
+      width: (initialCrop.width * width) / 100,
+      height: (initialCrop.height * height) / 100,
+    };
+    setCompletedCrop(pixelCrop);
   };
 
   // Save the cropped & compressed file to input
@@ -261,9 +274,17 @@ export function PhotoUploadWithCrop({
     const image = imgRef.current;
     if (!image) return;
 
-    if (useCrop && (!completedCrop || completedCrop.width === 0 || completedCrop.height === 0)) {
-      toast.error('Please drag on the image to select a crop area, or click "Use Original Photo".');
-      return;
+    let activeCrop = completedCrop;
+    if (useCrop && (!activeCrop || activeCrop.width === 0 || activeCrop.height === 0)) {
+      // Fallback: Generate a default center crop dynamically if completedCrop is somehow not set
+      const minDim = Math.min(image.width, image.height);
+      activeCrop = {
+        unit: 'px',
+        x: (image.width - minDim) / 2,
+        y: (image.height - minDim) / 2,
+        width: minDim,
+        height: minDim,
+      };
     }
 
     const canvas = document.createElement('canvas');
@@ -275,11 +296,11 @@ export function PhotoUploadWithCrop({
     let sx = 0;
     let sy = 0;
 
-    if (useCrop && completedCrop) {
-      sWidth = completedCrop.width * scaleX;
-      sHeight = completedCrop.height * scaleY;
-      sx = completedCrop.x * scaleX;
-      sy = completedCrop.y * scaleY;
+    if (useCrop && activeCrop) {
+      sWidth = activeCrop.width * scaleX;
+      sHeight = activeCrop.height * scaleY;
+      sx = activeCrop.x * scaleX;
+      sy = activeCrop.y * scaleY;
     } else {
       // Use original photo dimensions (no cropping)
       sWidth = image.naturalWidth;
