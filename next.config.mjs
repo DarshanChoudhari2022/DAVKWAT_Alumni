@@ -23,7 +23,7 @@ const nextConfig = {
   },
   compress: true,
   experimental: {
-    serverActions: { bodySizeLimit: '5mb' },
+    serverActions: { bodySizeLimit: '20mb' },
     staleTimes: {
       dynamic: 30,
       static: 180,
