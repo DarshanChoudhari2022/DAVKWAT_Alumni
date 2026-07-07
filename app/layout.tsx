@@ -27,6 +27,24 @@ export const metadata: Metadata = {
     type: 'website',
     siteName: 'DAVKAWT Alumni Portal',
     locale: 'en_IN',
+    title: 'DAVKAWT Alumni Portal',
+    description:
+      'Official alumni portal of DAV Khagaul Alumni Welfare Trust — connecting generations of alumni across India and the world.',
+    images: [
+      {
+        url: '/og-image.png',
+        width: 1200,
+        height: 630,
+        alt: 'DAVKAWT Alumni Portal',
+      },
+    ],
+  },
+  twitter: {
+    card: 'summary_large_image',
+    title: 'DAVKAWT Alumni Portal',
+    description:
+      'Official alumni portal of DAV Khagaul Alumni Welfare Trust — connecting generations of alumni across India and the world.',
+    images: ['/og-image.png'],
   },
   robots: { index: true, follow: true },
 };
