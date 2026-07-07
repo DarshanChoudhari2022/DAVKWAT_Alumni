@@ -129,6 +129,132 @@ export function RegisterForm() {
   const [leavingYear, setLeavingYear] = useState('');
   const [batchYear, setBatchYear] = useState('');
 
+  const saveTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  const saveFormDraft = () => {
+    if (saveTimeoutRef.current) {
+      clearTimeout(saveTimeoutRef.current);
+    }
+    saveTimeoutRef.current = setTimeout(() => {
+      if (!formRef.current) return;
+      const fd = new FormData(formRef.current);
+      const draft: Record<string, unknown> = {};
+
+      draft.step = step;
+      draft.educationLevel = educationLevel;
+      draft.leftClass = leftClass;
+      draft.leavingYear = leavingYear;
+      draft.batchYear = batchYear;
+      draft.selectedAmount = selectedAmount;
+      draft.countryCode = countryCode;
+      draft.dobDay = dobDay;
+      draft.dobMonth = dobMonth;
+      draft.dobYear = dobYear;
+
+      for (const [key, value] of fd.entries()) {
+        if (key === 'password' || key === 'confirmPassword' || value instanceof File) {
+          continue;
+        }
+        draft[key] = value;
+      }
+
+      const checkboxes = ['hide_email', 'hide_phone', 'terms_accepted'];
+      checkboxes.forEach((cb) => {
+        const el = formRef.current?.querySelector<HTMLInputElement>(`input[name="${cb}"]`);
+        if (el) {
+          draft[cb] = el.checked;
+        }
+      });
+
+      localStorage.setItem('davkawt_register_draft', JSON.stringify(draft));
+    }, 500);
+  };
+
+  // Save draft whenever controlled states change
+  useEffect(() => {
+    saveFormDraft();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [
+    step,
+    educationLevel,
+    leftClass,
+    leavingYear,
+    batchYear,
+    selectedAmount,
+    countryCode,
+    dobDay,
+    dobMonth,
+    dobYear,
+  ]);
+
+  // Load draft on mount
+  useEffect(() => {
+    const saved = localStorage.getItem('davkawt_register_draft');
+    if (!saved) return;
+
+    try {
+      const draft = JSON.parse(saved);
+      if (!draft) return;
+
+      if (typeof draft.step === 'number') setStep(draft.step);
+      if (draft.educationLevel) setEducationLevel(draft.educationLevel);
+      if (draft.leftClass) setLeftClass(draft.leftClass);
+      if (draft.leavingYear) setLeavingYear(draft.leavingYear);
+      if (draft.batchYear) setBatchYear(draft.batchYear);
+      if (draft.selectedAmount) setSelectedAmount(draft.selectedAmount);
+      if (draft.countryCode) setCountryCode(draft.countryCode);
+      if (draft.dobDay) setDobDay(draft.dobDay);
+      if (draft.dobMonth) setDobMonth(draft.dobMonth);
+      if (draft.dobYear) setDobYear(draft.dobYear);
+
+      // Restore uncontrolled inputs after React completes rendering
+      setTimeout(() => {
+        if (!formRef.current) return;
+        Object.entries(draft).forEach(([key, value]) => {
+          if (
+            [
+              'step',
+              'educationLevel',
+              'leftClass',
+              'leavingYear',
+              'batchYear',
+              'selectedAmount',
+              'countryCode',
+              'dobDay',
+              'dobMonth',
+              'dobYear',
+              'password',
+              'confirmPassword',
+            ].includes(key)
+          ) {
+            return;
+          }
+
+          const input = formRef.current?.querySelector<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>(
+            `[name="${key}"]`
+          );
+
+          if (input) {
+            if (input.type === 'checkbox') {
+              (input as HTMLInputElement).checked = !!value;
+            } else {
+              input.value = String(value);
+            }
+          }
+        });
+      }, 100);
+    } catch (e) {
+      console.error('[register] failed to restore draft:', e);
+    }
+  }, []);
+
+  // Clean up save draft timeout on unmount
+  useEffect(() => {
+    return () => {
+      if (saveTimeoutRef.current) clearTimeout(saveTimeoutRef.current);
+    };
+  }, []);
+
   // Automatically calculate batch year for left_before_10th
   useEffect(() => {
     if (educationLevel === 'left_before_10th' && leftClass && leavingYear) {
@@ -305,7 +431,7 @@ export function RegisterForm() {
   const fieldErrors = { ...clientErrors, ...state.fieldErrors };
 
   return (
-    <form ref={formRef} action={handleSubmit} noValidate className="space-y-6">
+    <form ref={formRef} action={handleSubmit} onChange={saveFormDraft} onInput={saveFormDraft} noValidate className="space-y-6">
       {/* Progress */}
       <ol className="flex items-center justify-between" aria-label="Registration progress">
         {STEPS.map((label, i) => (

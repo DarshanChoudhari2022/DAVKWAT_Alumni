@@ -28,6 +28,14 @@ async function VerifyEmailContent({
 
   return (
     <div className="flex min-h-[60vh] items-center justify-center px-4 py-16">
+      <script
+        dangerouslySetInnerHTML={{
+          __html: `
+            localStorage.removeItem('davkawt_register_draft');
+            localStorage.removeItem('davkawt_faculty_register_draft');
+          `,
+        }}
+      />
       {isNewRegistration && (
         <ToastTrigger message="Registration submitted successfully! Please verify your email." type="success" />
       )}

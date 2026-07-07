@@ -67,6 +67,14 @@ export default async function PendingApprovalPage() {
 
   return (
     <div className="mx-auto max-w-2xl px-4 py-12 sm:px-6">
+      <script
+        dangerouslySetInnerHTML={{
+          __html: `
+            localStorage.removeItem('davkawt_register_draft');
+            localStorage.removeItem('davkawt_faculty_register_draft');
+          `,
+        }}
+      />
       <Card className="p-8">
         <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
           <div className="flex items-start gap-3">

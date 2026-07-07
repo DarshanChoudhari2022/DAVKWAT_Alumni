@@ -1,7 +1,7 @@
 'use client';
 
 import type React from 'react';
-import { useActionState } from 'react';
+import { useActionState, useRef, useEffect } from 'react';
 import { useFormStatus } from 'react-dom';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -26,9 +26,80 @@ function SubmitButton() {
 
 export function FacultyRegisterForm() {
   const [state, action] = useActionState(facultyRegisterAction, initialState);
+  const formRef = useRef<HTMLFormElement>(null);
+  const saveTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  const saveFormDraft = () => {
+    if (saveTimeoutRef.current) {
+      clearTimeout(saveTimeoutRef.current);
+    }
+    saveTimeoutRef.current = setTimeout(() => {
+      if (!formRef.current) return;
+      const fd = new FormData(formRef.current);
+      const draft: Record<string, unknown> = {};
+
+      for (const [key, value] of fd.entries()) {
+        if (key === 'password' || key === 'confirmPassword') {
+          continue;
+        }
+        draft[key] = value;
+      }
+
+      const checkboxes = ['hide_email', 'hide_phone', 'terms_accepted'];
+      checkboxes.forEach((cb) => {
+        const el = formRef.current?.querySelector<HTMLInputElement>(`input[name="${cb}"]`);
+        if (el) {
+          draft[cb] = el.checked;
+        }
+      });
+
+      localStorage.setItem('davkawt_faculty_register_draft', JSON.stringify(draft));
+    }, 500);
+  };
+
+  // Load draft on mount
+  useEffect(() => {
+    const saved = localStorage.getItem('davkawt_faculty_register_draft');
+    if (!saved) return;
+
+    try {
+      const draft = JSON.parse(saved);
+      if (!draft) return;
+
+      setTimeout(() => {
+        if (!formRef.current) return;
+        Object.entries(draft).forEach(([key, value]) => {
+          if (['password', 'confirmPassword'].includes(key)) {
+            return;
+          }
+
+          const input = formRef.current?.querySelector<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>(
+            `[name="${key}"]`
+          );
+
+          if (input) {
+            if (input.type === 'checkbox') {
+              (input as HTMLInputElement).checked = !!value;
+            } else {
+              input.value = String(value);
+            }
+          }
+        });
+      }, 100);
+    } catch (e) {
+      console.error('[faculty-register] failed to restore draft:', e);
+    }
+  }, []);
+
+  // Clean up save draft timeout on unmount
+  useEffect(() => {
+    return () => {
+      if (saveTimeoutRef.current) clearTimeout(saveTimeoutRef.current);
+    };
+  }, []);
 
   return (
-    <form action={action} className="space-y-5">
+    <form ref={formRef} action={action} onChange={saveFormDraft} onInput={saveFormDraft} className="space-y-5">
       {state.error && (
         <div role="alert" className="rounded-lg border border-rose-200 bg-rose-50 p-3 text-sm text-rose-700">
           {state.error}
