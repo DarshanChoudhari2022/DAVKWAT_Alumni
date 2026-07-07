@@ -3,6 +3,7 @@ import { LayoutDashboard, Users, Calendar, MessageSquare, Megaphone, CreditCard,
 import { Logo } from '@/components/shared/Logo';
 import { logoutAction } from '@/app/(public)/login/actions';
 import { Button } from '@/components/ui/button';
+import { getTrustedUserId } from '@/lib/auth/trusted-identity';
 
 const NAV = [
   { href: '/dashboard', label: 'Dashboard', icon: LayoutDashboard },
@@ -18,7 +19,25 @@ const NAV = [
 // etc. request, so the layout shell itself carries no per-request data and can be
 // served from the static shell. This removes an auth round-trip + a DB write that
 // previously ran on every single navigation (the main source of the UI lag).
-export default function AlumniLayout({ children }: { children: React.ReactNode }) {
+export default async function AlumniLayout({ children }: { children: React.ReactNode }) {
+  const userId = await getTrustedUserId();
+
+  if (!userId) {
+    return (
+      <div className="flex min-h-dvh flex-col bg-slate-50">
+        <header className="sticky top-0 z-30 flex h-16 items-center justify-between border-b border-slate-200 bg-white px-4 sm:px-6">
+          <Logo />
+          <Button asChild size="sm" className="bg-[#0F2557] hover:bg-[#1a3a7a]">
+            <Link href="/login">Sign In</Link>
+          </Button>
+        </header>
+        <main className="flex-1">
+          {children}
+        </main>
+      </div>
+    );
+  }
+
   return (
     <div className="flex min-h-dvh flex-col lg:flex-row">
       {/* Desktop sidebar */}

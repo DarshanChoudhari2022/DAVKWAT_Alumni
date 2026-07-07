@@ -4,7 +4,7 @@ import Image from 'next/image';
 import type React from 'react';
 import { useActionState, useState, useRef, useEffect } from 'react';
 import { useFormStatus } from 'react-dom';
-import { Copy, Download, Check, Upload } from 'lucide-react';
+import { Copy, Download, Check } from 'lucide-react';
 import { toast } from 'sonner';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -93,7 +93,7 @@ const FIELD_STEP_MAP: Record<string, number> = {
   hide_email: 3,
   hide_phone: 3,
   terms_accepted: 3,
-  school_document: 4,
+  school_document: 1,
   payment_proof: 4,
   selected_amount: 4,
 };
@@ -224,11 +224,19 @@ export function RegisterForm() {
       }
     }
 
-    // Custom validation for school document on Step 4 (Payment & Documents)
-    if (step === 4) {
+    // Custom validation for proof of schooling on Step 2 (Academic)
+    if (step === 1) {
       const docInput = stepDiv.querySelector<HTMLInputElement>('input[name="school_document"]');
       if (docInput && (!docInput.files || docInput.files.length === 0)) {
-        errors['school_document'] = 'School document is required';
+        errors['school_document'] = 'Proof of schooling is required';
+      }
+    }
+
+    // Custom validation for payment proof on Step 5 (Payment & Documents)
+    if (step === 4) {
+      const proofInput = stepDiv.querySelector<HTMLInputElement>('input[name="payment_proof"]');
+      if (proofInput && (!proofInput.files || proofInput.files.length === 0)) {
+        errors['payment_proof'] = 'Proof of payment is required';
       }
     }
 
@@ -500,6 +508,17 @@ export function RegisterForm() {
           </div>
         )}
         <Field label="Roll Number (optional)" name="roll_number" maxLength={VALIDATION_LIMITS.rollNumberMax} />
+        {/* Proof of Schooling Upload (Compulsory) */}
+        <div className="mt-4 rounded-2xl border border-blue-200 bg-gradient-to-br from-blue-50 to-indigo-50 p-5">
+          <DocumentUpload
+            name="school_document"
+            label="Proof of Schooling"
+            required
+            error={fieldErrors?.school_document}
+            maxRawSize={10 * 1024 * 1024}
+            targetCompressedSize={350 * 1024}
+          />
+        </div>
       </div>
 
       {/* Step 3 — Personal */}
@@ -661,17 +680,6 @@ export function RegisterForm() {
 
       {/* Step 5 — Payment & Documents */}
       <div id="step-4" className={cn('space-y-5', step !== 4 && 'hidden')}>
-        {/* School Document Upload (Compulsory) */}
-        <div className="rounded-2xl border border-blue-200 bg-gradient-to-br from-blue-50 to-indigo-50 p-5">
-          <DocumentUpload
-            name="school_document"
-            label="School Document"
-            required
-            error={fieldErrors?.school_document}
-            maxRawSize={10 * 1024 * 1024}
-            targetCompressedSize={350 * 1024}
-          />
-        </div>
 
         {/* Membership Amount Selection */}
         <div className="rounded-2xl border border-blue-200 bg-gradient-to-br from-blue-50 to-indigo-50 p-5">
@@ -793,7 +801,8 @@ export function RegisterForm() {
         <div className="rounded-2xl border border-emerald-200 bg-gradient-to-br from-emerald-50 to-green-50 p-5">
           <DocumentUpload
             name="payment_proof"
-            label="Payment Proof Screenshot"
+            label="Proof of Payment"
+            required
             error={fieldErrors?.payment_proof}
             maxRawSize={10 * 1024 * 1024}
             targetCompressedSize={350 * 1024}

@@ -344,6 +344,54 @@ export async function registerAction(
     };
   }
 
+  // ---------- 1b. Check proof of schooling file first ----------
+  const schoolDocFile = formData.get('school_document') as File | null;
+  if (!schoolDocFile || schoolDocFile.size === 0) {
+    return {
+      fieldErrors: {
+        school_document: 'Proof of schooling is required',
+      },
+    };
+  }
+  if (schoolDocFile.size > 10 * 1024 * 1024) {
+    return {
+      fieldErrors: {
+        school_document: 'School document must be under 10 MB',
+      },
+    };
+  }
+  if (!allowedTypes.includes(schoolDocFile.type)) {
+    return {
+      fieldErrors: {
+        school_document: 'Only JPG, PNG or WebP images are allowed',
+      },
+    };
+  }
+
+  // ---------- 1c. Check proof of payment file first ----------
+  const paymentProofFile = formData.get('payment_proof') as File | null;
+  if (!paymentProofFile || paymentProofFile.size === 0) {
+    return {
+      fieldErrors: {
+        payment_proof: 'Proof of payment is required',
+      },
+    };
+  }
+  if (paymentProofFile.size > 10 * 1024 * 1024) {
+    return {
+      fieldErrors: {
+        payment_proof: 'Payment proof must be under 10 MB',
+      },
+    };
+  }
+  if (!allowedTypes.includes(paymentProofFile.type)) {
+    return {
+      fieldErrors: {
+        payment_proof: 'Only JPG, PNG or WebP images are allowed',
+      },
+    };
+  }
+
   // ---------- 2. Parse & validate fields ----------
   const raw: Record<string, unknown> = Object.fromEntries(formData.entries());
   if (raw.passing_year) raw.passing_year = Number(raw.passing_year);
@@ -452,15 +500,14 @@ export async function registerAction(
     return { error: `Failed to upload profile photo: ${uploadMsg}. Please try again.` };
   }
 
-  // ---------- 4b. Upload school document (compulsory) ----------
+  // ---------- 4b. Upload proof of schooling (compulsory) ----------
   let schoolDocUrl: string | null = null;
-  const schoolDocFile = formData.get('school_document') as File | null;
   if (schoolDocFile && schoolDocFile.size > 0) {
     try {
       schoolDocUrl = await uploadSchoolDocument(userId, schoolDocFile);
-      console.log(`[register] school document uploaded: ${schoolDocUrl}`);
+      console.log(`[register] proof of schooling uploaded: ${schoolDocUrl}`);
     } catch (docErr: unknown) {
-      console.error('[register] school document upload failed:', docErr);
+      console.error('[register] proof of schooling upload failed:', docErr);
       // Non-fatal — continue registration
     }
   }
@@ -479,13 +526,12 @@ export async function registerAction(
     return { error: `Failed to create your profile: ${profileResult.error}. Please try again.` };
   }
 
-  // ---------- 5b. Upload payment proof & create payment record ----------
-  const paymentProofFile = formData.get('payment_proof') as File | null;
+  // ---------- 5b. Upload proof of payment & create payment record ----------
   const selectedAmount = Number(formData.get('selected_amount') || 500);
   if (paymentProofFile && paymentProofFile.size > 0) {
     try {
       const proofUrl = await uploadPaymentProof(userId, paymentProofFile);
-      console.log(`[register] payment proof uploaded: ${proofUrl}`);
+      console.log(`[register] proof of payment uploaded: ${proofUrl}`);
       const txnid = await createManualPayment(userId, selectedAmount, proofUrl);
       console.log(`[register] manual payment created: ${txnid}`);
 
@@ -503,7 +549,7 @@ export async function registerAction(
         // Non-critical
       }
     } catch (payErr: unknown) {
-      console.error('[register] payment proof upload/record failed:', payErr);
+      console.error('[register] proof of payment upload/record failed:', payErr);
       // Non-fatal — registration still succeeded
     }
   }

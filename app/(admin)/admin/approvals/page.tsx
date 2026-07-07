@@ -183,7 +183,7 @@ async function ApprovalsListRegion({ sp, page }: { sp: SearchParams; page: numbe
                         )}
                         {profile.website_url && (
                           <a href={profile.website_url} target="_blank" rel="noopener noreferrer">
-                            <Badge variant="primary">📄 School Doc</Badge>
+                            <Badge variant="primary">📄 Proof of Schooling</Badge>
                           </a>
                         )}
                       </div>

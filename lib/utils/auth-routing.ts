@@ -20,6 +20,10 @@ function matchesRoute(pathname: string, prefixes: string[]) {
 }
 
 export function isAlumniRoute(pathname: string) {
+  // Event details pages (/events/[slug]) are public and shareable.
+  if (pathname.startsWith('/events/') && pathname !== '/events/') {
+    return false;
+  }
   return matchesRoute(pathname, ALUMNI_ROUTE_PREFIXES);
 }
 
