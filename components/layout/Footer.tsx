@@ -55,9 +55,7 @@ export async function Footer() {
                   </a>
                 </li>
               ))}
-              {socialLinks.length === 0 && (
-                <li className="text-slate-500">Social links can be added from Admin Settings.</li>
-              )}
+
             </ul>
             <h4 className="mt-6 text-sm font-semibold text-slate-900">Legal</h4>
             <ul className="mt-4 space-y-2 text-sm">
