@@ -12,6 +12,7 @@ import { PasswordInput } from '@/components/shared/PasswordInput';
 import { INPUT_PATTERNS, VALIDATION_LIMITS } from '@/lib/validations/constraints';
 import { facultyRegisterAction, type FacultyRegisterState } from './actions';
 import { DocumentUpload } from '@/components/shared/DocumentUpload';
+import { cn } from '@/lib/utils/cn';
 
 const initialState: FacultyRegisterState = {};
 const CURRENT_YEAR = new Date().getFullYear();
@@ -35,15 +36,72 @@ export function FacultyRegisterForm() {
 
   const lastHandledStateRef = useRef<FacultyRegisterState>(initialState);
 
-  // Auto scroll to top on submit error
+  const restoreFormDraft = () => {
+    const saved = localStorage.getItem('davkawt_faculty_register_draft');
+    if (!saved) return;
+
+    try {
+      const draft = JSON.parse(saved);
+      if (!draft) return;
+
+      if (!formRef.current) return;
+      Object.entries(draft).forEach(([key, value]) => {
+        if (['password', 'confirmPassword'].includes(key)) {
+          return;
+        }
+
+        const input = formRef.current?.querySelector<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>(
+          `[name="${key}"]`
+        );
+
+        if (input) {
+          if (input.type === 'checkbox') {
+            (input as HTMLInputElement).checked = !!value;
+          } else if (input.type !== 'file') {
+            input.value = String(value);
+          }
+        }
+      });
+    } catch (e) {
+      console.error('[faculty-register] failed to restore draft:', e);
+    }
+  };
+
+  const saveDraftSync = () => {
+    if (!formRef.current) return;
+    const fd = new FormData(formRef.current);
+    const draft: Record<string, unknown> = {};
+
+    for (const [key, value] of fd.entries()) {
+      if (key === 'password' || key === 'confirmPassword' || value instanceof File) {
+        continue;
+      }
+      draft[key] = value;
+    }
+
+    const checkboxes = ['hide_email', 'hide_phone', 'terms_accepted'];
+    checkboxes.forEach((cb) => {
+      const el = formRef.current?.querySelector<HTMLInputElement>(`input[name="${cb}"]`);
+      if (el) {
+        draft[cb] = el.checked;
+      }
+    });
+
+    localStorage.setItem('davkawt_faculty_register_draft', JSON.stringify(draft));
+  };
+
+  // Auto scroll to top on submit error and restore form inputs if React reset the form
   useEffect(() => {
     if (state === lastHandledStateRef.current) return;
     lastHandledStateRef.current = state;
 
     if (state.error || (state.fieldErrors && Object.keys(state.fieldErrors).length > 0)) {
-      if (state.error) {
-        toast.error(state.error);
-      }
+      setTimeout(() => {
+        restoreFormDraft();
+        if (state.error) {
+          toast.error(state.error);
+        }
+      }, 50);
       window.scrollTo({ top: 0, behavior: 'smooth' });
     }
   }, [state]);
@@ -53,61 +111,15 @@ export function FacultyRegisterForm() {
       clearTimeout(saveTimeoutRef.current);
     }
     saveTimeoutRef.current = setTimeout(() => {
-      if (!formRef.current) return;
-      const fd = new FormData(formRef.current);
-      const draft: Record<string, unknown> = {};
-
-      for (const [key, value] of fd.entries()) {
-        if (key === 'password' || key === 'confirmPassword' || value instanceof File) {
-          continue;
-        }
-        draft[key] = value;
-      }
-
-      const checkboxes = ['hide_email', 'hide_phone', 'terms_accepted'];
-      checkboxes.forEach((cb) => {
-        const el = formRef.current?.querySelector<HTMLInputElement>(`input[name="${cb}"]`);
-        if (el) {
-          draft[cb] = el.checked;
-        }
-      });
-
-      localStorage.setItem('davkawt_faculty_register_draft', JSON.stringify(draft));
+      saveDraftSync();
     }, 500);
   };
 
   // Load draft on mount
   useEffect(() => {
-    const saved = localStorage.getItem('davkawt_faculty_register_draft');
-    if (!saved) return;
-
-    try {
-      const draft = JSON.parse(saved);
-      if (!draft) return;
-
-      setTimeout(() => {
-        if (!formRef.current) return;
-        Object.entries(draft).forEach(([key, value]) => {
-          if (['password', 'confirmPassword'].includes(key)) {
-            return;
-          }
-
-          const input = formRef.current?.querySelector<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>(
-            `[name="${key}"]`
-          );
-
-          if (input) {
-            if (input.type === 'checkbox') {
-              (input as HTMLInputElement).checked = !!value;
-            } else if (input.type !== 'file') {
-              input.value = String(value);
-            }
-          }
-        });
-      }, 100);
-    } catch (e) {
-      console.error('[faculty-register] failed to restore draft:', e);
-    }
+    setTimeout(() => {
+      restoreFormDraft();
+    }, 100);
   }, []);
 
   // Clean up save draft timeout on unmount
@@ -119,6 +131,7 @@ export function FacultyRegisterForm() {
 
   const handleSubmit = (fd: FormData) => {
     setClientErrors({});
+    saveDraftSync();
     if (!hasSchoolDoc) {
       setClientErrors({ school_document: 'Proof of ID is required' });
       setTimeout(() => {
@@ -150,7 +163,13 @@ export function FacultyRegisterForm() {
 
       <div>
         <Label htmlFor="taught_subject">Subject taught <span className="text-rose-600">*</span></Label>
-        <Input id="taught_subject" name="taught_subject" required maxLength={VALIDATION_LIMITS.professionalTextMax} className="mt-1.5" />
+        <Input
+          id="taught_subject"
+          name="taught_subject"
+          required
+          maxLength={VALIDATION_LIMITS.professionalTextMax}
+          className={cn("mt-1.5", fieldErrors?.taught_subject && "border-rose-500 focus:ring-rose-500")}
+        />
         <FieldError message={fieldErrors?.taught_subject} />
       </div>
 
@@ -185,7 +204,12 @@ export function FacultyRegisterForm() {
           name="bio"
           rows={4}
           maxLength={VALIDATION_LIMITS.bioMax}
-          className="mt-1.5 flex w-full rounded-lg border border-slate-200 bg-white px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-[#0F2557]"
+          className={cn(
+            "mt-1.5 flex w-full rounded-lg border bg-white px-4 py-2.5 text-sm focus:outline-none focus:ring-2",
+            fieldErrors?.bio
+              ? "border-rose-500 focus:ring-rose-500"
+              : "border-slate-200 focus:ring-[#0F2557]"
+          )}
         />
         <FieldError message={fieldErrors?.bio} />
       </div>
@@ -229,9 +253,22 @@ function Field({ label, name, error, required, type, ...rest }: FieldProps) {
     <div>
       <Label htmlFor={name}>{label} {required && <span className="text-rose-600">*</span>}</Label>
       {isPassword ? (
-        <PasswordInput id={name} name={name} required={required} className="mt-1.5" {...rest} />
+        <PasswordInput
+          id={name}
+          name={name}
+          required={required}
+          className={cn("mt-1.5", error && "border-rose-500 focus:ring-rose-500")}
+          {...rest}
+        />
       ) : (
-        <Input id={name} name={name} type={type} required={required} className="mt-1.5" {...rest} />
+        <Input
+          id={name}
+          name={name}
+          type={type}
+          required={required}
+          className={cn("mt-1.5", error && "border-rose-500 focus:ring-rose-500")}
+          {...rest}
+        />
       )}
       <FieldError message={error} />
     </div>
@@ -256,7 +293,12 @@ function YearField({
         id={name}
         name={name}
         required={required}
-        className="mt-1.5 flex h-10 w-full rounded-lg border border-slate-200 bg-white px-4 text-sm focus:outline-none focus:ring-2 focus:ring-[#0F2557]"
+        className={cn(
+          "mt-1.5 flex h-10 w-full rounded-lg border bg-white px-4 text-sm focus:outline-none focus:ring-2",
+          error
+            ? "border-rose-500 focus:ring-rose-500"
+            : "border-slate-200 focus:ring-[#0F2557]"
+        )}
       >
         <option value="">Select year...</option>
         {YEARS.map((year) => (
