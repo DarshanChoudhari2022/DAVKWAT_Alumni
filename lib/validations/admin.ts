@@ -68,3 +68,7 @@ export const adminProfileUpdateSchema = z.object({
   hide_email: z.boolean().optional(),
   hide_phone: z.boolean().optional(),
 });
+
+export const deleteAlumniSchema = z.object({
+  adminPassword: z.string().min(1, 'Admin password is required.'),
+});

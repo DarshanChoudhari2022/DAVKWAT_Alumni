@@ -5,6 +5,7 @@ import { logoutAction } from '@/app/(public)/login/actions';
 import { Button } from '@/components/ui/button';
 import { SignOutButton } from '@/components/shared/SignOutButton';
 import { getTrustedUserId } from '@/lib/auth/trusted-identity';
+import { createClient } from '@/lib/supabase/server';
 
 const NAV = [
   { href: '/dashboard', label: 'Dashboard', icon: LayoutDashboard },
@@ -16,10 +17,22 @@ const NAV = [
   { href: '/profile', label: 'Profile', icon: User },
 ];
 
-// The session is already validated in middleware for every /dashboard, /directory,
-// etc. request, so the layout shell itself carries no per-request data and can be
-// served from the static shell. This removes an auth round-trip + a DB write that
-// previously ran on every single navigation (the main source of the UI lag).
+function needsProfileCompletion(profile: {
+  avatar_url: string | null;
+  phone: string | null;
+  current_city: string | null;
+  current_state: string | null;
+  school_document_url: string | null;
+}) {
+  return (
+    !profile.avatar_url ||
+    !profile.phone ||
+    !profile.current_city ||
+    !profile.current_state ||
+    !profile.school_document_url
+  );
+}
+
 export default async function AlumniLayout({ children }: { children: React.ReactNode }) {
   const userId = await getTrustedUserId();
 
@@ -38,6 +51,14 @@ export default async function AlumniLayout({ children }: { children: React.React
       </div>
     );
   }
+
+  const supabase = await createClient();
+  const { data: profile } = await supabase
+    .from('profiles')
+    .select('avatar_url, phone, current_city, current_state, school_document_url')
+    .eq('id', userId)
+    .maybeSingle();
+  const showCompleteProfile = profile ? needsProfileCompletion(profile) : false;
 
   return (
     <div className="flex min-h-dvh flex-col lg:flex-row">
@@ -77,6 +98,18 @@ export default async function AlumniLayout({ children }: { children: React.React
       </header>
 
       <main id="main" className="flex-1 pb-20 lg:pb-0">
+        {showCompleteProfile && (
+          <div className="border-b border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-900 sm:px-6">
+            <div className="mx-auto flex max-w-5xl flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+              <p>
+                Some profile details are missing. Complete your profile so the Trust can verify and segment your membership correctly.
+              </p>
+              <Button asChild size="sm" className="bg-[#0F2557] hover:bg-[#1a3a7a]">
+                <Link href="/profile">Complete Profile</Link>
+              </Button>
+            </div>
+          </div>
+        )}
         {children}
       </main>
 

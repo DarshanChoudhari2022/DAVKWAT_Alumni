@@ -27,7 +27,7 @@ const ADMIN_NAV = [
   { href: '/admin/forum', label: 'Forum', icon: MessageSquare },
   { href: '/admin/payments', label: 'Payments', icon: CreditCard },
   { href: '/admin/reports', label: 'Reports', icon: BarChart3 },
-  { href: '/admin/settings', label: 'Settings', icon: Settings },
+  { href: '/admin/settings', label: 'Settings', icon: Settings, superAdminOnly: true },
 ];
 
 export default async function AdminLayout({ children }: { children: React.ReactNode }) {
@@ -35,6 +35,9 @@ export default async function AdminLayout({ children }: { children: React.ReactN
     requireAdminAccess(),
     getPendingApprovalsCount(),
   ]);
+  const visibleNav = ADMIN_NAV.filter(
+    (item) => !item.superAdminOnly || adminAccess.role === 'super_admin'
+  );
 
   return (
     <div className="flex min-h-dvh min-w-0">
@@ -46,7 +49,7 @@ export default async function AdminLayout({ children }: { children: React.ReactN
         </div>
         <nav className="flex-1 overflow-y-auto px-3 py-2" aria-label="Admin navigation">
           <ul className="space-y-1">
-            {ADMIN_NAV.map((item) => (
+            {visibleNav.map((item) => (
               <li key={item.href}>
                 <Link
                   href={item.href}
@@ -76,6 +79,7 @@ export default async function AdminLayout({ children }: { children: React.ReactN
         {/* Mobile header with slide-out drawer navigation */}
         <AdminMobileNav
           displayName={adminAccess.displayName}
+          isSuperAdmin={adminAccess.role === 'super_admin'}
           pendingCount={pendingCount}
           logoutAction={adminLogoutAction}
         />

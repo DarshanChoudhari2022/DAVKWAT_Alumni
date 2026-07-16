@@ -2,7 +2,9 @@ import { NextRequest, NextResponse } from 'next/server';
 import { requireAdminApiAccess } from '@/lib/auth/admin-api';
 import { writeAuditLog } from '@/lib/audit';
 import { invalidateAfterAction } from '@/lib/cache/invalidate';
-import { adminProfileUpdateSchema } from '@/lib/validations/admin';
+import { verifyLocalAdminPassword } from '@/lib/auth/local-admin';
+import { createAdminClient } from '@/lib/supabase/admin';
+import { adminProfileUpdateSchema, deleteAlumniSchema } from '@/lib/validations/admin';
 
 function normalizeOptionalString(value: unknown) {
   if (value == null) return null;
@@ -91,6 +93,87 @@ export async function PATCH(
 
   // Profile edits can change membership-backing fields (e.g. is_paid_member),
   // so invalidate the dashboard + payments stat caches (design Section 4).
+  invalidateAfterAction('alumni_edit');
+
+  return NextResponse.json({ success: true });
+}
+
+export async function DELETE(
+  req: NextRequest,
+  { params }: { params: Promise<{ id: string }> }
+) {
+  const { adminAccess, error: authError } = await requireAdminApiAccess();
+  if (authError || !adminAccess) return authError;
+
+  if (adminAccess.role !== 'super_admin') {
+    return NextResponse.json(
+      { error: 'Only super admins can permanently delete alumni records.' },
+      { status: 403 }
+    );
+  }
+
+  const { id } = await params;
+  if (adminAccess.actorProfileId === id) {
+    return NextResponse.json(
+      { error: 'You cannot delete your own admin profile.' },
+      { status: 400 }
+    );
+  }
+
+  const body = await req.json().catch(() => ({}));
+  const parsed = deleteAlumniSchema.safeParse(body);
+  if (!parsed.success) {
+    return NextResponse.json(
+      { error: parsed.error.issues[0]?.message ?? 'Admin password is required.' },
+      { status: 400 }
+    );
+  }
+
+  const passwordMatches = await verifyLocalAdminPassword(parsed.data.adminPassword);
+  if (!passwordMatches) {
+    return NextResponse.json({ error: 'Invalid admin password.' }, { status: 403 });
+  }
+
+  const admin = createAdminClient();
+  const { data: profile } = await admin
+    .from('profiles')
+    .select('id, full_name, email, role')
+    .eq('id', id)
+    .maybeSingle();
+
+  if (!profile) {
+    return NextResponse.json({ error: 'Alumni profile not found.' }, { status: 404 });
+  }
+
+  if (profile.role === 'super_admin') {
+    return NextResponse.json(
+      { error: 'Super admin profiles cannot be deleted from this screen.' },
+      { status: 403 }
+    );
+  }
+
+  const { error: authDeleteError } = await admin.auth.admin.deleteUser(id);
+  if (authDeleteError) {
+    return NextResponse.json({ error: authDeleteError.message }, { status: 500 });
+  }
+
+  const { error: deleteError } = await admin.from('profiles').delete().eq('id', id);
+  if (deleteError) {
+    return NextResponse.json({ error: deleteError.message }, { status: 500 });
+  }
+
+  await writeAuditLog({
+    actor_id: adminAccess.actorProfileId,
+    action: 'admin_delete_alumni',
+    target_type: 'profile',
+    target_id: id,
+    metadata: {
+      deleted_email: profile.email,
+      deleted_name: profile.full_name,
+      deleted_role: profile.role,
+    },
+  });
+
   invalidateAfterAction('alumni_edit');
 
   return NextResponse.json({ success: true });

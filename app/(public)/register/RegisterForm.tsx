@@ -255,7 +255,9 @@ export function RegisterForm({ step, setStep }: RegisterFormProps) {
     } catch (e) {
       console.error('[register] failed to restore draft:', e);
     }
-  }, []);
+  // Draft restore runs once after inputs are rehydrated; getFirstInvalidStep reads the DOM at that moment.
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [setStep]);
 
   // Clean up save draft timeout on unmount
   useEffect(() => {
@@ -313,7 +315,7 @@ export function RegisterForm({ step, setStep }: RegisterFormProps) {
         }
       }
     }
-  }, [state, step]);
+  }, [state, step, setStep]);
 
   // Effect to scroll to the field error after the step changes
   useEffect(() => {

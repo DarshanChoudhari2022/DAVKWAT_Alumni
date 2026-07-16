@@ -3,7 +3,7 @@ import { Suspense } from 'react';
 import { AlertCircle, CheckCircle2, Crown } from 'lucide-react';
 import { Card } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { CardSkeleton, TableRowSkeleton } from '@/components/shared/Skeleton';
+import { CardSkeleton } from '@/components/shared/Skeleton';
 import { SectionError } from '@/components/shared/SectionError';
 import { requireAlumniAccess } from '@/lib/auth/alumni-access';
 import { getMembershipPlansForAlumni } from '@/lib/cache/admin-cache';
@@ -54,7 +54,7 @@ export default async function MembershipPage({
       )}
       {sp.payment && (
         <Card className="mt-6 border-slate-200 bg-slate-50 text-sm text-slate-700">
-          Receipt available for payment reference <span className="font-mono">{sp.payment}</span>. You can also open it from your payment history below.
+          Receipt available for payment reference <span className="font-mono">{sp.payment}</span>.
         </Card>
       )}
 
@@ -113,9 +113,6 @@ export default async function MembershipPage({
       )}
 
       {/* Payments region (fresh, identity-scoped) — independent Suspense boundary */}
-      <Suspense fallback={<PaymentsSkeleton />}>
-        <PaymentsRegion />
-      </Suspense>
     </div>
   );
 }
@@ -300,86 +297,6 @@ async function PlansRegion({
   }
 }
 
-/**
- * Payments region: always fresh via the user's RLS-scoped client (never cached).
- * Identity-scoped data (Req 3.6, 7.1, 7.3).
- */
-async function PaymentsRegion() {
-  try {
-    const { database, userId } = await requireAlumniAccess();
-
-    const { data: payments } = await database
-      .from('payments')
-      .select('id, plan_id, txnid, amount, status, payment_mode, created_at, receipt_url')
-      .eq('alumni_id', userId)
-      .order('created_at', { ascending: false })
-      .limit(10);
-
-    if (!payments || payments.length === 0) {
-      return null;
-    }
-
-    return (
-      <section className="mt-10">
-        <h2 className="font-display text-xl font-semibold">Membership Requests</h2>
-        <div className="mt-4 overflow-x-auto">
-          <table className="w-full text-sm">
-            <thead>
-              <tr className="border-b border-slate-200 text-left text-xs uppercase tracking-wide text-slate-500">
-                <th className="pb-2 pr-4">Reference</th>
-                <th className="pb-2 pr-4">Amount</th>
-                <th className="pb-2 pr-4">Status</th>
-                <th className="pb-2 pr-4">Mode</th>
-                <th className="pb-2">Date</th>
-                <th className="pb-2">Receipt</th>
-              </tr>
-            </thead>
-            <tbody>
-              {payments.map((payment) => (
-                <tr key={payment.id} className="border-b border-slate-100">
-                  <td className="py-3 pr-4 font-mono text-xs">{payment.txnid}</td>
-                  <td className="py-3 pr-4">{formatINR(Number(payment.amount))}</td>
-                  <td className="py-3 pr-4">
-                    <Badge
-                      variant={
-                        payment.status === 'success'
-                          ? 'success'
-                          : payment.status === 'failed'
-                            ? 'error'
-                            : 'warning'
-                      }
-                    >
-                      {payment.status}
-                    </Badge>
-                  </td>
-                  <td className="py-3 pr-4 capitalize">
-                    {payment.payment_mode?.replace(/_/g, ' ') ?? 'manual review'}
-                  </td>
-                  <td className="py-3">{formatDate(payment.created_at)}</td>
-                  <td className="py-3">
-                    {payment.receipt_url ? (
-                      <a
-                        href={payment.receipt_url}
-                        className="text-[#0F2557] underline hover:no-underline"
-                      >
-                        View
-                      </a>
-                    ) : (
-                      <span className="text-slate-400">-</span>
-                    )}
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-      </section>
-    );
-  } catch {
-    return <SectionError title="Couldn't load payment history." />;
-  }
-}
-
 // ---------------------------------------------------------------------------
 // Skeleton fallbacks
 // ---------------------------------------------------------------------------
@@ -393,32 +310,6 @@ function PlansSkeleton() {
         <CardSkeleton className="h-64" />
         <CardSkeleton className="h-64" />
         <CardSkeleton className="h-64" />
-      </div>
-    </section>
-  );
-}
-
-function PaymentsSkeleton() {
-  return (
-    <section className="mt-10">
-      <div className="mb-4 h-7 w-48 animate-pulse rounded bg-slate-200" />
-      <div className="overflow-x-auto">
-        <table className="w-full text-sm">
-          <thead>
-            <tr className="border-b border-slate-200">
-              {Array.from({ length: 6 }).map((_, i) => (
-                <th key={i} className="pb-2 pr-4">
-                  <div className="h-3 w-16 animate-pulse rounded bg-slate-200" />
-                </th>
-              ))}
-            </tr>
-          </thead>
-          <tbody>
-            <TableRowSkeleton cols={6} />
-            <TableRowSkeleton cols={6} />
-            <TableRowSkeleton cols={6} />
-          </tbody>
-        </table>
       </div>
     </section>
   );

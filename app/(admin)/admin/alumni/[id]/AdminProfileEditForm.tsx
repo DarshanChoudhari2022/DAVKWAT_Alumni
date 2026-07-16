@@ -157,7 +157,7 @@ export function AdminProfileEditForm({ alumniId, initial }: AdminProfileEditForm
           defaultValue={initial.linkedin_url ?? ''}
         />
         <Field
-          label="Proof of Schooling URL"
+          label="Website URL"
           name="website_url"
           type="url"
           maxLength={VALIDATION_LIMITS.urlMax}

@@ -1,5 +1,6 @@
 import { Suspense } from 'react';
 import type { Metadata } from 'next';
+import { redirect } from 'next/navigation';
 import { requireAdminAccess } from '@/lib/auth/admin-access';
 import { Card } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -24,6 +25,9 @@ export default async function AdminSettingsPage() {
   // streaming regions below reuse it without re-verifying (Req 1.1/1.2).
   const adminAccess = await requireAdminAccess();
   const isSuperAdmin = adminAccess.role === 'super_admin';
+  if (!isSuperAdmin) {
+    redirect('/admin');
+  }
 
   return (
     <div className="mx-auto max-w-4xl px-3 py-5 sm:px-6 sm:py-8 lg:px-8">

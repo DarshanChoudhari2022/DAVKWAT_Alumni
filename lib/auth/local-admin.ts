@@ -104,6 +104,15 @@ export async function verifyLocalAdminCredentials(email: string, password: strin
   return emailMatches && passwordMatches;
 }
 
+export async function verifyLocalAdminPassword(password: string) {
+  const expectedPassword = process.env.ADMIN_LOGIN_PASSWORD;
+  if (!expectedPassword) {
+    return false;
+  }
+
+  return secureEqual(password, expectedPassword);
+}
+
 export async function createLocalAdminSessionToken(email: string) {
   const payload = encodeText(
     JSON.stringify({

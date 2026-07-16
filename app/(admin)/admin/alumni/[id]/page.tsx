@@ -1,13 +1,12 @@
 import type { Metadata } from 'next';
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
-import { ArrowLeft, Mail, Phone, MapPin, Briefcase, GraduationCap, Calendar } from 'lucide-react';
+import { ArrowLeft, Mail, Phone, MapPin, Briefcase, GraduationCap, Calendar, ExternalLink } from 'lucide-react';
 import { Card } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { MobileInfoRow } from '@/components/admin/MobileInfoRow';
 import { Avatar } from '@/components/shared/Avatar';
 import { requireAdminAccess } from '@/lib/auth/admin-access';
-import { formatDate, formatINR } from '@/lib/utils/format';
+import { formatDate } from '@/lib/utils/format';
 import { AlumniDetailActions } from './AlumniDetailActions';
 import { AdminProfileEditForm } from './AdminProfileEditForm';
 
@@ -19,7 +18,8 @@ export default async function AdminAlumniDetailPage({
   params: Promise<{ id: string }>;
 }) {
   const { id } = await params;
-  const { database: supabase } = await requireAdminAccess();
+  const adminAccess = await requireAdminAccess();
+  const { database: supabase } = adminAccess;
 
   // Parallel fetch: profile + payments at the same time (~2x faster)
   const [alumniResult, paymentsResult] = await Promise.all([
@@ -30,7 +30,7 @@ export default async function AdminAlumniDetailPage({
       .single(),
     supabase
       .from('payments')
-      .select('id, txnid, amount, status, payment_mode, created_at')
+      .select('id, txnid, amount, status, payment_mode, receipt_url, created_at')
       .eq('alumni_id', id)
       .order('created_at', { ascending: false })
       .order('id', { ascending: false })
@@ -40,6 +40,7 @@ export default async function AdminAlumniDetailPage({
   const alumni = alumniResult.data;
   if (!alumni) notFound();
   const payments = paymentsResult.data;
+  const latestPaymentProofUrl = payments?.find((payment) => payment.receipt_url)?.receipt_url ?? null;
 
   return (
     <div className="mx-auto max-w-4xl px-3 py-5 sm:px-6 sm:py-8 lg:px-8">
@@ -88,6 +89,7 @@ export default async function AdminAlumniDetailPage({
           </div>
           <AlumniDetailActions
             alumniId={alumni.id}
+            canDelete={adminAccess.role === 'super_admin'}
             currentRole={alumni.role}
             isActive={alumni.is_active}
           />
@@ -176,18 +178,17 @@ export default async function AdminAlumniDetailPage({
             <DetailRow icon={Briefcase} label="Job Title" value={alumni.job_title ?? '—'} />
             <DetailRow icon={Briefcase} label="Industry" value={alumni.industry ?? '—'} />
             {alumni.linkedin_url && (
-              <div className="flex items-start gap-2">
-                <span className="font-medium text-slate-500">LinkedIn:</span>
-                <a
-                  href={alumni.linkedin_url}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="text-[#0F2557] hover:underline"
-                >
-                  View Profile
-                </a>
-              </div>
+              <MaskedViewLink label="LinkedIn" href={alumni.linkedin_url} />
             )}
+          </dl>
+        </Card>
+
+        {/* Verification documents */}
+        <Card>
+          <h2 className="font-display text-lg font-semibold">Verification Documents</h2>
+          <dl className="mt-4 space-y-3 text-sm">
+            <MaskedViewLink label="Proof of Schooling" href={alumni.school_document_url} />
+            <MaskedViewLink label="Proof of Payment" href={latestPaymentProofUrl} />
           </dl>
         </Card>
 
@@ -235,73 +236,6 @@ export default async function AdminAlumniDetailPage({
           )}
         </Card>
       )}
-
-      {/* Payment History */}
-      <Card className="mt-6">
-        <h2 className="font-display text-lg font-semibold">Payment History</h2>
-        {(payments ?? []).length === 0 ? (
-          <p className="mt-3 text-sm text-slate-500">No payments recorded.</p>
-        ) : (
-          <>
-          <div className="mt-4 grid gap-3 sm:hidden">
-            {(payments ?? []).map((p: { id: string; txnid: string; amount: number; status: string; payment_mode: string | null; created_at: string }) => (
-              <div key={p.id} className="rounded-xl border border-slate-100 bg-slate-50 p-3">
-                <div className="flex items-start justify-between gap-3">
-                  <code className="break-all font-mono text-xs">{p.txnid}</code>
-                  <Badge
-                    variant={
-                      p.status === 'success' ? 'success' : p.status === 'failed' ? 'error' : 'warning'
-                    }
-                  >
-                    {p.status}
-                  </Badge>
-                </div>
-                <div className="mt-3 space-y-2">
-                  <MobileInfoRow label="Amount">{formatINR(Number(p.amount))}</MobileInfoRow>
-                  <MobileInfoRow label="Mode"><span className="capitalize">{p.payment_mode ?? '-'}</span></MobileInfoRow>
-                  <MobileInfoRow label="Date">{formatDate(p.created_at)}</MobileInfoRow>
-                </div>
-              </div>
-            ))}
-          </div>
-
-          <div className="mt-4 hidden overflow-x-auto rounded-2xl border border-slate-200 sm:block">
-            <table className="w-full min-w-[640px] text-sm">
-              <thead>
-                <tr className="border-b border-slate-200 text-left text-xs uppercase tracking-wide text-slate-500">
-                  <th className="pb-2 pr-3">Txn ID</th>
-                  <th className="pb-2 pr-3">Amount</th>
-                  <th className="pb-2 pr-3">Status</th>
-                  <th className="pb-2 pr-3">Mode</th>
-                  <th className="pb-2">Date</th>
-                </tr>
-              </thead>
-              <tbody>
-                {(payments ?? []).map((p: { id: string; txnid: string; amount: number; status: string; payment_mode: string | null; created_at: string }) => (
-                  <tr key={p.id} className="border-b border-slate-100">
-                    <td className="py-2 pr-3">
-                      <code className="font-mono text-xs">{p.txnid}</code>
-                    </td>
-                    <td className="py-2 pr-3">{formatINR(Number(p.amount))}</td>
-                    <td className="py-2 pr-3">
-                      <Badge
-                        variant={
-                          p.status === 'success' ? 'success' : p.status === 'failed' ? 'error' : 'warning'
-                        }
-                      >
-                        {p.status}
-                      </Badge>
-                    </td>
-                    <td className="py-2 pr-3 capitalize">{p.payment_mode ?? '—'}</td>
-                    <td className="py-2">{formatDate(p.created_at)}</td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-          </>
-        )}
-      </Card>
 
       {/* Rejection reason */}
       {alumni.rejection_reason && (
@@ -362,6 +296,38 @@ function DetailRow({
         <dt className="font-medium text-slate-500">{label}</dt>
         <dd className="text-slate-900">{value}</dd>
       </div>
+    </div>
+  );
+}
+
+function maskExternalUrl(value: string) {
+  try {
+    return new URL(value).hostname.replace(/^www\./, '');
+  } catch {
+    return 'External file';
+  }
+}
+
+function MaskedViewLink({ label, href }: { label: string; href: string | null }) {
+  return (
+    <div className="flex items-start justify-between gap-3">
+      <dt className="font-medium text-slate-500">{label}</dt>
+      <dd className="text-right">
+        {href ? (
+          <a
+            href={href}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="inline-flex items-center gap-1.5 rounded-md border border-slate-200 px-2.5 py-1 text-xs font-medium text-[#0F2557] hover:bg-slate-50"
+            title={maskExternalUrl(href)}
+          >
+            View
+            <ExternalLink className="h-3.5 w-3.5" />
+          </a>
+        ) : (
+          <span className="text-slate-400">Not uploaded</span>
+        )}
+      </dd>
     </div>
   );
 }

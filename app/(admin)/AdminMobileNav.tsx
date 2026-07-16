@@ -31,11 +31,12 @@ const ADMIN_NAV = [
   { href: '/admin/forum', label: 'Forum', icon: MessageSquare },
   { href: '/admin/payments', label: 'Payments', icon: CreditCard },
   { href: '/admin/reports', label: 'Reports', icon: BarChart3 },
-  { href: '/admin/settings', label: 'Settings', icon: Settings },
+  { href: '/admin/settings', label: 'Settings', icon: Settings, superAdminOnly: true },
 ];
 
 interface AdminMobileNavProps {
   displayName: string;
+  isSuperAdmin: boolean;
   pendingCount: number;
   logoutAction: () => void | Promise<void>;
 }
@@ -45,16 +46,22 @@ function isActive(pathname: string, href: string, exact?: boolean) {
   return pathname === href || pathname.startsWith(`${href}/`);
 }
 
-export function AdminMobileNav({ displayName, pendingCount, logoutAction }: AdminMobileNavProps) {
+export function AdminMobileNav({
+  displayName,
+  isSuperAdmin,
+  pendingCount,
+  logoutAction,
+}: AdminMobileNavProps) {
   const pathname = usePathname();
   const [open, setOpen] = useState(false);
+  const visibleNav = ADMIN_NAV.filter((item) => !item.superAdminOnly || isSuperAdmin);
 
   // Close the drawer whenever the route changes.
   useEffect(() => {
     setOpen(false);
   }, [pathname]);
 
-  const activeItem = ADMIN_NAV.find((item) => isActive(pathname, item.href, item.exact));
+  const activeItem = visibleNav.find((item) => isActive(pathname, item.href, item.exact));
 
   return (
     <header className="sticky top-0 z-30 flex h-14 items-center justify-between border-b border-slate-200 bg-white/95 px-3 backdrop-blur sm:px-4 lg:hidden">
@@ -96,7 +103,7 @@ export function AdminMobileNav({ displayName, pendingCount, logoutAction }: Admi
 
               <nav className="flex-1 overflow-y-auto px-3 py-3" aria-label="Admin navigation">
                 <ul className="space-y-1">
-                  {ADMIN_NAV.map((item) => {
+                  {visibleNav.map((item) => {
                     const active = isActive(pathname, item.href, item.exact);
                     return (
                       <li key={item.href}>

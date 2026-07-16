@@ -2,17 +2,23 @@
 
 import { useState, useTransition } from 'react';
 import { useRouter } from 'next/navigation';
-import { Shield, UserX, UserCheck } from 'lucide-react';
+import { Shield, Trash2, UserX, UserCheck } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { readApiResponse } from '@/lib/utils/api-client';
 
 interface AlumniDetailActionsProps {
   alumniId: string;
+  canDelete: boolean;
   currentRole: string;
   isActive: boolean;
 }
 
-export function AlumniDetailActions({ alumniId, currentRole, isActive }: AlumniDetailActionsProps) {
+export function AlumniDetailActions({
+  alumniId,
+  canDelete,
+  currentRole,
+  isActive,
+}: AlumniDetailActionsProps) {
   const [role, setRole] = useState(currentRole);
   const [error, setError] = useState<string | null>(null);
   const [isPending, startTransition] = useTransition();
@@ -48,6 +54,34 @@ export function AlumniDetailActions({ alumniId, currentRole, isActive }: AlumniD
       if (!res.ok) {
         setError(data.error ?? 'Failed to update status.');
       } else {
+        router.refresh();
+      }
+    });
+  }
+
+  function handleDelete() {
+    const adminPassword = window.prompt(
+      'Enter the admin password to permanently delete this alumni record.'
+    );
+    if (!adminPassword) return;
+
+    const confirmed = window.confirm(
+      'This permanently deletes the alumni login, profile, documents, payments, RSVPs, and related records. This cannot be undone.'
+    );
+    if (!confirmed) return;
+
+    setError(null);
+    startTransition(async () => {
+      const res = await fetch(`/api/admin/alumni/${alumniId}`, {
+        method: 'DELETE',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ adminPassword }),
+      });
+      const data = await readApiResponse<{ error?: string }>(res);
+      if (!res.ok) {
+        setError(data.error ?? 'Failed to delete alumni record.');
+      } else {
+        router.replace('/admin/alumni');
         router.refresh();
       }
     });
@@ -93,6 +127,19 @@ export function AlumniDetailActions({ alumniId, currentRole, isActive }: AlumniD
           </>
         )}
       </Button>
+
+      {canDelete && (
+        <Button
+          size="sm"
+          variant="destructive"
+          onClick={handleDelete}
+          disabled={isPending}
+          className="w-full sm:w-auto"
+        >
+          <Trash2 className="h-4 w-4" />
+          Delete Permanently
+        </Button>
+      )}
     </div>
   );
 }

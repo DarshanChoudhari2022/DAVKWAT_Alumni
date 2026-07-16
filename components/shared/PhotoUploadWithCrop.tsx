@@ -39,7 +39,6 @@ export function PhotoUploadWithCrop({
   onChange,
 }: PhotoUploadWithCropProps) {
   const [imgSrc, setImgSrc] = useState<string>('');
-  const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [crop, setCrop] = useState<Crop>();
   const [completedCrop, setCompletedCrop] = useState<PixelCrop | null>(null);
   const [photoPreview, setPhotoPreview] = useState<string | null>(null);
@@ -59,6 +58,7 @@ export function PhotoUploadWithCrop({
   const fileInputRef = useRef<HTMLInputElement>(null);
   const hiddenFileInputRef = useRef<HTMLInputElement>(null);
   const dialogRef = useRef<HTMLDialogElement>(null);
+  const selectedFileRef = useRef<File | null>(null);
 
   // Load camera devices
   const loadDevices = useCallback(async () => {
@@ -189,7 +189,7 @@ export function PhotoUploadWithCrop({
         }
       }
 
-      setSelectedFile(file);
+      selectedFileRef.current = file;
       const reader = new FileReader();
       reader.addEventListener('load', () => {
         setImgSrc(reader.result?.toString() || '');
@@ -241,7 +241,7 @@ export function PhotoUploadWithCrop({
         canvas.toBlob((blob) => {
           if (blob) {
             const file = new File([blob], 'camera-capture.jpg', { type: 'image/jpeg' });
-            setSelectedFile(file);
+            selectedFileRef.current = file;
           }
         }, 'image/jpeg', 0.95);
 
@@ -354,7 +354,7 @@ export function PhotoUploadWithCrop({
           
           // Re-trigger visual change
           const previewUrl = URL.createObjectURL(file);
-          setSelectedFile(file); // Keep reference to prevent GC of the file and its object URL
+          selectedFileRef.current = file; // Keep reference to prevent GC of the file and its object URL
           setPhotoPreview(previewUrl);
           setIsDialogOpen(false);
           if (useCrop) {
@@ -373,7 +373,7 @@ export function PhotoUploadWithCrop({
   const removePhoto = () => {
     setPhotoPreview(null);
     setImgSrc('');
-    setSelectedFile(null);
+    selectedFileRef.current = null;
     setCrop(undefined);
     setCompletedCrop(null);
     stopCamera();
