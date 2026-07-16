@@ -25,6 +25,7 @@ const SUPPORTS = [
 
 function planPeriod(plan: MembershipPlan): string {
   if (plan.membership_type === 'lifetime') return 'one-time';
+  if (plan.membership_type === 'monthly') return 'per month';
   if (plan.duration_months && plan.duration_months !== 12) {
     return `every ${plan.duration_months} months`;
   }
@@ -65,14 +66,14 @@ export function MembershipSection({ plans }: MembershipSectionProps) {
               {hasPlans ? (
                 <>
                   {plans.map((plan) => {
-                    const isLifetime = plan.membership_type === 'lifetime';
+                    const isAnnual = plan.membership_type === 'annual';
                     return (
                       <div
                         key={plan.id}
-                        className={`relative flex h-full flex-col rounded-3xl border bg-white p-6 shadow-sm ${isLifetime ? 'border-[#0F2557] ring-1 ring-[#0F2557]/15' : 'border-slate-200'
+                        className={`relative flex h-full flex-col rounded-3xl border bg-white p-6 shadow-sm ${isAnnual ? 'border-[#0F2557] ring-1 ring-[#0F2557]/15' : 'border-slate-200'
                           }`}
                       >
-                        {isLifetime && (
+                        {isAnnual && (
                           <span className="absolute -top-2.5 right-5 rounded-full bg-[#0F2557] px-3 py-0.5 text-[10px] font-bold uppercase tracking-wider text-white">
                             Recommended
                           </span>
@@ -107,7 +108,7 @@ export function MembershipSection({ plans }: MembershipSectionProps) {
                       Lifetime portal access for teachers and staff of DAV Khagaul.
                     </p>
                     <p className="mt-4 font-sans text-3xl font-bold text-[#0F2557]">
-                      Free
+                      Complimentary
                     </p>
                     <p className="mt-0.5 text-xs text-slate-500">Lifetime</p>
                     <p className="mt-4 text-xs text-slate-500">

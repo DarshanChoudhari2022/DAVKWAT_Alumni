@@ -2,7 +2,7 @@ import { createAdminClient } from '@/lib/supabase/admin';
 import { APP_URL, FROM_EMAIL, getResend } from '@/lib/resend/client';
 
 export function getMembershipExpiryDate(
-  membershipType: 'lifetime' | 'annual' | undefined,
+  membershipType: 'lifetime' | 'annual' | 'monthly' | undefined,
   durationMonths: number | null
 ) {
   if (membershipType === 'lifetime') {
@@ -67,7 +67,7 @@ export async function sendPaymentReceiptEmail(params: {
   alumniId: string | null | undefined;
   planId: string | null | undefined;
   amount: string | number | null | undefined;
-  membershipType: 'lifetime' | 'annual' | undefined;
+  membershipType: 'lifetime' | 'annual' | 'monthly' | undefined;
 }) {
   if (!process.env.RESEND_API_KEY || !params.alumniId) {
     return { sent: false };

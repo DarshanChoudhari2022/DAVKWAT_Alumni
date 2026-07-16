@@ -52,7 +52,7 @@ export interface Database {
           approved_at: string | null;
           approved_by: string | null;
           rejection_reason: string | null;
-          membership_type: 'lifetime' | 'annual' | null;
+          membership_type: 'lifetime' | 'annual' | 'monthly' | null;
           membership_expires_at: string | null;
           is_paid_member: boolean;
           created_at: string;
@@ -101,7 +101,7 @@ export interface Database {
           approved_at?: string | null;
           approved_by?: string | null;
           rejection_reason?: string | null;
-          membership_type?: 'lifetime' | 'annual' | null;
+          membership_type?: 'lifetime' | 'annual' | 'monthly' | null;
           membership_expires_at?: string | null;
           is_paid_member?: boolean;
           created_at?: string;
@@ -329,7 +329,7 @@ export interface Database {
           description: string | null;
           amount: number;
           currency: string;
-          membership_type: 'lifetime' | 'annual';
+          membership_type: 'lifetime' | 'annual' | 'monthly';
           duration_months: number | null;
           is_active: boolean;
           created_at: string;
@@ -340,7 +340,7 @@ export interface Database {
           description?: string | null;
           amount: number;
           currency?: string;
-          membership_type: 'lifetime' | 'annual';
+          membership_type: 'lifetime' | 'annual' | 'monthly';
           duration_months?: number | null;
           is_active?: boolean;
           created_at?: string;
@@ -453,7 +453,7 @@ export interface Database {
       user_role: 'guest' | 'pending' | 'alumni' | 'admin' | 'super_admin';
       approval_status: 'pending' | 'approved' | 'rejected';
       payment_status: 'pending' | 'success' | 'failed' | 'refunded';
-      membership_type: 'lifetime' | 'annual';
+      membership_type: 'lifetime' | 'annual' | 'monthly';
     };
   };
 }

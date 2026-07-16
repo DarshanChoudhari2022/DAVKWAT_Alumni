@@ -11,7 +11,7 @@ export const membershipPlanSchema = z.object({
   name: optionalText(VALIDATION_LIMITS.planNameMax).pipe(z.string().min(1, 'Plan name is required')),
   description: optionalText(VALIDATION_LIMITS.planDescriptionMax),
   amount: z.coerce.number().positive('Amount must be greater than 0'),
-  membership_type: z.enum(['lifetime', 'annual']),
+  membership_type: z.enum(['lifetime', 'annual', 'monthly']),
   duration_months: z.coerce.number().int().positive().optional().nullable(),
   is_active: z.boolean().default(true),
 });

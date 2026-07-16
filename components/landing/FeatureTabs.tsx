@@ -103,7 +103,7 @@ const CONTENT: Record<TabKey, { title: string; bullets: string[] }> = {
   donations: {
     title: 'Manage membership and contributions securely.',
     bullets: [
-      'Annual and lifetime membership plans',
+      'Annual and monthly membership plans',
       'Manual fee coordination until the payment gateway goes live',
       'Membership records, renewal reminders, and payment history',
       'Transparent records for Trust administration',

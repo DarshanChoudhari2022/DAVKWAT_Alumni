@@ -86,7 +86,7 @@ export default async function AdminAlumniPage({
         >
           <option value="">All membership</option>
           <option value="paid">Paid</option>
-          <option value="free">Free</option>
+          <option value="free">Unpaid</option>
         </select>
         <div className="flex flex-col gap-2 sm:flex-row lg:col-span-4">
           <button
@@ -200,7 +200,7 @@ async function AlumniListRegion({ sp, page }: { sp: SearchParams; page: number }
                         {a.approval_status}
                       </Badge>
                       <Badge variant={a.is_paid_member ? 'success' : 'default'}>
-                        {a.is_paid_member ? 'Paid' : 'Free'}
+                        {a.is_paid_member ? 'Paid' : 'Unpaid'}
                       </Badge>
                     </div>
                   </div>
@@ -262,7 +262,7 @@ async function AlumniListRegion({ sp, page }: { sp: SearchParams; page: number }
                   </td>
                   <td className="py-3 pr-3">
                     <Badge variant={a.is_paid_member ? 'success' : 'default'}>
-                      {a.is_paid_member ? 'Paid' : 'Free'}
+                      {a.is_paid_member ? 'Paid' : 'Unpaid'}
                     </Badge>
                   </td>
                   <td className="py-3 pr-3 capitalize">{a.role}</td>

@@ -15,7 +15,7 @@ type DeliverySegment =
 const SEGMENT_LABELS: Record<DeliverySegment, string> = {
   all: 'All verified alumni',
   paid_members: 'Paid members',
-  free_members: 'Free members',
+  free_members: 'Unpaid members',
   batch_year: 'Batch year',
   course: 'Course',
   city: 'City',

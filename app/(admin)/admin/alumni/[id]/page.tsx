@@ -75,7 +75,7 @@ export default async function AdminAlumniDetailPage({
                   {alumni.approval_status}
                 </Badge>
                 <Badge variant={alumni.is_paid_member ? 'success' : 'default'}>
-                  {alumni.is_paid_member ? 'Paid Member' : 'Free'}
+                  {alumni.is_paid_member ? 'Paid Member' : 'Unpaid'}
                 </Badge>
                 <Badge variant="default">
                   {alumni.profile_type === 'faculty' ? 'Faculty' : 'Alumni'}

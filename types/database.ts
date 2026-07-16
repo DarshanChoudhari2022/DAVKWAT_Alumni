@@ -3,7 +3,7 @@ export type { Json } from '@/lib/supabase/database.types';
 export type UserRole = 'guest' | 'pending' | 'alumni' | 'admin' | 'super_admin';
 export type ApprovalStatus = 'pending' | 'approved' | 'rejected';
 export type PaymentStatus = 'pending' | 'success' | 'failed' | 'refunded';
-export type MembershipType = 'lifetime' | 'annual';
+export type MembershipType = 'lifetime' | 'annual' | 'monthly';
 
 export interface Profile {
   id: string;

@@ -4,15 +4,15 @@ export const MANUAL_MEMBERSHIP_PAYMENT = {
   transactionNote: 'DAVKAWT Alumni Membership Fee',
   currency: 'INR',
   whatsappNumber: '919773695456',
-  /** QR image for the ₹500 annual plan */
+  /** QR image used for manual annual/monthly UPI payments */
   qrImage500: '/500.jpeg',
-  /** QR image for the ₹5,000 lifetime plan */
+  /** Legacy QR image kept for old references and records */
   qrImage5000: '/5000.jpeg',
   /** Legacy single QR path (kept for backward compat) */
   qrImagePath: '/manual-membership-upi-qr.jpeg',
 } as const;
 
-export type MembershipAmount = 500 | 5000;
+export type MembershipAmount = 100 | 500 | 5000;
 
 /**
  * Build a UPI deep-link for the selected membership amount.

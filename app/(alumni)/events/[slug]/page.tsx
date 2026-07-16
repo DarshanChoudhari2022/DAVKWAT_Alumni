@@ -240,8 +240,8 @@ export default async function EventDetailPage({
                   <span className="font-semibold text-[#0F2557]">{formatINR(500)} / year</span>
                 </div>
                 <div className="flex justify-between">
-                  <span>Lifetime Membership</span>
-                  <span className="font-semibold text-[#0F2557]">{formatINR(5000)} (One-time)</span>
+                  <span>Monthly Membership</span>
+                  <span className="font-semibold text-[#0F2557]">{formatINR(100)} / month</span>
                 </div>
               </div>
 
@@ -338,7 +338,7 @@ export default async function EventDetailPage({
                   <div>
                     <h4 className="font-semibold text-sm text-slate-700">Option 2: Manual UPI Transfer</h4>
                     <p className="text-xs text-slate-500 mt-1">
-                      Transfer <span className="font-semibold">{formatINR(500)}</span> (Annual) or <span className="font-semibold">{formatINR(5000)}</span> (Lifetime) to:
+                      Transfer <span className="font-semibold">{formatINR(500)}</span> (Annual) or <span className="font-semibold">{formatINR(100)}</span> (Monthly) to:
                     </p>
                     <code className="block bg-slate-100 px-2 py-1 rounded text-xs mt-1.5 font-mono text-center font-semibold text-[#0F2557] break-all">
                       {MANUAL_MEMBERSHIP_PAYMENT.upiId}

@@ -38,6 +38,7 @@ enum payment_status {
 enum membership_type {
   lifetime
   annual
+  monthly
 }
 
 // ─── PROFILES ───────────────────────────────────────────────────────

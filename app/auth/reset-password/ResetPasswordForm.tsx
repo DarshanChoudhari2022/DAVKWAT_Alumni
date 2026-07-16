@@ -13,16 +13,31 @@ export function ResetPasswordForm({ recoveryCode }: { recoveryCode?: string }) {
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState(false);
   const [isPreparingSession, setIsPreparingSession] = useState(Boolean(recoveryCode));
+  const [hasResetSession, setHasResetSession] = useState(Boolean(recoveryCode));
   const [isPending, startTransition] = useTransition();
   const router = useRouter();
 
   useEffect(() => {
-    if (!recoveryCode) {
-      return;
-    }
-
     let isMounted = true;
     const supabase = createClient();
+
+    if (!recoveryCode) {
+      supabase.auth.getSession().then(({ data }) => {
+        if (!isMounted) {
+          return;
+        }
+
+        const hasSession = Boolean(data.session);
+        setHasResetSession(hasSession);
+        if (!hasSession) {
+          setError('This reset link is invalid or expired. Please request a new reset link.');
+        }
+      });
+
+      return () => {
+        isMounted = false;
+      };
+    }
 
     supabase.auth.exchangeCodeForSession(recoveryCode).then(({ error: sessionError }) => {
       if (!isMounted) {
@@ -32,6 +47,7 @@ export function ResetPasswordForm({ recoveryCode }: { recoveryCode?: string }) {
       if (sessionError) {
         setError('This reset link is invalid or expired. Please request a new reset link.');
       } else {
+        setHasResetSession(true);
         router.replace('/auth/reset-password');
       }
 
@@ -63,7 +79,14 @@ export function ResetPasswordForm({ recoveryCode }: { recoveryCode?: string }) {
       });
 
       if (updateError) {
-        setError(updateError.message);
+        const isMissingSession =
+          updateError.message.toLowerCase().includes('session') ||
+          updateError.message.toLowerCase().includes('jwt');
+        setError(
+          isMissingSession
+            ? 'This reset session has expired. Please request a new reset link.'
+            : updateError.message
+        );
         return;
       }
 
@@ -116,7 +139,7 @@ export function ResetPasswordForm({ recoveryCode }: { recoveryCode?: string }) {
           className="mt-1.5"
         />
       </div>
-      <Button type="submit" className="w-full" loading={isPending} disabled={isPreparingSession}>
+      <Button type="submit" className="w-full" loading={isPending} disabled={isPreparingSession || !hasResetSession}>
         Update password
       </Button>
     </form>

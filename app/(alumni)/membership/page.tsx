@@ -70,7 +70,7 @@ export default async function MembershipPage({
                 Faculty Member
               </h2>
               <p className="mt-0.5 text-sm text-emerald-700">
-                Faculty accounts have a free lifetime membership and full portal access.
+                Faculty accounts receive complimentary lifetime membership and full portal access.
               </p>
             </div>
           </div>
@@ -211,13 +211,13 @@ async function PlansRegion({
                 <Card
                   key={plan.id}
                   className={`relative flex flex-col justify-between ${
-                    plan.membership_type === 'lifetime'
+                    plan.membership_type === 'annual'
                       ? 'border-[#0F2557] ring-1 ring-[#0F2557]/20'
                       : ''
                   }`}
                 >
                   <div>
-                    {plan.membership_type === 'lifetime' && (
+                    {plan.membership_type === 'annual' && (
                       <Badge variant="primary" className="absolute -top-2.5 right-4">
                         Recommended
                       </Badge>
@@ -230,17 +230,19 @@ async function PlansRegion({
                       {formatINR(Number(plan.amount))}
                     </p>
                     <p className="mt-0.5 text-xs text-slate-500">
-                      {plan.membership_type === 'lifetime'
-                        ? 'One-time fee'
-                        : `Per year${plan.duration_months ? ` (${plan.duration_months} months)` : ''}`}
+                      {plan.membership_type === 'monthly'
+                        ? `Per month${plan.duration_months ? ` (${plan.duration_months} month${plan.duration_months === 1 ? '' : 's'})` : ''}`
+                        : plan.membership_type === 'annual'
+                          ? `Per year${plan.duration_months ? ` (${plan.duration_months} months)` : ''}`
+                          : 'One-time fee'}
                     </p>
                     <ul className="mt-4 space-y-2 text-sm text-slate-700">
                       <BenefitItem>Full alumni directory access</BenefitItem>
                       <BenefitItem>Event registrations and RSVP</BenefitItem>
                       <BenefitItem>Forum participation</BenefitItem>
                       <BenefitItem>Verified member badge</BenefitItem>
-                      {plan.membership_type === 'lifetime' && (
-                        <BenefitItem>Priority support and recognition</BenefitItem>
+                      {plan.membership_type === 'annual' && (
+                        <BenefitItem>Annual renewal reminders</BenefitItem>
                       )}
                     </ul>
                   </div>
@@ -263,7 +265,7 @@ async function PlansRegion({
                     Lifetime portal access for teachers and staff of DAV Khagaul.
                   </p>
                   <p className="mt-4 font-display text-3xl font-bold text-[#0F2557]">
-                    Free
+                    Complimentary
                   </p>
                   <p className="mt-0.5 text-xs text-slate-500">
                     Lifetime

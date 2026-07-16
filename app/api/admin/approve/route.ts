@@ -34,6 +34,8 @@ export async function POST(req: Request) {
         rejection_reason: null,
         updated_at: now,
         is_paid_member: isFaculty ? true : undefined,
+        membership_type: isFaculty ? 'lifetime' : undefined,
+        membership_expires_at: isFaculty ? null : undefined,
       })
       .eq('id', alumniId)
       .eq('approval_status', 'pending')

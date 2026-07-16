@@ -549,7 +549,7 @@ export async function registerAction(
         const whatsappUrl = buildManualPaymentWhatsappUrl({
           fullName: data.full_name,
           batchYear: String(data.batch_year),
-          amount: selectedAmount as 500 | 5000,
+          amount: selectedAmount as 100 | 500,
           paymentProofUrl: proofUrl,
         });
         console.log(`[register] WhatsApp proof URL generated: ${whatsappUrl}`);

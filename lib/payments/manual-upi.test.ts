@@ -23,10 +23,10 @@ describe('manual UPI payment helpers', () => {
     expect(url).toContain('pa=thakursubhashsingh-1%40okaxis');
   });
 
-  it('builds a UPI deep link with ₹5000 amount', () => {
-    const url = buildUpiPaymentUrl(5000);
+  it('builds a UPI deep link with monthly amount', () => {
+    const url = buildUpiPaymentUrl(100);
 
-    expect(url).toContain('am=5000');
+    expect(url).toContain('am=100');
   });
 
   it('uses Subhash Ji WhatsApp number (919773695456)', () => {
@@ -38,14 +38,14 @@ describe('manual UPI payment helpers', () => {
       fullName: 'Asha Kumar',
       batchYear: '2012',
       phone: '9876543210',
-      amount: 5000,
+      amount: 500,
     });
 
     expect(url).toContain(`https://wa.me/${MANUAL_MEMBERSHIP_PAYMENT.whatsappNumber}`);
     expect(decodeURIComponent(url)).toContain('Asha Kumar');
     expect(decodeURIComponent(url)).toContain('2012');
     expect(decodeURIComponent(url)).toContain('9876543210');
-    expect(decodeURIComponent(url)).toContain('₹5,000');
+    expect(decodeURIComponent(url)).toContain('₹500');
     expect(decodeURIComponent(url)).toContain(MANUAL_MEMBERSHIP_PAYMENT.upiId);
     expect(decodeURIComponent(url)).toContain('Subhash Ji');
   });
