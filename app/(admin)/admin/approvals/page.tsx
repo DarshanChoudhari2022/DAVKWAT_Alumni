@@ -10,6 +10,7 @@ import { requireAdminAccess } from '@/lib/auth/admin-access';
 import { formatCount } from '@/lib/db/count-format';
 import { computePagination } from '@/lib/db/pagination';
 import { formatDate } from '@/lib/utils/format';
+import { getSchoolProofUrl } from '@/lib/profiles/proof-url';
 import { ApprovalActions } from './ApprovalActions';
 
 export const metadata: Metadata = { title: 'Pending Approvals - Admin' };
@@ -114,7 +115,7 @@ async function ApprovalsListRegion({ sp, page }: { sp: SearchParams; page: numbe
     let listQuery = supabase
       .from('profiles')
       .select(
-        'id, full_name, email, profile_type, batch_year, course, current_city, phone, created_at, avatar_url, school_document_url, taught_subject, taught_from_year, taught_to_year',
+        'id, full_name, email, profile_type, batch_year, course, current_city, phone, created_at, avatar_url, school_document_url, website_url, taught_subject, taught_from_year, taught_to_year',
         { count: 'exact' }
       )
       .eq('approval_status', 'pending')
@@ -224,6 +225,7 @@ async function ApprovalsListRegion({ sp, page }: { sp: SearchParams; page: numbe
           )}
           {pendingProfiles.map((profile) => {
             const paymentProofUrl = paymentProofByAlumniId.get(profile.id);
+            const schoolProofUrl = getSchoolProofUrl(profile);
             return (
             <li key={profile.id}>
               <Card className="p-4 sm:p-5">
@@ -256,8 +258,8 @@ async function ApprovalsListRegion({ sp, page }: { sp: SearchParams; page: numbe
                         {profile.current_city && (
                           <Badge variant="default">{profile.current_city}</Badge>
                         )}
-                        {profile.school_document_url && (
-                          <a href={profile.school_document_url} target="_blank" rel="noopener noreferrer">
+                        {schoolProofUrl && (
+                          <a href={schoolProofUrl} target="_blank" rel="noopener noreferrer">
                             <Badge variant="primary">Proof of Schooling: View</Badge>
                           </a>
                         )}

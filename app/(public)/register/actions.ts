@@ -281,7 +281,7 @@ async function insertProfile(
       hide_email: data.hide_email as boolean,
       hide_phone: data.hide_phone as boolean,
       avatar_url: avatarUrl,
-      website_url: schoolDocUrl, // Storing school document URL in website_url
+      school_document_url: schoolDocUrl,
       role: 'pending',
       approval_status: 'pending',
     });

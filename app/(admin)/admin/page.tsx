@@ -16,6 +16,7 @@ import {
 } from '@/lib/cache/admin-cache';
 import { getSuccessfulRevenue } from '@/lib/db/estimated-count';
 import { formatINR, formatDate } from '@/lib/utils/format';
+import { DeleteRejectedAlumniButton } from './alumni/DeleteRejectedAlumniButton';
 
 export const metadata: Metadata = { title: 'Admin Dashboard' };
 
@@ -103,7 +104,9 @@ async function DashboardStats() {
 }
 
 async function RecentRegistrationsTable() {
-  const { database: supabase } = await requireAdminAccess();
+  const adminAccess = await requireAdminAccess();
+  const supabase = adminAccess.database;
+  const canDeleteRejected = adminAccess.role === 'super_admin';
   const { data } = await supabase
     .from('profiles')
     .select('id, full_name, batch_year, course, approval_status, created_at')
@@ -136,6 +139,11 @@ async function RecentRegistrationsTable() {
           <div className="mt-4 space-y-2 border-t border-slate-100 pt-3">
             <MobileInfoRow label="Batch">{r.batch_year}</MobileInfoRow>
             <MobileInfoRow label="Course">{r.course}</MobileInfoRow>
+            {canDeleteRejected && r.approval_status === 'rejected' && (
+              <MobileInfoRow label="Actions">
+                <DeleteRejectedAlumniButton alumniId={r.id} />
+              </MobileInfoRow>
+            )}
           </div>
         </Card>
       ))}
@@ -149,7 +157,8 @@ async function RecentRegistrationsTable() {
             <th className="pb-2 pr-4">Batch</th>
             <th className="pb-2 pr-4">Course</th>
             <th className="pb-2 pr-4">Status</th>
-            <th className="pb-2">Registered</th>
+            <th className="pb-2 pr-4">Registered</th>
+            {canDeleteRejected && <th className="pb-2">Actions</th>}
           </tr>
         </thead>
         <tbody>
@@ -171,7 +180,16 @@ async function RecentRegistrationsTable() {
                   {r.approval_status}
                 </Badge>
               </td>
-              <td className="py-3">{formatDate(r.created_at)}</td>
+              <td className="py-3 pr-4">{formatDate(r.created_at)}</td>
+              {canDeleteRejected && (
+                <td className="py-3">
+                  {r.approval_status === 'rejected' ? (
+                    <DeleteRejectedAlumniButton alumniId={r.id} />
+                  ) : (
+                    <span className="text-xs text-slate-400">-</span>
+                  )}
+                </td>
+              )}
             </tr>
           ))}
         </tbody>

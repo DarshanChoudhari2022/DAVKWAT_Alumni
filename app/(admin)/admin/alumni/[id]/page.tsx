@@ -7,6 +7,7 @@ import { Badge } from '@/components/ui/badge';
 import { Avatar } from '@/components/shared/Avatar';
 import { requireAdminAccess } from '@/lib/auth/admin-access';
 import { formatDate } from '@/lib/utils/format';
+import { getSchoolProofUrl } from '@/lib/profiles/proof-url';
 import { AlumniDetailActions } from './AlumniDetailActions';
 import { AdminProfileEditForm } from './AdminProfileEditForm';
 
@@ -41,6 +42,7 @@ export default async function AdminAlumniDetailPage({
   if (!alumni) notFound();
   const payments = paymentsResult.data;
   const latestPaymentProofUrl = payments?.find((payment) => payment.receipt_url)?.receipt_url ?? null;
+  const schoolProofUrl = getSchoolProofUrl(alumni);
 
   return (
     <div className="mx-auto max-w-4xl px-3 py-5 sm:px-6 sm:py-8 lg:px-8">
@@ -188,7 +190,7 @@ export default async function AdminAlumniDetailPage({
         <Card>
           <h2 className="font-display text-lg font-semibold">Verification Documents</h2>
           <dl className="mt-4 space-y-3 text-sm">
-            <MaskedViewLink label="Proof of Schooling" href={alumni.school_document_url} />
+            <MaskedViewLink label="Proof of Schooling" href={schoolProofUrl} />
             <MaskedViewLink label="Proof of Payment" href={latestPaymentProofUrl} />
           </dl>
         </Card>
