@@ -47,7 +47,7 @@ export async function DirectoryListRegion({
       .from('profiles')
       .select(
         'id, full_name, batch_year, course, current_city, current_state, current_country, occupation, company, industry, avatar_url',
-        { count: 'exact' }
+        { count: 'estimated' }
       )
       .eq('approval_status', 'approved')
       .eq('is_active', true);

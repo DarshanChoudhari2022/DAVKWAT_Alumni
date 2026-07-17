@@ -1,7 +1,7 @@
 import type { Metadata } from 'next';
 import Link from 'next/link';
 import { Suspense } from 'react';
-import { Users, Calendar, Megaphone, ArrowRight } from 'lucide-react';
+import { Users, Calendar, Megaphone, ArrowRight, CreditCard, ExternalLink } from 'lucide-react';
 import { Card } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -9,7 +9,7 @@ import { StatCardSkeleton } from '@/components/shared/Skeleton';
 import { SectionError } from '@/components/shared/SectionError';
 import { requireAlumniAccess } from '@/lib/auth/alumni-access';
 import { logoutAction } from '@/app/(public)/login/actions';
-import { formatDate } from '@/lib/utils/format';
+import { formatDate, formatINR } from '@/lib/utils/format';
 import { SignOutButton } from '@/components/shared/SignOutButton';
 
 export const metadata: Metadata = { title: 'Dashboard' };
@@ -64,20 +64,16 @@ export default async function DashboardPage() {
         <StatsRegion batchYear={profile.batch_year} userId={userId} database={database} />
       </Suspense>
 
-      {/* Membership banner (shell, uses profile data) */}
-      {profile.profile_type !== 'faculty' && !profile.is_paid_member && (
-        <Card className="mt-6 flex flex-col items-start gap-4 bg-gradient-to-r from-[#0F2557] to-[#1a3a7a] text-white sm:flex-row sm:items-center sm:justify-between">
-          <div>
-            <h2 className="font-display text-lg font-semibold">Become a paying member</h2>
-            <p className="mt-1 text-sm text-white/80">
-              Support the Trust and unlock all member benefits.
-            </p>
-          </div>
-          <Button asChild variant="accent">
-            <Link href="/membership">View plans</Link>
-          </Button>
-        </Card>
-      )}
+      <Suspense fallback={null}>
+        <PaymentSummaryRegion
+          database={database}
+          userId={userId}
+          membershipType={profile.membership_type}
+          membershipExpiresAt={profile.membership_expires_at}
+          isPaidMember={profile.is_paid_member}
+          profileType={profile.profile_type}
+        />
+      </Suspense>
 
       {/* Upcoming events region (async) */}
       <Suspense fallback={<EventsRegionSkeleton />}>
@@ -111,18 +107,18 @@ async function StatsRegion({
     const [batchPeers, upcomingEvents, recentAnnouncements] = await Promise.all([
       database
         .from('profiles')
-        .select('id', { count: 'exact', head: true })
+        .select('id', { count: 'estimated', head: true })
         .eq('batch_year', batchYear)
         .eq('approval_status', 'approved')
         .neq('id', userId),
       database
         .from('events')
-        .select('id', { count: 'exact', head: true })
+        .select('id', { count: 'estimated', head: true })
         .eq('is_published', true)
         .gte('starts_at', now),
       database
         .from('announcements')
-        .select('id', { count: 'exact', head: true })
+        .select('id', { count: 'estimated', head: true })
         .eq('is_published', true)
         .or(`scheduled_for.is.null,scheduled_for.lte.${now}`),
     ]);
@@ -151,6 +147,96 @@ async function StatsRegion({
     );
   } catch {
     return <SectionError title="Couldn't load stats." />;
+  }
+}
+
+async function PaymentSummaryRegion({
+  database,
+  userId,
+  membershipType,
+  membershipExpiresAt,
+  isPaidMember,
+  profileType,
+}: {
+  database: Awaited<ReturnType<typeof requireAlumniAccess>>['database'];
+  userId: string;
+  membershipType: 'annual' | 'lifetime' | null;
+  membershipExpiresAt: string | null;
+  isPaidMember: boolean;
+  profileType: 'alumni' | 'faculty';
+}) {
+  try {
+    const { data } = await database
+      .from('payments')
+      .select('id, amount, status, receipt_url, created_at, membership_plans(name, membership_type, duration_months)')
+      .eq('alumni_id', userId)
+      .in('status', ['pending', 'success'])
+      .order('created_at', { ascending: false })
+      .order('id', { ascending: false })
+      .limit(1);
+
+    const payment = data?.[0];
+    if (!payment) {
+      if (profileType === 'faculty' || isPaidMember) return null;
+      return (
+        <Card className="mt-6 flex flex-col items-start gap-4 bg-gradient-to-r from-[#0F2557] to-[#1a3a7a] text-white sm:flex-row sm:items-center sm:justify-between">
+          <div>
+            <h2 className="font-display text-lg font-semibold">Become a paying member</h2>
+            <p className="mt-1 text-sm text-white/80">
+              Support the Trust and unlock all member benefits.
+            </p>
+          </div>
+          <Button asChild variant="accent">
+            <Link href="/membership">View plans</Link>
+          </Button>
+        </Card>
+      );
+    }
+
+    const plan = Array.isArray(payment.membership_plans)
+      ? payment.membership_plans[0]
+      : payment.membership_plans;
+    const effectiveType = membershipType ?? plan?.membership_type ?? null;
+    const isVerified = isPaidMember || payment.status === 'success';
+    const paidDate = formatDate(payment.created_at);
+    const validUntil = effectiveType === 'annual' && membershipExpiresAt
+      ? formatDate(membershipExpiresAt)
+      : null;
+
+    return (
+      <Card className="mt-6 border-emerald-200 bg-emerald-50/50">
+        <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+          <div className="flex items-start gap-3">
+            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-emerald-100 text-emerald-700">
+              <CreditCard className="h-5 w-5" />
+            </div>
+            <div>
+              <h2 className="font-display text-lg font-semibold text-emerald-900">
+                {isVerified ? 'Membership payment recorded' : 'Membership payment under review'}
+              </h2>
+              <p className="mt-1 text-sm text-emerald-800">
+                {formatINR(Number(payment.amount))} paid on {paidDate}
+                {effectiveType ? ` · ${effectiveType === 'annual' ? 'Annual' : 'Lifetime'} membership` : ''}
+                {validUntil ? ` · valid ${paidDate} to ${validUntil}` : ''}
+              </p>
+            </div>
+          </div>
+          {payment.receipt_url && (
+            <a
+              href={payment.receipt_url}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="inline-flex items-center justify-center gap-1.5 rounded-lg border border-emerald-200 bg-white px-3 py-2 text-sm font-medium text-emerald-800 hover:bg-emerald-50"
+            >
+              View proof
+              <ExternalLink className="h-4 w-4" />
+            </a>
+          )}
+        </div>
+      </Card>
+    );
+  } catch {
+    return null;
   }
 }
 

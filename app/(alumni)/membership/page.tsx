@@ -1,6 +1,6 @@
 import type { Metadata } from 'next';
 import { Suspense } from 'react';
-import { AlertCircle, CheckCircle2, Crown } from 'lucide-react';
+import { AlertCircle, CheckCircle2, Crown, ExternalLink } from 'lucide-react';
 import { Card } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { CardSkeleton } from '@/components/shared/Skeleton';
@@ -101,6 +101,13 @@ export default async function MembershipPage({
         </Card>
       ) : null}
 
+      <Suspense fallback={null}>
+        <PaymentHistoryRegion
+          membershipType={profile.membership_type}
+          membershipExpiresAt={profile.membership_expires_at}
+        />
+      </Suspense>
+
       {/* Plans region (cached, ≤300s) — independent Suspense boundary */}
       {profile.profile_type !== 'faculty' && (
         <Suspense fallback={<PlansSkeleton />}>
@@ -120,6 +127,95 @@ export default async function MembershipPage({
 // ---------------------------------------------------------------------------
 // Async regions
 // ---------------------------------------------------------------------------
+
+async function PaymentHistoryRegion({
+  membershipType,
+  membershipExpiresAt,
+}: {
+  membershipType: 'annual' | 'lifetime' | null;
+  membershipExpiresAt: string | null;
+}) {
+  try {
+    const { database, userId } = await requireAlumniAccess();
+    const { data: payments } = await database
+      .from('payments')
+      .select('id, txnid, amount, status, receipt_url, created_at, membership_plans(name, membership_type, duration_months)')
+      .eq('alumni_id', userId)
+      .order('created_at', { ascending: false })
+      .order('id', { ascending: false })
+      .limit(5);
+
+    if (!payments || payments.length === 0) return null;
+
+    return (
+      <section className="mt-8">
+        <h2 className="font-display text-xl font-semibold">Payment records</h2>
+        <div className="mt-4 space-y-3">
+          {payments.map((payment) => {
+            const plan = Array.isArray(payment.membership_plans)
+              ? payment.membership_plans[0]
+              : payment.membership_plans;
+            const effectiveType =
+              payment.status === 'success'
+                ? membershipType ?? plan?.membership_type ?? null
+                : plan?.membership_type ?? null;
+            const paidDate = formatDate(payment.created_at);
+            const validUntil =
+              effectiveType === 'annual' && payment.status === 'success' && membershipExpiresAt
+                ? formatDate(membershipExpiresAt)
+                : null;
+
+            return (
+              <Card key={payment.id} className="p-4">
+                <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                  <div>
+                    <div className="flex flex-wrap items-center gap-2">
+                      <p className="font-medium">{formatINR(Number(payment.amount))}</p>
+                      <Badge
+                        variant={
+                          payment.status === 'success'
+                            ? 'success'
+                            : payment.status === 'failed'
+                              ? 'error'
+                              : 'warning'
+                        }
+                      >
+                        {payment.status}
+                      </Badge>
+                      {effectiveType && (
+                        <Badge variant="primary">
+                          {effectiveType === 'annual' ? 'Annual' : 'Lifetime'}
+                        </Badge>
+                      )}
+                    </div>
+                    <p className="mt-1 text-sm text-slate-500">
+                      Paid/requested on {paidDate}
+                      {validUntil ? ` · valid ${paidDate} to ${validUntil}` : ''}
+                    </p>
+                    <p className="mt-1 font-mono text-xs text-slate-400">{payment.txnid}</p>
+                  </div>
+                  {payment.receipt_url && (
+                    <a
+                      href={payment.receipt_url}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="inline-flex items-center justify-center gap-1.5 rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm font-medium text-[#0F2557] hover:bg-slate-50"
+                    >
+                      View proof
+                      <ExternalLink className="h-4 w-4" />
+                    </a>
+                  )}
+                </div>
+              </Card>
+            );
+          })}
+        </div>
+      </section>
+    );
+  } catch {
+    return null;
+  }
+}
 
 /**
  * Plans region: reads cached membership plans + fresh pending-payment IDs.
@@ -325,3 +421,4 @@ function BenefitItem({ children }: { children: React.ReactNode }) {
     </li>
   );
 }
+
