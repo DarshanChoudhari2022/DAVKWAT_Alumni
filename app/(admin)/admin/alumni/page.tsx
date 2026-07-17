@@ -121,7 +121,7 @@ async function AlumniListRegion({ sp, page }: { sp: SearchParams; page: number }
     const offset = (page - 1) * PAGE_SIZE;
     const adminAccess = await requireAdminAccess();
     const supabase = adminAccess.database;
-    const canDeleteRejected = adminAccess.role === 'super_admin';
+    const canDeleteAlumni = adminAccess.role === 'super_admin';
 
     // Real list query — select/.or/.eq/.order/.range identical to before, just
     // without count:'exact' (the count is resolved separately, Req 5.1).
@@ -232,7 +232,7 @@ async function AlumniListRegion({ sp, page }: { sp: SearchParams; page: number }
                 <th className="pb-2 pr-3">Membership</th>
                 <th className="pb-2 pr-3">Role</th>
                 <th className="pb-2 pr-3">Joined</th>
-                {canDeleteRejected && <th className="pb-2">Actions</th>}
+                {canDeleteAlumni && <th className="pb-2">Actions</th>}
               </tr>
             </thead>
             <tbody>
@@ -271,9 +271,9 @@ async function AlumniListRegion({ sp, page }: { sp: SearchParams; page: number }
                   </td>
                   <td className="py-3 pr-3 capitalize">{a.role}</td>
                   <td className="py-3 pr-3">{formatDate(a.created_at)}</td>
-                  {canDeleteRejected && (
+                  {canDeleteAlumni && (
                     <td className="py-3">
-                      {a.approval_status === 'rejected' ? (
+                      {a.role !== 'super_admin' ? (
                         <DeleteRejectedAlumniButton alumniId={a.id} />
                       ) : (
                         <span className="text-xs text-slate-400">-</span>

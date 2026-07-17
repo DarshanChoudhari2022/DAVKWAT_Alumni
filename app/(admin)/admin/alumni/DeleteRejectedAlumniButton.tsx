@@ -11,7 +11,7 @@ export function DeleteRejectedAlumniButton({ alumniId }: { alumniId: string }) {
   const router = useRouter();
 
   function handleDelete() {
-    const confirmationText = window.prompt('Type Delete to permanently delete this rejected entry.');
+    const confirmationText = window.prompt('Type Delete to permanently delete this alumni record.');
     if (confirmationText !== 'Delete') {
       return;
     }
@@ -24,7 +24,7 @@ export function DeleteRejectedAlumniButton({ alumniId }: { alumniId: string }) {
       });
       const data = await readApiResponse<{ error?: string }>(response);
       if (!response.ok) {
-        window.alert(data.error ?? 'Could not delete this rejected entry.');
+        window.alert(data.error ?? 'Could not delete this alumni record.');
         return;
       }
       router.refresh();

@@ -106,10 +106,10 @@ async function DashboardStats() {
 async function RecentRegistrationsTable() {
   const adminAccess = await requireAdminAccess();
   const supabase = adminAccess.database;
-  const canDeleteRejected = adminAccess.role === 'super_admin';
+  const canDeleteAlumni = adminAccess.role === 'super_admin';
   const { data } = await supabase
     .from('profiles')
-    .select('id, full_name, batch_year, course, approval_status, created_at')
+    .select('id, full_name, batch_year, course, role, approval_status, created_at')
     .order('created_at', { ascending: false })
     .order('id', { ascending: false })
     .limit(8);
@@ -139,7 +139,7 @@ async function RecentRegistrationsTable() {
           <div className="mt-4 space-y-2 border-t border-slate-100 pt-3">
             <MobileInfoRow label="Batch">{r.batch_year}</MobileInfoRow>
             <MobileInfoRow label="Course">{r.course}</MobileInfoRow>
-            {canDeleteRejected && r.approval_status === 'rejected' && (
+            {canDeleteAlumni && r.role !== 'super_admin' && (
               <MobileInfoRow label="Actions">
                 <DeleteRejectedAlumniButton alumniId={r.id} />
               </MobileInfoRow>
@@ -158,7 +158,7 @@ async function RecentRegistrationsTable() {
             <th className="pb-2 pr-4">Course</th>
             <th className="pb-2 pr-4">Status</th>
             <th className="pb-2 pr-4">Registered</th>
-            {canDeleteRejected && <th className="pb-2">Actions</th>}
+            {canDeleteAlumni && <th className="pb-2">Actions</th>}
           </tr>
         </thead>
         <tbody>
@@ -181,9 +181,9 @@ async function RecentRegistrationsTable() {
                 </Badge>
               </td>
               <td className="py-3 pr-4">{formatDate(r.created_at)}</td>
-              {canDeleteRejected && (
+              {canDeleteAlumni && (
                 <td className="py-3">
-                  {r.approval_status === 'rejected' ? (
+                  {r.role !== 'super_admin' ? (
                     <DeleteRejectedAlumniButton alumniId={r.id} />
                   ) : (
                     <span className="text-xs text-slate-400">-</span>
