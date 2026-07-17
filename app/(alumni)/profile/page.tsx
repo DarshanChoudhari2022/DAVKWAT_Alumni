@@ -17,7 +17,20 @@ export default async function ProfilePage() {
     <div className="mx-auto max-w-3xl px-4 py-10 sm:px-6 lg:px-8">
       {/* Shell: heading + avatar (synchronous, streams immediately) */}
       <header className="flex items-center gap-4">
-        <Avatar src={profile.avatar_url} name={profile.full_name} size="xl" />
+        {profile.avatar_url ? (
+          <a
+            href={profile.avatar_url}
+            target="_blank"
+            rel="noopener noreferrer"
+            title="View profile photo"
+            aria-label={`View ${profile.full_name} profile photo`}
+            className="rounded-full focus:outline-none focus:ring-2 focus:ring-[#0F2557] focus:ring-offset-2"
+          >
+            <Avatar src={profile.avatar_url} name={profile.full_name} size="xl" />
+          </a>
+        ) : (
+          <Avatar src={profile.avatar_url} name={profile.full_name} size="xl" />
+        )}
         <div>
           <h1 className="font-display text-3xl font-semibold tracking-tight">{profile.full_name}</h1>
           <p className="mt-1 text-sm text-slate-500">

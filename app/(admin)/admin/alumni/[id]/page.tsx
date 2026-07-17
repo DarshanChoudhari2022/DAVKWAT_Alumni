@@ -58,7 +58,20 @@ export default async function AdminAlumniDetailPage({
       <Card className="mt-4 p-4 sm:p-5">
         <div className="flex flex-col gap-6 sm:flex-row sm:items-start sm:justify-between">
           <div className="flex items-start gap-4">
-            <Avatar src={alumni.avatar_url} name={alumni.full_name} size="lg" />
+            {alumni.avatar_url ? (
+              <a
+                href={alumni.avatar_url}
+                target="_blank"
+                rel="noopener noreferrer"
+                title="View profile photo"
+                aria-label={`View ${alumni.full_name} profile photo`}
+                className="rounded-full focus:outline-none focus:ring-2 focus:ring-[#0F2557] focus:ring-offset-2"
+              >
+                <Avatar src={alumni.avatar_url} name={alumni.full_name} size="lg" />
+              </a>
+            ) : (
+              <Avatar src={alumni.avatar_url} name={alumni.full_name} size="lg" />
+            )}
             <div className="min-w-0">
               <h1 className="break-words font-display text-2xl font-semibold">{alumni.full_name}</h1>
               {alumni.display_name && (

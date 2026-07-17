@@ -38,7 +38,20 @@ export default async function AlumniProfilePage({
 
       <Card className="mt-4 p-6 sm:p-8">
         <div className="flex flex-col items-start gap-4 sm:flex-row sm:items-center">
-          <Avatar src={profile.avatar_url} name={profile.full_name} size="xl" />
+          {profile.avatar_url ? (
+            <a
+              href={profile.avatar_url}
+              target="_blank"
+              rel="noopener noreferrer"
+              title="View profile photo"
+              aria-label={`View ${profile.full_name} profile photo`}
+              className="rounded-full focus:outline-none focus:ring-2 focus:ring-[#0F2557] focus:ring-offset-2"
+            >
+              <Avatar src={profile.avatar_url} name={profile.full_name} size="xl" />
+            </a>
+          ) : (
+            <Avatar src={profile.avatar_url} name={profile.full_name} size="xl" />
+          )}
           <div>
             <h1 className="font-display text-3xl font-semibold tracking-tight">
               {profile.full_name}
