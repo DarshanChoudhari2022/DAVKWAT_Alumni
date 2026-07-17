@@ -1,6 +1,7 @@
 import type { Metadata, Viewport } from 'next';
 import { DM_Sans, JetBrains_Mono } from 'next/font/google';
 import { Toaster } from 'sonner';
+import { resolveAppUrl } from '@/lib/utils/app-url';
 import './globals.css';
 
 const sans = DM_Sans({
@@ -22,7 +23,7 @@ export const metadata: Metadata = {
   },
   description:
     'Official alumni portal of DAV Khagaul Alumni Welfare Trust — connecting generations of alumni across India and the world.',
-  metadataBase: new URL(process.env.NEXT_PUBLIC_APP_URL ?? 'http://localhost:3000'),
+  metadataBase: new URL(resolveAppUrl()),
   openGraph: {
     type: 'website',
     siteName: 'DAVKAWT Alumni Portal',
