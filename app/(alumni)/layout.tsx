@@ -5,7 +5,7 @@ import { logoutAction } from '@/app/(public)/login/actions';
 import { Button } from '@/components/ui/button';
 import { SignOutButton } from '@/components/shared/SignOutButton';
 import { getTrustedUserId } from '@/lib/auth/trusted-identity';
-import { createClient } from '@/lib/supabase/server';
+import { getAlumniAccess } from '@/lib/auth/alumni-access';
 
 const NAV = [
   { href: '/dashboard', label: 'Dashboard', icon: LayoutDashboard },
@@ -52,13 +52,10 @@ export default async function AlumniLayout({ children }: { children: React.React
     );
   }
 
-  const supabase = await createClient();
-  const { data: profile } = await supabase
-    .from('profiles')
-    .select('avatar_url, phone, current_city, current_state, school_document_url')
-    .eq('id', userId)
-    .maybeSingle();
-  const showCompleteProfile = profile ? needsProfileCompletion(profile) : false;
+  const alumniAccess = await getAlumniAccess();
+  const showCompleteProfile = alumniAccess
+    ? needsProfileCompletion(alumniAccess.profile)
+    : false;
 
   return (
     <div className="flex min-h-dvh flex-col lg:flex-row">

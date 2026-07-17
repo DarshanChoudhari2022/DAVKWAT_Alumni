@@ -19,6 +19,10 @@ export interface AlumniProfile {
   is_paid_member: boolean;
   membership_expires_at: string | null;
   avatar_url: string | null;
+  phone: string | null;
+  current_city: string | null;
+  current_state: string | null;
+  school_document_url: string | null;
   approval_status: string;
   profile_type: 'alumni' | 'faculty';
   passing_year_10th?: number | null;
@@ -73,7 +77,7 @@ const readAlumniAccess: RequestScopedLoader<AlumniAccess | null> = async () => {
     const { data: profile } = await supabase
       .from('profiles')
       .select(
-        'id, full_name, email, batch_year, course, is_paid_member, membership_expires_at, avatar_url, approval_status, profile_type, passing_year_10th'
+        'id, full_name, email, batch_year, course, is_paid_member, membership_expires_at, avatar_url, phone, current_city, current_state, school_document_url, approval_status, profile_type, passing_year_10th'
       )
       .eq('id', userId)
       .single();

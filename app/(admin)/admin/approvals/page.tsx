@@ -68,7 +68,7 @@ export default async function ApprovalsPage({
         </nav>
       </header>
 
-      <Suspense fallback={<ListSkeleton rows={20} cols={4} />}>
+      <Suspense fallback={<ListSkeleton rows={6} cols={4} />}>
         <ApprovalsListRegion sp={sp} page={page} />
       </Suspense>
     </div>
@@ -94,21 +94,16 @@ async function ApprovalsListRegion({ sp, page }: { sp: SearchParams; page: numbe
 
     const activeType = sp.type === 'faculty' ? 'faculty' : 'alumni';
 
-    // Get counts for badges (non-blocking, parallel)
-    const [alumniCountRes, facultyCountRes] = await Promise.all([
-      supabase
-        .from('profiles')
-        .select('id', { count: 'exact', head: true })
-        .eq('approval_status', 'pending')
-        .eq('profile_type', 'alumni'),
-      supabase
-        .from('profiles')
-        .select('id', { count: 'exact', head: true })
-        .eq('approval_status', 'pending')
-        .eq('profile_type', 'faculty'),
-    ]);
-    const alumniCount = alumniCountRes.count ?? 0;
-    const facultyCount = facultyCountRes.count ?? 0;
+    const alumniCountPromise = supabase
+      .from('profiles')
+      .select('id', { count: 'exact', head: true })
+      .eq('approval_status', 'pending')
+      .eq('profile_type', 'alumni');
+    const facultyCountPromise = supabase
+      .from('profiles')
+      .select('id', { count: 'exact', head: true })
+      .eq('approval_status', 'pending')
+      .eq('profile_type', 'faculty');
 
     // Real list query — same select / .eq / date filter / .order / .range as
     // before, just without count:'exact' (the count is resolved separately, Req 5.1).
@@ -136,7 +131,13 @@ async function ApprovalsListRegion({ sp, page }: { sp: SearchParams; page: numbe
       .order('id', { ascending: true })
       .range(offset, offset + PAGE_SIZE - 1);
 
-    const listResult = await listPromise;
+    const [alumniCountRes, facultyCountRes, listResult] = await Promise.all([
+      alumniCountPromise,
+      facultyCountPromise,
+      listPromise,
+    ]);
+    const alumniCount = alumniCountRes.count ?? 0;
+    const facultyCount = facultyCountRes.count ?? 0;
     const pendingProfiles = listResult.data ?? [];
     const paymentProofByAlumniId = new Map<string, string>();
     const pendingProfileIds = pendingProfiles.map((profile) => profile.id);
