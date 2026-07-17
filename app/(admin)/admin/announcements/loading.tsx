@@ -8,8 +8,15 @@ export default function AdminAnnouncementsLoading() {
       <table className="w-full text-sm">
         <thead>
           <tr className="border-b border-slate-200">
-            {['Title', 'Author', 'Status', 'Date', 'Actions'].map((h) => (
-              <th key={h} className="px-4 py-3 text-left text-xs uppercase tracking-wide text-slate-500">{h}</th>
+            {['Title', 'Author', 'Status', 'Date', 'Actions'].map((h, index) => (
+              <th
+                key={h}
+                className={`py-3 text-left text-xs uppercase tracking-wide text-slate-500 ${
+                  index === 0 ? 'pl-5 pr-4' : index === 4 ? 'pl-4 pr-5' : 'px-4'
+                }`}
+              >
+                {h}
+              </th>
             ))}
           </tr>
         </thead>

@@ -186,10 +186,10 @@ async function AnnouncementsListRegion({ sp, page }: { sp: SearchParams; page: n
           <table className="w-full min-w-[720px] text-sm">
             <thead>
               <tr className="border-b border-slate-200 text-left text-xs uppercase tracking-wide text-slate-500">
-                <th className="px-4 py-3">Title</th>
+                <th className="py-3 pl-5 pr-4">Title</th>
                 <th className="px-4 py-3">Status</th>
                 <th className="px-4 py-3">Date</th>
-                <th className="px-4 py-3 text-right">Actions</th>
+                <th className="py-3 pl-4 pr-5 text-right">Actions</th>
               </tr>
             </thead>
             <tbody>
@@ -207,7 +207,7 @@ async function AnnouncementsListRegion({ sp, page }: { sp: SearchParams; page: n
                     : 'Unknown';
                 return (
                   <tr key={a.id} className="border-b border-slate-100">
-                    <td className="px-4 py-3">
+                    <td className="py-3 pl-5 pr-4">
                       <div className="flex items-center gap-2">
                         {a.is_pinned && <Pin className="h-3.5 w-3.5 shrink-0 text-amber-500" />}
                         <div className="min-w-0">
@@ -232,7 +232,7 @@ async function AnnouncementsListRegion({ sp, page }: { sp: SearchParams; page: n
                     <td className="px-4 py-3 text-slate-500">
                       {a.scheduled_for ? formatDate(a.scheduled_for) : a.published_at ? formatDate(a.published_at) : formatDate(a.created_at)}
                     </td>
-                    <td className="px-4 py-3 text-right">
+                    <td className="py-3 pl-4 pr-5 text-right">
                       <AnnouncementActions
                         id={a.id}
                         isPublished={a.is_published}

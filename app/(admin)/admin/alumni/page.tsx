@@ -226,19 +226,19 @@ async function AlumniListRegion({ sp, page }: { sp: SearchParams; page: number }
           <table className="w-full min-w-[760px] text-sm">
             <thead>
               <tr className="border-b border-slate-200 text-left text-xs uppercase tracking-wide text-slate-500">
-                <th className="pb-2 pr-3">Alumni</th>
-                <th className="pb-2 pr-3">Batch</th>
-                <th className="pb-2 pr-3">Status</th>
-                <th className="pb-2 pr-3">Membership</th>
-                <th className="pb-2 pr-3">Role</th>
-                <th className="pb-2 pr-3">Joined</th>
-                {canDeleteAlumni && <th className="pb-2">Actions</th>}
+                <th className="py-3 pl-5 pr-4">Alumni</th>
+                <th className="px-4 py-3">Batch</th>
+                <th className="px-4 py-3">Status</th>
+                <th className="px-4 py-3">Membership</th>
+                <th className="px-4 py-3">Role</th>
+                <th className="px-4 py-3">Joined</th>
+                {canDeleteAlumni && <th className="py-3 pl-4 pr-5">Actions</th>}
               </tr>
             </thead>
             <tbody>
               {alumni.map((a) => (
                 <tr key={a.id} className="border-b border-slate-100">
-                  <td className="py-3 pr-3">
+                  <td className="py-3 pl-5 pr-4">
                     <Link
                       href={`/admin/alumni/${a.id}`}
                       className="flex items-center gap-2 hover:text-[#0F2557]"
@@ -250,8 +250,8 @@ async function AlumniListRegion({ sp, page }: { sp: SearchParams; page: number }
                       </div>
                     </Link>
                   </td>
-                  <td className="py-3 pr-3">{a.batch_year}</td>
-                  <td className="py-3 pr-3">
+                  <td className="px-4 py-3">{a.batch_year}</td>
+                  <td className="px-4 py-3">
                     <Badge
                       variant={
                         a.approval_status === 'approved'
@@ -264,15 +264,15 @@ async function AlumniListRegion({ sp, page }: { sp: SearchParams; page: number }
                       {a.approval_status}
                     </Badge>
                   </td>
-                  <td className="py-3 pr-3">
+                  <td className="px-4 py-3">
                     <Badge variant={a.is_paid_member ? 'success' : 'default'}>
                       {a.is_paid_member ? 'Paid' : 'Unpaid'}
                     </Badge>
                   </td>
-                  <td className="py-3 pr-3 capitalize">{a.role}</td>
-                  <td className="py-3 pr-3">{formatDate(a.created_at)}</td>
+                  <td className="px-4 py-3 capitalize">{a.role}</td>
+                  <td className="px-4 py-3">{formatDate(a.created_at)}</td>
                   {canDeleteAlumni && (
-                    <td className="py-3">
+                    <td className="py-3 pl-4 pr-5">
                       {a.role !== 'super_admin' ? (
                         <DeleteRejectedAlumniButton alumniId={a.id} />
                       ) : (

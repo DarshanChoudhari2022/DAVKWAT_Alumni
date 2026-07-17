@@ -153,21 +153,21 @@ async function RecentRegistrationsTable() {
       <table className="w-full text-sm">
         <thead>
           <tr className="border-b border-slate-200 text-left text-xs uppercase tracking-wide text-slate-500">
-            <th className="pb-2 pr-4">Name</th>
-            <th className="pb-2 pr-4">Batch</th>
-            <th className="pb-2 pr-4">Course</th>
-            <th className="pb-2 pr-4">Status</th>
-            <th className="pb-2 pr-4">Registered</th>
-            {canDeleteAlumni && <th className="pb-2">Actions</th>}
+            <th className="py-3 pl-5 pr-4">Name</th>
+            <th className="px-4 py-3">Batch</th>
+            <th className="px-4 py-3">Course</th>
+            <th className="px-4 py-3">Status</th>
+            <th className="px-4 py-3">Registered</th>
+            {canDeleteAlumni && <th className="py-3 pl-4 pr-5">Actions</th>}
           </tr>
         </thead>
         <tbody>
           {(data ?? []).map((r) => (
             <tr key={r.id} className="border-b border-slate-100">
-              <td className="py-3 pr-4 font-medium">{r.full_name}</td>
-              <td className="py-3 pr-4">{r.batch_year}</td>
-              <td className="py-3 pr-4">{r.course}</td>
-              <td className="py-3 pr-4">
+              <td className="py-3 pl-5 pr-4 font-medium">{r.full_name}</td>
+              <td className="px-4 py-3">{r.batch_year}</td>
+              <td className="px-4 py-3">{r.course}</td>
+              <td className="px-4 py-3">
                 <Badge
                   variant={
                     r.approval_status === 'approved'
@@ -180,9 +180,9 @@ async function RecentRegistrationsTable() {
                   {r.approval_status}
                 </Badge>
               </td>
-              <td className="py-3 pr-4">{formatDate(r.created_at)}</td>
+              <td className="px-4 py-3">{formatDate(r.created_at)}</td>
               {canDeleteAlumni && (
-                <td className="py-3">
+                <td className="py-3 pl-4 pr-5">
                   {r.role !== 'super_admin' ? (
                     <DeleteRejectedAlumniButton alumniId={r.id} />
                   ) : (

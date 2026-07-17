@@ -310,14 +310,14 @@ async function PaymentsList({ sp, page }: { sp: SearchParams; page: number }) {
           <table className="w-full min-w-[820px] text-sm">
             <thead>
               <tr className="border-b border-slate-200 text-left text-xs uppercase tracking-wide text-slate-500">
-                <th className="pb-2 pr-3">Txn ID</th>
-                <th className="pb-2 pr-3">Alumni</th>
-                <th className="pb-2 pr-3">Amount</th>
-                <th className="pb-2 pr-3">Status</th>
-                <th className="pb-2 pr-3">Mode</th>
-                <th className="pb-2 pr-3">Proof</th>
-                <th className="pb-2 pr-3">Manual Review</th>
-                <th className="pb-2">Date</th>
+                <th className="py-3 pl-5 pr-4">Txn ID</th>
+                <th className="px-4 py-3">Alumni</th>
+                <th className="px-4 py-3">Amount</th>
+                <th className="px-4 py-3">Status</th>
+                <th className="px-4 py-3">Mode</th>
+                <th className="px-4 py-3">Proof</th>
+                <th className="px-4 py-3">Manual Review</th>
+                <th className="py-3 pl-4 pr-5">Date</th>
               </tr>
             </thead>
             <tbody>
@@ -325,19 +325,19 @@ async function PaymentsList({ sp, page }: { sp: SearchParams; page: number }) {
                 const profile = p.profiles;
                 return (
                   <tr key={p.id} className="border-b border-slate-100">
-                    <td className="py-3 pr-3">
+                    <td className="py-3 pl-5 pr-4">
                       <code className="rounded bg-slate-100 px-1.5 py-0.5 font-mono text-xs">
                         {p.txnid}
                       </code>
                     </td>
-                    <td className="py-3 pr-3">
+                    <td className="px-4 py-3">
                       <Link href={`/admin/alumni/${p.alumni_id}`} className="hover:text-[#0F2557]">
                         <p className="font-medium">{profile?.full_name ?? '—'}</p>
                         <p className="text-xs text-slate-500">{profile?.email ?? ''}</p>
                       </Link>
                     </td>
-                    <td className="py-3 pr-3 font-medium">{formatINR(Number(p.amount))}</td>
-                    <td className="py-3 pr-3">
+                    <td className="px-4 py-3 font-medium">{formatINR(Number(p.amount))}</td>
+                    <td className="px-4 py-3">
                       <Badge
                         variant={
                           p.status === 'success'
@@ -352,8 +352,8 @@ async function PaymentsList({ sp, page }: { sp: SearchParams; page: number }) {
                         {p.status}
                       </Badge>
                     </td>
-                    <td className="py-3 pr-3 capitalize">{p.payment_mode ?? '—'}</td>
-                    <td className="py-3 pr-3">
+                    <td className="px-4 py-3 capitalize">{p.payment_mode ?? '—'}</td>
+                    <td className="px-4 py-3">
                       {p.receipt_url ? (
                         <a href={p.receipt_url} target="_blank" rel="noopener noreferrer" className="text-[#0F2557] underline text-xs">
                           View
@@ -362,10 +362,10 @@ async function PaymentsList({ sp, page }: { sp: SearchParams; page: number }) {
                         <span className="text-slate-400">—</span>
                       )}
                     </td>
-                    <td className="py-3 pr-3">
+                    <td className="px-4 py-3">
                       <ManualPaymentStatusActions paymentId={p.id} currentStatus={p.status} />
                     </td>
-                    <td className="py-3">{formatDateTime(p.created_at)}</td>
+                    <td className="py-3 pl-4 pr-5">{formatDateTime(p.created_at)}</td>
                   </tr>
                 );
               })}
