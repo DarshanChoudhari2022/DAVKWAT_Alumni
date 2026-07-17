@@ -22,6 +22,7 @@ import { formatCount } from '@/lib/db/count-format';
 import { computePagination } from '@/lib/db/pagination';
 import { formatINR, formatDateTime } from '@/lib/utils/format';
 import { escapeIlikePattern, normalizeSearchTerm } from '@/lib/utils/search';
+import { ManualPaymentStatusActions } from './ManualPaymentStatusActions';
 
 export const metadata: Metadata = { title: 'Payments — Admin' };
 
@@ -286,6 +287,9 @@ async function PaymentsList({ sp, page }: { sp: SearchParams; page: number }) {
                   <MobileInfoRow label="Amount">{formatINR(Number(p.amount))}</MobileInfoRow>
                   <MobileInfoRow label="Mode"><span className="capitalize">{p.payment_mode ?? '-'}</span></MobileInfoRow>
                   <MobileInfoRow label="Date">{formatDateTime(p.created_at)}</MobileInfoRow>
+                  <MobileInfoRow label="Review">
+                    <ManualPaymentStatusActions paymentId={p.id} currentStatus={p.status} />
+                  </MobileInfoRow>
                   {p.receipt_url && (
                     <MobileInfoRow label="Proof">
                       <a href={p.receipt_url} target="_blank" rel="noopener noreferrer" className="text-[#0F2557] underline text-xs">
@@ -312,6 +316,7 @@ async function PaymentsList({ sp, page }: { sp: SearchParams; page: number }) {
                 <th className="pb-2 pr-3">Status</th>
                 <th className="pb-2 pr-3">Mode</th>
                 <th className="pb-2 pr-3">Proof</th>
+                <th className="pb-2 pr-3">Manual Review</th>
                 <th className="pb-2">Date</th>
               </tr>
             </thead>
@@ -356,6 +361,9 @@ async function PaymentsList({ sp, page }: { sp: SearchParams; page: number }) {
                       ) : (
                         <span className="text-slate-400">—</span>
                       )}
+                    </td>
+                    <td className="py-3 pr-3">
+                      <ManualPaymentStatusActions paymentId={p.id} currentStatus={p.status} />
                     </td>
                     <td className="py-3">{formatDateTime(p.created_at)}</td>
                   </tr>

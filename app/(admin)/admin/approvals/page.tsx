@@ -114,7 +114,7 @@ async function ApprovalsListRegion({ sp, page }: { sp: SearchParams; page: numbe
     let listQuery = supabase
       .from('profiles')
       .select(
-        'id, full_name, email, profile_type, batch_year, course, current_city, phone, created_at, avatar_url, website_url, taught_subject, taught_from_year, taught_to_year',
+        'id, full_name, email, profile_type, batch_year, course, current_city, phone, created_at, avatar_url, school_document_url, taught_subject, taught_from_year, taught_to_year',
         { count: 'exact' }
       )
       .eq('approval_status', 'pending')
@@ -137,6 +137,22 @@ async function ApprovalsListRegion({ sp, page }: { sp: SearchParams; page: numbe
 
     const listResult = await listPromise;
     const pendingProfiles = listResult.data ?? [];
+    const paymentProofByAlumniId = new Map<string, string>();
+    const pendingProfileIds = pendingProfiles.map((profile) => profile.id);
+    if (pendingProfileIds.length > 0) {
+      const { data: paymentProofs } = await supabase
+        .from('payments')
+        .select('alumni_id, receipt_url, created_at')
+        .in('alumni_id', pendingProfileIds)
+        .not('receipt_url', 'is', null)
+        .order('created_at', { ascending: false });
+
+      for (const payment of paymentProofs ?? []) {
+        if (payment.receipt_url && !paymentProofByAlumniId.has(payment.alumni_id)) {
+          paymentProofByAlumniId.set(payment.alumni_id, payment.receipt_url);
+        }
+      }
+    }
     const { error } = listResult;
     const countResult = {
       count: listResult.count ?? pendingProfiles.length,
@@ -206,7 +222,9 @@ async function ApprovalsListRegion({ sp, page }: { sp: SearchParams; page: numbe
               </Card>
             </li>
           )}
-          {pendingProfiles.map((profile) => (
+          {pendingProfiles.map((profile) => {
+            const paymentProofUrl = paymentProofByAlumniId.get(profile.id);
+            return (
             <li key={profile.id}>
               <Card className="p-4 sm:p-5">
                 <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
@@ -238,9 +256,14 @@ async function ApprovalsListRegion({ sp, page }: { sp: SearchParams; page: numbe
                         {profile.current_city && (
                           <Badge variant="default">{profile.current_city}</Badge>
                         )}
-                        {profile.website_url && (
-                          <a href={profile.website_url} target="_blank" rel="noopener noreferrer">
-                            <Badge variant="primary">📄 Proof of Schooling</Badge>
+                        {profile.school_document_url && (
+                          <a href={profile.school_document_url} target="_blank" rel="noopener noreferrer">
+                            <Badge variant="primary">Proof of Schooling: View</Badge>
+                          </a>
+                        )}
+                        {paymentProofUrl && (
+                          <a href={paymentProofUrl} target="_blank" rel="noopener noreferrer">
+                            <Badge variant="primary">Proof of Payment: View</Badge>
                           </a>
                         )}
                       </div>
@@ -253,7 +276,8 @@ async function ApprovalsListRegion({ sp, page }: { sp: SearchParams; page: numbe
                 </div>
               </Card>
             </li>
-          ))}
+            );
+          })}
           {!error && pendingProfiles.length === 0 && (
             <li>
               <Card className="text-center text-sm text-slate-500">

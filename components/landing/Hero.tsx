@@ -149,8 +149,8 @@ function HeroPreview() {
 
           <div className="sm:col-span-2 rounded-2xl bg-gradient-to-br from-indigo-600 to-blue-700 p-4 text-white shadow-md">
             <Users className="h-4 w-4 text-white/80" />
-            <p className="mt-2 font-sans text-2xl font-bold tracking-[-0.02em]">1,240</p>
-            <p className="text-[11px] text-white/70">Verified alumni</p>
+            <p className="mt-2 font-sans text-2xl font-bold tracking-[-0.02em]">1,024</p>
+            <p className="text-[11px] text-white/70">Alumni registered</p>
             <div className="mt-3 h-1.5 w-full overflow-hidden rounded-full bg-white/20">
               <div className="h-full w-3/4 rounded-full bg-sky-400" />
             </div>

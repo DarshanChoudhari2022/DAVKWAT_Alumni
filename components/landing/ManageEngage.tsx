@@ -105,7 +105,7 @@ export function ManageEngage() {
                 </div>
 
                 <div className="mt-3 flex items-center justify-between rounded-lg bg-slate-900 px-3 py-2 text-[10px] sm:text-[11px] text-white">
-                  <span>10,240 verified alumni</span>
+                  <span>1,024 alumni registered</span>
                   <span className="text-sky-300">View directory →</span>
                 </div>
               </div>

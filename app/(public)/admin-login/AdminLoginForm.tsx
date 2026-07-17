@@ -32,10 +32,6 @@ export function AdminLoginForm({ redirectTo }: { redirectTo?: string }) {
     <form ref={formRef} onSubmit={handleSubmit} className="mt-6 space-y-4">
       {redirectTo && <input type="hidden" name="redirect" value={redirectTo} />}
 
-      <div className="rounded-lg border border-blue-200 bg-blue-50 p-3 text-sm text-blue-700">
-        This admin login uses local credentials from your environment, not Supabase Auth.
-      </div>
-
       {state.error && (
         <div role="alert" className="rounded-lg border border-rose-200 bg-rose-50 p-3 text-sm text-rose-700">
           {state.error}
@@ -75,4 +71,3 @@ export function AdminLoginForm({ redirectTo }: { redirectTo?: string }) {
     </form>
   );
 }
-

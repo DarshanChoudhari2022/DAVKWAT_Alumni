@@ -43,8 +43,8 @@ export default function TermsPage() {
           <h2>5. Membership &amp; Payments</h2>
           <p>
             Paid membership fees are non-refundable unless explicitly stated. Membership
-            benefits are subject to change with prior notice. Payments are processed securely
-            through Easebuzz.
+            benefits are subject to change with prior notice. Payments are verified manually
+            by the Trust team using submitted proof of payment.
           </p>
 
           <h2>6. Content</h2>

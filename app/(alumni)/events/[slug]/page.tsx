@@ -240,8 +240,8 @@ export default async function EventDetailPage({
                   <span className="font-semibold text-[#0F2557]">{formatINR(500)} / year</span>
                 </div>
                 <div className="flex justify-between">
-                  <span>Monthly Membership</span>
-                  <span className="font-semibold text-[#0F2557]">{formatINR(100)} / month</span>
+                  <span>Lifetime Membership</span>
+                  <span className="font-semibold text-[#0F2557]">{formatINR(5000)} (one-time)</span>
                 </div>
               </div>
 
@@ -324,13 +324,13 @@ export default async function EventDetailPage({
               <div className="grid gap-4 md:grid-cols-2 pt-2">
                 <div className="rounded-xl border border-slate-100 bg-slate-50/50 p-4 space-y-3 flex flex-col justify-between">
                   <div>
-                    <h4 className="font-semibold text-sm text-slate-700">Option 1: Pay Online</h4>
+                    <h4 className="font-semibold text-sm text-slate-700">Option 1: Request Membership</h4>
                     <p className="text-xs text-slate-500 mt-1">
-                      Pay instantly using online cards, netbanking or UPI via Easebuzz payment gateway.
+                      Record a membership request and share your payment proof with the admin team.
                     </p>
                   </div>
                   <Button asChild className="w-full mt-2 bg-[#0F2557] hover:bg-[#1a3a7a]" size="sm">
-                    <Link href="/membership">Activate Online</Link>
+                    <Link href="/membership">Request Membership</Link>
                   </Button>
                 </div>
 
@@ -338,7 +338,7 @@ export default async function EventDetailPage({
                   <div>
                     <h4 className="font-semibold text-sm text-slate-700">Option 2: Manual UPI Transfer</h4>
                     <p className="text-xs text-slate-500 mt-1">
-                      Transfer <span className="font-semibold">{formatINR(500)}</span> (Annual) or <span className="font-semibold">{formatINR(100)}</span> (Monthly) to:
+                      Transfer <span className="font-semibold">{formatINR(500)}</span> (Annual) or <span className="font-semibold">{formatINR(5000)}</span> (Lifetime) to:
                     </p>
                     <code className="block bg-slate-100 px-2 py-1 rounded text-xs mt-1.5 font-mono text-center font-semibold text-[#0F2557] break-all">
                       {MANUAL_MEMBERSHIP_PAYMENT.upiId}

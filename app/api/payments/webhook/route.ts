@@ -65,7 +65,7 @@ export async function POST(req: Request) {
       }
 
       const alumniId = udf1;
-      const membershipType = udf3 as 'lifetime' | 'annual' | 'monthly' | undefined;
+      const membershipType = udf3 as 'lifetime' | 'annual' | undefined;
       const durationMonths = udf4 ? parseInt(udf4, 10) : null;
 
       if (alumniId) {

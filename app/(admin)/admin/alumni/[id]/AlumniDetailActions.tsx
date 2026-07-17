@@ -9,6 +9,7 @@ import { readApiResponse } from '@/lib/utils/api-client';
 interface AlumniDetailActionsProps {
   alumniId: string;
   canDelete: boolean;
+  canAssignAdminRoles: boolean;
   currentRole: string;
   isActive: boolean;
 }
@@ -16,6 +17,7 @@ interface AlumniDetailActionsProps {
 export function AlumniDetailActions({
   alumniId,
   canDelete,
+  canAssignAdminRoles,
   currentRole,
   isActive,
 }: AlumniDetailActionsProps) {
@@ -60,6 +62,14 @@ export function AlumniDetailActions({
   }
 
   function handleDelete() {
+    const confirmationText = window.prompt(
+      'Type Delete to permanently delete this alumni record.'
+    );
+    if (confirmationText !== 'Delete') {
+      if (confirmationText) setError('Type Delete exactly to confirm permanent deletion.');
+      return;
+    }
+
     const adminPassword = window.prompt(
       'Enter the admin password to permanently delete this alumni record.'
     );
@@ -75,7 +85,7 @@ export function AlumniDetailActions({
       const res = await fetch(`/api/admin/alumni/${alumniId}`, {
         method: 'DELETE',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ adminPassword }),
+        body: JSON.stringify({ adminPassword, confirmationText }),
       });
       const data = await readApiResponse<{ error?: string }>(res);
       if (!res.ok) {
@@ -102,8 +112,12 @@ export function AlumniDetailActions({
         >
           <option value="pending">Pending</option>
           <option value="alumni">Alumni</option>
-          <option value="admin">Admin</option>
-          <option value="super_admin">Super Admin</option>
+          {canAssignAdminRoles && (
+            <>
+              <option value="admin">Admin</option>
+              <option value="super_admin">Super Admin</option>
+            </>
+          )}
         </select>
       </div>
 

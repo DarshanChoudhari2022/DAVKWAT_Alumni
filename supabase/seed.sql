@@ -10,7 +10,7 @@ ON CONFLICT (slug) DO NOTHING;
 -- Default membership plans (amounts to be confirmed by Trust)
 INSERT INTO membership_plans (name, description, amount, membership_type, duration_months) VALUES
   ('Annual Membership', 'Yearly membership with full portal access', 500.00, 'annual', 12),
-  ('Monthly Membership', 'Monthly membership with full portal access', 100.00, 'monthly', 1)
+  ('Lifetime Membership', 'Lifetime membership with full portal access', 5000.00, 'lifetime', NULL)
 ON CONFLICT DO NOTHING;
 
 -- Default site settings

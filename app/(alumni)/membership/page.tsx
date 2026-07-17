@@ -184,11 +184,10 @@ async function PlansRegion({
                 </div>
                 <div>
                   <h2 className="font-display text-lg font-semibold text-amber-800">
-                    Membership payment setup is pending credentials
+                    Manual membership payment review
                   </h2>
                   <p className="mt-0.5 text-sm text-amber-700">
-                    Select a plan below to proceed. If Easebuzz credentials are not configured yet, the
-                    request will be recorded for admin follow-up instead of redirecting to the gateway.
+                    Select a plan below to record your membership request for admin verification.
                   </p>
                 </div>
               </div>
@@ -202,8 +201,7 @@ async function PlansRegion({
             <div className="flex flex-col gap-2">
               <h2 className="font-display text-xl font-semibold">Choose a Plan</h2>
               <p className="text-sm text-slate-500">
-                If Easebuzz is configured, you will be redirected to complete payment online. If not,
-                the request will be recorded for manual follow-up.
+                Payments are verified manually by the admin team using proof of payment.
               </p>
             </div>
             <div className="mt-4 grid gap-4 md:grid-cols-3">
@@ -230,11 +228,9 @@ async function PlansRegion({
                       {formatINR(Number(plan.amount))}
                     </p>
                     <p className="mt-0.5 text-xs text-slate-500">
-                      {plan.membership_type === 'monthly'
-                        ? `Per month${plan.duration_months ? ` (${plan.duration_months} month${plan.duration_months === 1 ? '' : 's'})` : ''}`
-                        : plan.membership_type === 'annual'
-                          ? `Per year${plan.duration_months ? ` (${plan.duration_months} months)` : ''}`
-                          : 'One-time fee'}
+                      {plan.membership_type === 'annual'
+                        ? `Per year${plan.duration_months ? ` (${plan.duration_months} months)` : ''}`
+                        : 'One-time fee'}
                     </p>
                     <ul className="mt-4 space-y-2 text-sm text-slate-700">
                       <BenefitItem>Full alumni directory access</BenefitItem>

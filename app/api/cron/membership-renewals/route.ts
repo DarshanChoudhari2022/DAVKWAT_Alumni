@@ -77,7 +77,7 @@ export async function GET(request: Request) {
           fullName: profile.full_name,
           expiryDate: format(new Date(profile.membership_expires_at), 'dd MMM yyyy'),
           daysRemaining,
-          planName: profile.membership_type === 'monthly' ? 'Monthly Membership' : 'Annual Membership',
+          planName: profile.membership_type === 'lifetime' ? 'Lifetime Membership' : 'Annual Membership',
           renewalUrl: `${APP_URL}/membership`,
           portalUrl: APP_URL,
         }),

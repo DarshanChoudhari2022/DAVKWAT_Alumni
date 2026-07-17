@@ -117,7 +117,7 @@ export function RegisterForm({ step, setStep }: RegisterFormProps) {
   const [educationLevel, setEducationLevel] = useState('');
   const [clientErrors, setClientErrors] = useState<Record<string, string>>({});
   const formRef = useRef<HTMLFormElement>(null);
-  const [selectedAmount, setSelectedAmount] = useState<100 | 500>(500);
+  const [selectedAmount, setSelectedAmount] = useState<500 | 5000>(500);
   const [checkingEmail, setCheckingEmail] = useState(false);
   const [hasPhoto, setHasPhoto] = useState(false);
   const [hasSchoolDoc, setHasSchoolDoc] = useState(false);
@@ -205,7 +205,7 @@ export function RegisterForm({ step, setStep }: RegisterFormProps) {
       if (draft.leftClass) setLeftClass(draft.leftClass);
       if (draft.leavingYear) setLeavingYear(draft.leavingYear);
       if (draft.batchYear) setBatchYear(draft.batchYear);
-      if (draft.selectedAmount === 100 || draft.selectedAmount === 500) {
+      if (draft.selectedAmount === 500 || draft.selectedAmount === 5000) {
         setSelectedAmount(draft.selectedAmount);
       }
       if (draft.countryCode) setCountryCode(draft.countryCode);
@@ -921,17 +921,17 @@ export function RegisterForm({ step, setStep }: RegisterFormProps) {
             </button>
             <button
               type="button"
-              onClick={() => setSelectedAmount(100)}
+              onClick={() => setSelectedAmount(5000)}
               className={cn(
                 'rounded-xl border-2 p-4 text-center shadow-sm transition-all',
-                selectedAmount === 100
+                selectedAmount === 5000
                   ? 'border-[#0F2557] bg-[#0F2557]/5 ring-2 ring-[#0F2557]/20'
                   : 'border-slate-200 bg-white hover:border-slate-300'
               )}
             >
-              <p className="text-xs font-semibold uppercase tracking-wider text-slate-500">Monthly</p>
-              <p className="mt-1 text-2xl font-bold text-[#0F2557]">₹100</p>
-              <p className="text-xs text-slate-500">per month</p>
+              <p className="text-xs font-semibold uppercase tracking-wider text-slate-500">Lifetime</p>
+              <p className="mt-1 text-2xl font-bold text-[#0F2557]">₹5,000</p>
+              <p className="text-xs text-slate-500">one-time payment</p>
             </button>
           </div>
           <input type="hidden" name="selected_amount" value={selectedAmount} />
@@ -943,7 +943,7 @@ export function RegisterForm({ step, setStep }: RegisterFormProps) {
             <div className="mx-auto w-full max-w-[220px] shrink-0 sm:mx-0 flex flex-col items-center">
               <div className="overflow-hidden rounded-xl border border-white bg-white p-2 shadow-sm w-full">
                 <Image
-                  src={MANUAL_MEMBERSHIP_PAYMENT.qrImage500}
+                  src={selectedAmount === 500 ? MANUAL_MEMBERSHIP_PAYMENT.qrImage500 : MANUAL_MEMBERSHIP_PAYMENT.qrImage5000}
                   alt={`UPI QR code for ₹${selectedAmount.toLocaleString('en-IN')}`}
                   width={1002}
                   height={1600}
@@ -951,7 +951,7 @@ export function RegisterForm({ step, setStep }: RegisterFormProps) {
                 />
               </div>
               <a
-                href={MANUAL_MEMBERSHIP_PAYMENT.qrImage500}
+                href={selectedAmount === 500 ? MANUAL_MEMBERSHIP_PAYMENT.qrImage500 : MANUAL_MEMBERSHIP_PAYMENT.qrImage5000}
                 download={`davkawt-upi-qr-${selectedAmount}.jpeg`}
                 className="mt-2.5 inline-flex w-full items-center justify-center gap-1.5 rounded-lg border border-slate-200 bg-white px-3 py-2 text-xs font-semibold text-slate-700 shadow-sm transition hover:bg-slate-50 hover:scale-[1.02] active:scale-[0.98]"
               >

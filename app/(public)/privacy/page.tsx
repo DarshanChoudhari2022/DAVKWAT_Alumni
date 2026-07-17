@@ -20,7 +20,7 @@ export default function PrivacyPage() {
             <li>Academic details: batch year, course, roll number</li>
             <li>Professional details: occupation, company, job title, LinkedIn URL</li>
             <li>Location: city, state, country</li>
-            <li>Payment information (processed securely via Easebuzz — we do not store card details)</li>
+            <li>Manual payment proof shared for membership verification</li>
           </ul>
 
           <h2>2. How We Use Your Information</h2>
@@ -44,7 +44,7 @@ export default function PrivacyPage() {
             shared with:
           </p>
           <ul>
-            <li>Easebuzz — for payment processing</li>
+            <li>Payment proof storage and admin verification tools</li>
             <li>Resend — for transactional emails</li>
             <li>Supabase — as our database and authentication provider</li>
           </ul>

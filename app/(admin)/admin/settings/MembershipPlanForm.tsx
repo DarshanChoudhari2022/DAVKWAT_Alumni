@@ -97,7 +97,7 @@ export function MembershipPlanForm() {
           className="mt-1 h-10 w-full rounded-lg border border-slate-200 bg-white px-3 text-sm"
         >
           <option value="annual">Annual</option>
-          <option value="monthly">Monthly</option>
+          <option value="lifetime">Lifetime</option>
         </select>
       </div>
 
@@ -111,7 +111,7 @@ export function MembershipPlanForm() {
           type="number"
           min="1"
           className="mt-1 h-10 w-full rounded-lg border border-slate-200 px-3 text-sm focus:outline-none focus:ring-2 focus:ring-[#0F2557]"
-          placeholder="12 for annual, 1 for monthly"
+          placeholder="12 for annual, blank for lifetime"
         />
       </div>
 

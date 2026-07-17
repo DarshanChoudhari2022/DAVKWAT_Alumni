@@ -11,7 +11,7 @@ export const membershipPlanSchema = z.object({
   name: optionalText(VALIDATION_LIMITS.planNameMax).pipe(z.string().min(1, 'Plan name is required')),
   description: optionalText(VALIDATION_LIMITS.planDescriptionMax),
   amount: z.coerce.number().positive('Amount must be greater than 0'),
-  membership_type: z.enum(['lifetime', 'annual', 'monthly']),
+  membership_type: z.enum(['lifetime', 'annual']),
   duration_months: z.coerce.number().int().positive().optional().nullable(),
   is_active: z.boolean().default(true),
 });
@@ -71,4 +71,12 @@ export const adminProfileUpdateSchema = z.object({
 
 export const deleteAlumniSchema = z.object({
   adminPassword: z.string().min(1, 'Admin password is required.'),
+  confirmationText: z.literal('Delete', {
+    errorMap: () => ({ message: 'Type Delete to confirm permanent deletion.' }),
+  }),
+});
+
+export const manualPaymentStatusSchema = z.object({
+  paymentId: z.string().uuid(),
+  status: z.enum(['pending', 'success', 'failed']),
 });
