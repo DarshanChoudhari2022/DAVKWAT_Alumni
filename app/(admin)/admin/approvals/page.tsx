@@ -90,7 +90,9 @@ async function ApprovalsListRegion({ sp, page }: { sp: SearchParams; page: numbe
     const startOfToday = new Date(now.getFullYear(), now.getMonth(), now.getDate()).toISOString();
     const oneWeekAgo = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000).toISOString();
 
-    const { database: supabase } = await requireAdminAccess();
+    const adminAccess = await requireAdminAccess();
+    const supabase = adminAccess.database;
+    const canDeleteProfiles = adminAccess.role === 'super_admin';
 
     const activeType = sp.type === 'faculty' ? 'faculty' : 'alumni';
 
@@ -275,7 +277,11 @@ async function ApprovalsListRegion({ sp, page }: { sp: SearchParams; page: numbe
                       </p>
                     </div>
                   </div>
-                  <ApprovalActions alumniId={profile.id} alumniName={profile.full_name} />
+                  <ApprovalActions
+                    alumniId={profile.id}
+                    alumniName={profile.full_name}
+                    canDelete={canDeleteProfiles}
+                  />
                 </div>
               </Card>
             </li>

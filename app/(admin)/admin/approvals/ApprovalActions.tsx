@@ -5,13 +5,15 @@ import { useRouter } from 'next/navigation';
 import { Check, X } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { readApiResponse } from '@/lib/utils/api-client';
+import { DeleteRejectedAlumniButton } from '../alumni/DeleteRejectedAlumniButton';
 
 interface ApprovalActionsProps {
   alumniId: string;
   alumniName: string;
+  canDelete?: boolean;
 }
 
-export function ApprovalActions({ alumniId, alumniName }: ApprovalActionsProps) {
+export function ApprovalActions({ alumniId, alumniName, canDelete = false }: ApprovalActionsProps) {
   const [showReject, setShowReject] = useState(false);
   const [reason, setReason] = useState('');
   const [error, setError] = useState<string | null>(null);
@@ -111,6 +113,7 @@ export function ApprovalActions({ alumniId, alumniName }: ApprovalActionsProps) 
           <X className="h-4 w-4" />
           Reject
         </Button>
+        {canDelete && <DeleteRejectedAlumniButton alumniId={alumniId} />}
       </div>
     </div>
   );
