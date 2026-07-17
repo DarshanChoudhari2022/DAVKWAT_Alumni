@@ -23,8 +23,7 @@ export async function forgotPasswordAction(
   // Build the reset link from the configured APP_URL rather than request headers.
   // Trusting x-forwarded-host would let a spoofed Host header redirect reset
   // links to an attacker-controlled origin (host-header poisoning).
-  const callbackUrl = new URL('/auth/callback', APP_URL);
-  callbackUrl.searchParams.set('redirect', '/auth/reset-password');
+  const callbackUrl = new URL('/auth/reset-password', APP_URL);
 
   const { error } = await supabase.auth.resetPasswordForEmail(parsed.data.email, {
     redirectTo: callbackUrl.toString(),

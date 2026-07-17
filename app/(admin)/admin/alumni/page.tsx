@@ -1,7 +1,7 @@
 import { Suspense } from 'react';
 import type { Metadata } from 'next';
 import Link from 'next/link';
-import { Search, Download } from 'lucide-react';
+import { Search, Download, Eye, Pencil } from 'lucide-react';
 import { Card } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -25,6 +25,8 @@ interface SearchParams {
   q?: string;
   status?: string;
   membership?: string;
+  batch?: string;
+  city?: string;
   page?: string;
 }
 
@@ -47,7 +49,7 @@ export default async function AdminAlumniPage({
         </div>
         <Button asChild variant="outline" size="sm" className="w-full sm:w-auto">
           <a
-            href={`/api/admin/export?type=alumni&status=${sp.status ?? ''}&membership=${sp.membership ?? ''}&q=${sp.q ?? ''}`}
+            href={`/api/admin/export?type=alumni&status=${sp.status ?? ''}&membership=${sp.membership ?? ''}&q=${sp.q ?? ''}&batch=${sp.batch ?? ''}&city=${sp.city ?? ''}`}
           >
             <Download className="h-4 w-4" />
             Export CSV
@@ -89,6 +91,20 @@ export default async function AdminAlumniPage({
           <option value="paid">Paid</option>
           <option value="free">Unpaid</option>
         </select>
+        <input
+          type="number"
+          name="batch"
+          defaultValue={sp.batch ?? ''}
+          placeholder="Batch year"
+          className="h-10 rounded-lg border border-slate-200 bg-white px-3 text-sm"
+        />
+        <input
+          type="text"
+          name="city"
+          defaultValue={sp.city ?? ''}
+          placeholder="City"
+          className="h-10 rounded-lg border border-slate-200 bg-white px-3 text-sm"
+        />
         <div className="flex flex-col gap-2 sm:flex-row lg:col-span-4">
           <button
             type="submit"
@@ -128,7 +144,7 @@ async function AlumniListRegion({ sp, page }: { sp: SearchParams; page: number }
     let listQuery = supabase
       .from('profiles')
       .select(
-        'id, full_name, email, batch_year, course, current_city, role, approval_status, is_paid_member, is_active, created_at, avatar_url',
+        'id, full_name, email, batch_year, course, current_city, role, approval_status, is_paid_member, membership_type, membership_expires_at, is_active, created_at, avatar_url',
         { count: 'exact' }
       );
 
@@ -156,6 +172,12 @@ async function AlumniListRegion({ sp, page }: { sp: SearchParams; page: number }
     }
     if (sp.membership === 'free') {
       listQuery = listQuery.eq('is_paid_member', false);
+    }
+    if (sp.batch) {
+      listQuery = listQuery.eq('batch_year', Number(sp.batch));
+    }
+    if (sp.city) {
+      listQuery = listQuery.ilike('current_city', `%${escapeIlikePattern(sp.city)}%`);
     }
 
     const listPromise = listQuery
@@ -232,7 +254,7 @@ async function AlumniListRegion({ sp, page }: { sp: SearchParams; page: number }
                 <th className="px-4 py-3">Membership</th>
                 <th className="px-4 py-3">Role</th>
                 <th className="px-4 py-3">Joined</th>
-                {canDeleteAlumni && <th className="py-3 pl-4 pr-5">Actions</th>}
+                <th className="py-3 pl-4 pr-5">Actions</th>
               </tr>
             </thead>
             <tbody>
@@ -265,21 +287,42 @@ async function AlumniListRegion({ sp, page }: { sp: SearchParams; page: number }
                     </Badge>
                   </td>
                   <td className="px-4 py-3">
-                    <Badge variant={a.is_paid_member ? 'success' : 'default'}>
-                      {a.is_paid_member ? 'Paid' : 'Unpaid'}
-                    </Badge>
+                    <div className="space-y-1">
+                      <Badge variant={a.is_paid_member ? 'success' : 'default'}>
+                        {a.membership_type === 'lifetime'
+                          ? 'Lifetime'
+                          : a.membership_type === 'annual'
+                            ? 'Annual'
+                            : a.is_paid_member
+                              ? 'Paid'
+                              : 'Unpaid'}
+                      </Badge>
+                      {a.membership_type === 'annual' && a.membership_expires_at && (
+                        <p className="text-xs text-slate-500">
+                          Until {formatDate(a.membership_expires_at)}
+                        </p>
+                      )}
+                    </div>
                   </td>
                   <td className="px-4 py-3 capitalize">{a.role}</td>
                   <td className="px-4 py-3">{formatDate(a.created_at)}</td>
-                  {canDeleteAlumni && (
-                    <td className="py-3 pl-4 pr-5">
-                      {a.role !== 'super_admin' ? (
-                        <DeleteRejectedAlumniButton alumniId={a.id} />
-                      ) : (
-                        <span className="text-xs text-slate-400">-</span>
+                  <td className="py-3 pl-4 pr-5">
+                    <div className="flex items-center gap-1.5">
+                      <Button asChild variant="outline" size="icon" className="h-9 w-9" title="View profile">
+                        <Link href={`/admin/alumni/${a.id}`} aria-label={`View ${a.full_name}`}>
+                          <Eye className="h-4 w-4" />
+                        </Link>
+                      </Button>
+                      <Button asChild variant="outline" size="icon" className="h-9 w-9" title="Update profile">
+                        <Link href={`/admin/alumni/${a.id}#edit-profile`} aria-label={`Update ${a.full_name}`}>
+                          <Pencil className="h-4 w-4" />
+                        </Link>
+                      </Button>
+                      {canDeleteAlumni && a.role !== 'super_admin' && (
+                        <DeleteRejectedAlumniButton alumniId={a.id} iconOnly />
                       )}
-                    </td>
-                  )}
+                    </div>
+                  </td>
                 </tr>
               ))}
             </tbody>
@@ -290,7 +333,7 @@ async function AlumniListRegion({ sp, page }: { sp: SearchParams; page: number }
           page={page}
           totalPages={totalPages}
           basePath="/admin/alumni"
-          searchParams={{ q: sp.q, status: sp.status, membership: sp.membership }}
+          searchParams={{ q: sp.q, status: sp.status, membership: sp.membership, batch: sp.batch, city: sp.city }}
         />
       </>
     );

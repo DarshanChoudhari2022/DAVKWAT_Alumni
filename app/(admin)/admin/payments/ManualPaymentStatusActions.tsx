@@ -1,6 +1,6 @@
 'use client';
 
-import { useTransition } from 'react';
+import { useState, useTransition } from 'react';
 import { useRouter } from 'next/navigation';
 import { Button } from '@/components/ui/button';
 import { readApiResponse } from '@/lib/utils/api-client';
@@ -12,18 +12,22 @@ export function ManualPaymentStatusActions({
   paymentId: string;
   currentStatus: string;
 }) {
+  const [status, setStatus] = useState(currentStatus);
   const [isPending, startTransition] = useTransition();
   const router = useRouter();
 
-  function updateStatus(status: 'pending' | 'success' | 'failed') {
+  function updateStatus(nextStatus: 'pending' | 'success' | 'failed') {
+    const previousStatus = status;
+    setStatus(nextStatus);
     startTransition(async () => {
       const response = await fetch('/api/admin/payments/status', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ paymentId, status }),
+        body: JSON.stringify({ paymentId, status: nextStatus }),
       });
       const data = await readApiResponse<{ error?: string }>(response);
       if (!response.ok) {
+        setStatus(previousStatus);
         window.alert(data.error ?? 'Could not update payment status.');
         return;
       }
@@ -36,7 +40,7 @@ export function ManualPaymentStatusActions({
       <Button
         type="button"
         size="sm"
-        variant={currentStatus === 'success' ? 'primary' : 'outline'}
+        variant={status === 'success' ? 'primary' : 'outline'}
         disabled={isPending}
         onClick={() => updateStatus('success')}
       >
@@ -45,7 +49,7 @@ export function ManualPaymentStatusActions({
       <Button
         type="button"
         size="sm"
-        variant={currentStatus === 'failed' ? 'destructive' : 'outline'}
+        variant={status === 'failed' ? 'destructive' : 'outline'}
         disabled={isPending}
         onClick={() => updateStatus('failed')}
       >
@@ -54,7 +58,7 @@ export function ManualPaymentStatusActions({
       <Button
         type="button"
         size="sm"
-        variant={currentStatus === 'pending' ? 'accent' : 'outline'}
+        variant={status === 'pending' ? 'accent' : 'outline'}
         disabled={isPending}
         onClick={() => updateStatus('pending')}
       >

@@ -1,9 +1,10 @@
 import { Suspense } from 'react';
 import type { Metadata } from 'next';
 import Link from 'next/link';
-import { CalendarDays, Users, UserCheck, CreditCard, TrendingUp } from 'lucide-react';
+import { CalendarDays, Users, UserCheck, CreditCard, TrendingUp, Eye, Pencil } from 'lucide-react';
 import { Card } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
 import { MobileInfoRow } from '@/components/admin/MobileInfoRow';
 import { CardSkeleton, StatCardSkeleton, TableRowSkeleton } from '@/components/shared/Skeleton';
 import { SectionError } from '@/components/shared/SectionError';
@@ -158,7 +159,7 @@ async function RecentRegistrationsTable() {
             <th className="px-4 py-3">Course</th>
             <th className="px-4 py-3">Status</th>
             <th className="px-4 py-3">Registered</th>
-            {canDeleteAlumni && <th className="py-3 pl-4 pr-5">Actions</th>}
+            <th className="py-3 pl-4 pr-5">Actions</th>
           </tr>
         </thead>
         <tbody>
@@ -181,15 +182,23 @@ async function RecentRegistrationsTable() {
                 </Badge>
               </td>
               <td className="px-4 py-3">{formatDate(r.created_at)}</td>
-              {canDeleteAlumni && (
-                <td className="py-3 pl-4 pr-5">
-                  {r.role !== 'super_admin' ? (
-                    <DeleteRejectedAlumniButton alumniId={r.id} />
-                  ) : (
-                    <span className="text-xs text-slate-400">-</span>
+              <td className="py-3 pl-4 pr-5">
+                <div className="flex items-center gap-1.5">
+                  <Button asChild variant="outline" size="icon" className="h-9 w-9" title="View profile">
+                    <Link href={`/admin/alumni/${r.id}`} aria-label={`View ${r.full_name}`}>
+                      <Eye className="h-4 w-4" />
+                    </Link>
+                  </Button>
+                  <Button asChild variant="outline" size="icon" className="h-9 w-9" title="Update profile">
+                    <Link href={`/admin/alumni/${r.id}#edit-profile`} aria-label={`Update ${r.full_name}`}>
+                      <Pencil className="h-4 w-4" />
+                    </Link>
+                  </Button>
+                  {canDeleteAlumni && r.role !== 'super_admin' && (
+                    <DeleteRejectedAlumniButton alumniId={r.id} iconOnly />
                   )}
-                </td>
-              )}
+                </div>
+              </td>
             </tr>
           ))}
         </tbody>

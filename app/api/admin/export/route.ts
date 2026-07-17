@@ -66,10 +66,14 @@ export async function GET(req: NextRequest) {
 
     const status = searchParams.get('status');
     const membership = searchParams.get('membership');
+    const batch = searchParams.get('batch');
+    const city = searchParams.get('city');
     const q = normalizeSearchTerm(searchParams.get('q'));
     if (status) query = query.eq('approval_status', status as 'pending' | 'approved' | 'rejected');
     if (membership === 'paid') query = query.eq('is_paid_member', true);
     if (membership === 'free') query = query.eq('is_paid_member', false);
+    if (batch) query = query.eq('batch_year', Number(batch));
+    if (city) query = query.ilike('current_city', `%${escapeIlikePattern(city)}%`);
     if (q) {
       const term = `%${escapeIlikePattern(q)}%`;
       query = query.or(`full_name.ilike.${term},email.ilike.${term}`);

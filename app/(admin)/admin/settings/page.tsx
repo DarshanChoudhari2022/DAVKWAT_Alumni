@@ -16,6 +16,7 @@ import { formatINR } from '@/lib/utils/format';
 import { MembershipPlanForm } from './MembershipPlanForm';
 import { SiteSettingsForm } from './SiteSettingsForm';
 import { SettingsActions } from './SettingsActions';
+import { AdminRoleManager } from './AdminRoleManager';
 
 export const metadata: Metadata = { title: 'Settings - Admin' };
 
@@ -83,7 +84,7 @@ export default async function AdminSettingsPage() {
         <section className="mt-10">
           <h2 className="font-display text-xl font-semibold">Admin Users</h2>
           <p className="mt-1 text-sm text-slate-500">
-            Manage admin access. Use the Alumni detail page to promote users to admin.
+            Assign admin and super admin access from one controlled section.
           </p>
           {/* Admin Users region streams in its own boundary (Req 3.3). */}
           <Suspense fallback={<ListSkeleton rows={3} cols={3} />}>
@@ -200,15 +201,33 @@ function MembershipPlansSkeleton() {
 async function AdminUsersList() {
   try {
     const { database: supabase } = await requireAdminAccess();
-    const { data: admins } = await supabase
-      .from('profiles')
-      .select('id, full_name, email, role')
-      .in('role', ['admin', 'super_admin'])
-      .order('full_name', { ascending: true })
-      .order('id', { ascending: true });
+    const [{ data: admins }, { data: candidates }] = await Promise.all([
+      supabase
+        .from('profiles')
+        .select('id, full_name, email, role')
+        .in('role', ['admin', 'super_admin'])
+        .order('full_name', { ascending: true })
+        .order('id', { ascending: true }),
+      supabase
+        .from('profiles')
+        .select('id, full_name, email, role')
+        .in('role', ['alumni', 'admin', 'super_admin'])
+        .eq('approval_status', 'approved')
+        .order('full_name', { ascending: true })
+        .order('id', { ascending: true })
+        .limit(200),
+    ]);
 
     return (
       <>
+      <Card className="mt-4">
+        <h3 className="font-display font-semibold">Assign Admin Role</h3>
+        <p className="mt-1 text-sm text-slate-500">
+          Super admins can promote members to Admin or Super Admin, or remove admin access.
+        </p>
+        <AdminRoleManager candidates={candidates ?? []} />
+      </Card>
+
       <div className="mt-4 grid gap-3 sm:hidden">
         {(admins ?? []).map((a: { id: string; full_name: string; email: string; role: string }) => (
           <Card key={a.id} className="p-4">
@@ -229,17 +248,17 @@ async function AdminUsersList() {
         <table className="w-full min-w-[520px] text-sm">
           <thead>
             <tr className="border-b border-slate-200 text-left text-xs uppercase tracking-wide text-slate-500">
-              <th className="pb-2 pr-3">Name</th>
-              <th className="pb-2 pr-3">Email</th>
-              <th className="pb-2">Role</th>
+              <th className="py-3 pl-5 pr-4">Name</th>
+              <th className="px-4 py-3">Email</th>
+              <th className="py-3 pl-4 pr-5">Role</th>
             </tr>
           </thead>
           <tbody>
             {(admins ?? []).map((a: { id: string; full_name: string; email: string; role: string }) => (
               <tr key={a.id} className="border-b border-slate-100">
-                <td className="py-2.5 pr-3 font-medium">{a.full_name}</td>
-                <td className="py-2.5 pr-3 text-slate-500">{a.email}</td>
-                <td className="py-2.5">
+                <td className="py-3 pl-5 pr-4 font-medium">{a.full_name}</td>
+                <td className="px-4 py-3 text-slate-500">{a.email}</td>
+                <td className="py-3 pl-4 pr-5">
                   <Badge variant="primary" className="capitalize">
                     {a.role}
                   </Badge>

@@ -6,7 +6,13 @@ import { Trash2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { readApiResponse } from '@/lib/utils/api-client';
 
-export function DeleteRejectedAlumniButton({ alumniId }: { alumniId: string }) {
+export function DeleteRejectedAlumniButton({
+  alumniId,
+  iconOnly = false,
+}: {
+  alumniId: string;
+  iconOnly?: boolean;
+}) {
   const [isPending, startTransition] = useTransition();
   const router = useRouter();
 
@@ -38,10 +44,12 @@ export function DeleteRejectedAlumniButton({ alumniId }: { alumniId: string }) {
       size="sm"
       onClick={handleDelete}
       disabled={isPending}
-      className="w-full sm:w-auto"
+      className={iconOnly ? 'h-9 w-9 px-0' : 'w-full sm:w-auto'}
+      title="Delete profile"
+      aria-label="Delete profile"
     >
       <Trash2 className="h-4 w-4" />
-      Delete
+      {!iconOnly && 'Delete'}
     </Button>
   );
 }

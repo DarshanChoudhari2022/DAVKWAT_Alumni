@@ -20,8 +20,33 @@ export function ResetPasswordForm({ recoveryCode }: { recoveryCode?: string }) {
   useEffect(() => {
     let isMounted = true;
     const supabase = createClient();
+    const hashParams = new URLSearchParams(window.location.hash.replace(/^#/, ''));
+    const accessToken = hashParams.get('access_token');
+    const refreshToken = hashParams.get('refresh_token');
 
     if (!recoveryCode) {
+      if (accessToken && refreshToken) {
+        supabase.auth
+          .setSession({ access_token: accessToken, refresh_token: refreshToken })
+          .then(({ error: sessionError }) => {
+            if (!isMounted) {
+              return;
+            }
+
+            if (sessionError) {
+              setError('This reset link is invalid or expired. Please request a new reset link.');
+            } else {
+              setHasResetSession(true);
+              window.history.replaceState(null, '', '/auth/reset-password');
+            }
+            setIsPreparingSession(false);
+          });
+
+        return () => {
+          isMounted = false;
+        };
+      }
+
       supabase.auth.getSession().then(({ data }) => {
         if (!isMounted) {
           return;

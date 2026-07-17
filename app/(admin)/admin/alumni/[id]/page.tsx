@@ -248,7 +248,7 @@ export default async function AdminAlumniDetailPage({
         </Card>
       )}
 
-      <Card className="mt-6">
+      <Card id="edit-profile" className="mt-6 scroll-mt-6">
         <h2 className="font-display text-lg font-semibold">Edit Selected Fields</h2>
         <p className="mt-1 text-sm text-slate-500">
           Update contact, professional, privacy, and profile information for this alumni record.
