@@ -2,7 +2,6 @@ import { NextRequest, NextResponse } from 'next/server';
 import { requireAdminApiAccess } from '@/lib/auth/admin-api';
 import { writeAuditLog } from '@/lib/audit';
 import { invalidateAfterAction } from '@/lib/cache/invalidate';
-import { verifyLocalAdminPassword } from '@/lib/auth/local-admin';
 import { createAdminClient } from '@/lib/supabase/admin';
 import { adminProfileUpdateSchema, deleteAlumniSchema } from '@/lib/validations/admin';
 
@@ -124,14 +123,9 @@ export async function DELETE(
   const parsed = deleteAlumniSchema.safeParse(body);
   if (!parsed.success) {
     return NextResponse.json(
-      { error: parsed.error.issues[0]?.message ?? 'Admin password is required.' },
+      { error: parsed.error.issues[0]?.message ?? 'Type Delete to confirm permanent deletion.' },
       { status: 400 }
     );
-  }
-
-  const passwordMatches = await verifyLocalAdminPassword(parsed.data.adminPassword);
-  if (!passwordMatches) {
-    return NextResponse.json({ error: 'Invalid admin password.' }, { status: 403 });
   }
 
   const admin = createAdminClient();
@@ -152,14 +146,29 @@ export async function DELETE(
     );
   }
 
-  const { error: authDeleteError } = await admin.auth.admin.deleteUser(id);
-  if (authDeleteError) {
-    return NextResponse.json({ error: authDeleteError.message }, { status: 500 });
+  const dependentDeletes = [
+    admin.from('payments').delete().eq('alumni_id', id),
+    admin.from('event_rsvps').delete().eq('alumni_id', id),
+    admin.from('forum_replies').delete().eq('author_id', id),
+    admin.from('forum_threads').delete().eq('author_id', id),
+    admin.from('audit_log').update({ actor_id: null }).eq('actor_id', id),
+    admin.from('profiles').update({ approved_by: null }).eq('approved_by', id),
+  ] as const;
+
+  const dependentResults = await Promise.all(dependentDeletes);
+  const dependentError = dependentResults.find((result) => result.error)?.error;
+  if (dependentError) {
+    return NextResponse.json({ error: dependentError.message }, { status: 500 });
   }
 
   const { error: deleteError } = await admin.from('profiles').delete().eq('id', id);
   if (deleteError) {
     return NextResponse.json({ error: deleteError.message }, { status: 500 });
+  }
+
+  const { error: authDeleteError } = await admin.auth.admin.deleteUser(id);
+  if (authDeleteError && !authDeleteError.message.toLowerCase().includes('user not found')) {
+    return NextResponse.json({ error: authDeleteError.message }, { status: 500 });
   }
 
   await writeAuditLog({

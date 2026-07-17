@@ -70,7 +70,6 @@ export const adminProfileUpdateSchema = z.object({
 });
 
 export const deleteAlumniSchema = z.object({
-  adminPassword: z.string().min(1, 'Admin password is required.'),
   confirmationText: z.literal('Delete', {
     errorMap: () => ({ message: 'Type Delete to confirm permanent deletion.' }),
   }),

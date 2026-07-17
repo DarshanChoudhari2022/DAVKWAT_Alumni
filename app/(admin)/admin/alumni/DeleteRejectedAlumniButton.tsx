@@ -16,16 +16,11 @@ export function DeleteRejectedAlumniButton({ alumniId }: { alumniId: string }) {
       return;
     }
 
-    const adminPassword = window.prompt('Enter the admin password to permanently delete this rejected entry.');
-    if (!adminPassword) {
-      return;
-    }
-
     startTransition(async () => {
       const response = await fetch(`/api/admin/alumni/${alumniId}`, {
         method: 'DELETE',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ adminPassword, confirmationText }),
+        body: JSON.stringify({ confirmationText }),
       });
       const data = await readApiResponse<{ error?: string }>(response);
       if (!response.ok) {

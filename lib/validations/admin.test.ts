@@ -31,14 +31,12 @@ describe('admin validations', () => {
   it('requires exact Delete confirmation for permanent alumni deletion', () => {
     expect(
       deleteAlumniSchema.safeParse({
-        adminPassword: 'secret',
         confirmationText: 'Delete',
       }).success
     ).toBe(true);
 
     expect(
       deleteAlumniSchema.safeParse({
-        adminPassword: 'secret',
         confirmationText: 'delete',
       }).success
     ).toBe(false);

@@ -70,22 +70,12 @@ export function AlumniDetailActions({
       return;
     }
 
-    const adminPassword = window.prompt(
-      'Enter the admin password to permanently delete this alumni record.'
-    );
-    if (!adminPassword) return;
-
-    const confirmed = window.confirm(
-      'This permanently deletes the alumni login, profile, documents, payments, RSVPs, and related records. This cannot be undone.'
-    );
-    if (!confirmed) return;
-
     setError(null);
     startTransition(async () => {
       const res = await fetch(`/api/admin/alumni/${alumniId}`, {
         method: 'DELETE',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ adminPassword, confirmationText }),
+        body: JSON.stringify({ confirmationText }),
       });
       const data = await readApiResponse<{ error?: string }>(res);
       if (!res.ok) {
