@@ -186,13 +186,20 @@ async function AnnouncementsListRegion({ sp, page }: { sp: SearchParams; page: n
           <table className="w-full min-w-[720px] text-sm">
             <thead>
               <tr className="border-b border-slate-200 text-left text-xs uppercase tracking-wide text-slate-500">
-                <th className="pb-2 pr-3">Title</th>
-                <th className="pb-2 pr-3">Status</th>
-                <th className="pb-2 pr-3">Date</th>
-                <th className="pb-2 text-right">Actions</th>
+                <th className="px-4 py-3">Title</th>
+                <th className="px-4 py-3">Status</th>
+                <th className="px-4 py-3">Date</th>
+                <th className="px-4 py-3 text-right">Actions</th>
               </tr>
             </thead>
             <tbody>
+              {data.length === 0 && (
+                <tr>
+                  <td colSpan={4} className="px-4 py-10 text-center text-sm text-slate-500">
+                    No announcements found.
+                  </td>
+                </tr>
+              )}
               {data.map((a) => {
                 const authorName =
                   a.profiles && !Array.isArray(a.profiles)
@@ -200,7 +207,7 @@ async function AnnouncementsListRegion({ sp, page }: { sp: SearchParams; page: n
                     : 'Unknown';
                 return (
                   <tr key={a.id} className="border-b border-slate-100">
-                    <td className="py-3 pr-3">
+                    <td className="px-4 py-3">
                       <div className="flex items-center gap-2">
                         {a.is_pinned && <Pin className="h-3.5 w-3.5 shrink-0 text-amber-500" />}
                         <div className="min-w-0">
@@ -209,7 +216,7 @@ async function AnnouncementsListRegion({ sp, page }: { sp: SearchParams; page: n
                         </div>
                       </div>
                     </td>
-                    <td className="py-3 pr-3">
+                    <td className="px-4 py-3">
                       {a.is_published && a.scheduled_for && new Date(a.scheduled_for).getTime() > Date.now() ? (
                         <Badge variant="warning">Scheduled</Badge>
                       ) : a.is_published ? (
@@ -222,10 +229,10 @@ async function AnnouncementsListRegion({ sp, page }: { sp: SearchParams; page: n
                         </Badge>
                       )}
                     </td>
-                    <td className="py-3 pr-3 text-slate-500">
+                    <td className="px-4 py-3 text-slate-500">
                       {a.scheduled_for ? formatDate(a.scheduled_for) : a.published_at ? formatDate(a.published_at) : formatDate(a.created_at)}
                     </td>
-                    <td className="py-3 text-right">
+                    <td className="px-4 py-3 text-right">
                       <AnnouncementActions
                         id={a.id}
                         isPublished={a.is_published}

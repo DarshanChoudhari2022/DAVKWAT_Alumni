@@ -11,6 +11,29 @@ function normalizeOptionalString(value: unknown) {
   return trimmed.length > 0 ? trimmed : null;
 }
 
+async function deleteAuthUserBestEffort(
+  admin: ReturnType<typeof createAdminClient>,
+  userId: string
+) {
+  const timeoutMs = 1500;
+  const timeoutMessage = 'Supabase Auth deletion timed out after profile cleanup.';
+  const result = await Promise.race([
+    admin.auth.admin.deleteUser(userId),
+    new Promise<{ error: { message: string } }>((resolve) =>
+      setTimeout(() => resolve({ error: { message: timeoutMessage } }), timeoutMs)
+    ),
+  ]);
+
+  if (!result.error) return null;
+  if (result.error.message.toLowerCase().includes('user not found')) return null;
+
+  console.warn('Best-effort auth user deletion did not complete', {
+    userId,
+    error: result.error.message,
+  });
+  return result.error.message;
+}
+
 export async function PATCH(
   req: NextRequest,
   { params }: { params: Promise<{ id: string }> }
@@ -166,10 +189,7 @@ export async function DELETE(
     return NextResponse.json({ error: deleteError.message }, { status: 500 });
   }
 
-  const { error: authDeleteError } = await admin.auth.admin.deleteUser(id);
-  if (authDeleteError && !authDeleteError.message.toLowerCase().includes('user not found')) {
-    return NextResponse.json({ error: authDeleteError.message }, { status: 500 });
-  }
+  const authDeleteWarning = await deleteAuthUserBestEffort(admin, id);
 
   await writeAuditLog({
     actor_id: adminAccess.actorProfileId,
@@ -180,6 +200,7 @@ export async function DELETE(
       deleted_email: profile.email,
       deleted_name: profile.full_name,
       deleted_role: profile.role,
+      auth_delete_warning: authDeleteWarning,
     },
   });
 

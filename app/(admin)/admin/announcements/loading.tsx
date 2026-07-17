@@ -9,7 +9,7 @@ export default function AdminAnnouncementsLoading() {
         <thead>
           <tr className="border-b border-slate-200">
             {['Title', 'Author', 'Status', 'Date', 'Actions'].map((h) => (
-              <th key={h} className="pb-2 pr-3 text-left text-xs uppercase tracking-wide text-slate-500">{h}</th>
+              <th key={h} className="px-4 py-3 text-left text-xs uppercase tracking-wide text-slate-500">{h}</th>
             ))}
           </tr>
         </thead>
