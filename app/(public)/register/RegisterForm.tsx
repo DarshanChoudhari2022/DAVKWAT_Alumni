@@ -27,6 +27,7 @@ const initialState: RegisterState = {};
 const CURRENT_YEAR = new Date().getFullYear();
 const BATCH_YEARS = Array.from({ length: CURRENT_YEAR - 1959 }, (_, i) => CURRENT_YEAR - i);
 const STEPS = ['Account', 'Academic', 'Personal', 'Professional', 'Payment & Documents'] as const;
+const DRAFT_KEY = 'davkawt_register_draft';
 
 const MONTHS = [
   'January', 'February', 'March', 'April', 'May', 'June',
@@ -135,43 +136,43 @@ export function RegisterForm({ step, setStep }: RegisterFormProps) {
 
   const saveTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
-  const saveFormDraft = () => {
-    if (saveTimeoutRef.current) {
-      clearTimeout(saveTimeoutRef.current);
-    }
-    saveTimeoutRef.current = setTimeout(() => {
-      if (!formRef.current) return;
-      const fd = new FormData(formRef.current);
-      const draft: Record<string, unknown> = {};
+  const saveDraftSync = () => {
+    if (!formRef.current) return;
+    const fd = new FormData(formRef.current);
+    const draft: Record<string, unknown> = {};
 
-      draft.step = step;
-      draft.educationLevel = educationLevel;
-      draft.leftClass = leftClass;
-      draft.leavingYear = leavingYear;
-      draft.batchYear = batchYear;
-      draft.selectedAmount = selectedAmount;
-      draft.countryCode = countryCode;
-      draft.dobDay = dobDay;
-      draft.dobMonth = dobMonth;
-      draft.dobYear = dobYear;
+    draft.step = step;
+    draft.educationLevel = educationLevel;
+    draft.leftClass = leftClass;
+    draft.leavingYear = leavingYear;
+    draft.batchYear = batchYear;
+    draft.selectedAmount = selectedAmount;
+    draft.countryCode = countryCode;
+    draft.dobDay = dobDay;
+    draft.dobMonth = dobMonth;
+    draft.dobYear = dobYear;
 
-      for (const [key, value] of fd.entries()) {
-        if (key === 'password' || key === 'confirmPassword' || value instanceof File) {
-          continue;
-        }
-        draft[key] = value;
+    for (const [key, value] of fd.entries()) {
+      if (key === 'password' || key === 'confirmPassword' || value instanceof File) {
+        continue;
       }
+      draft[key] = value;
+    }
 
-      const checkboxes = ['hide_email', 'hide_phone', 'terms_accepted'];
-      checkboxes.forEach((cb) => {
-        const el = formRef.current?.querySelector<HTMLInputElement>(`input[name="${cb}"]`);
-        if (el) {
-          draft[cb] = el.checked;
-        }
-      });
+    const checkboxes = ['hide_email', 'hide_phone', 'terms_accepted'];
+    checkboxes.forEach((cb) => {
+      const el = formRef.current?.querySelector<HTMLInputElement>(`input[name="${cb}"]`);
+      if (el) {
+        draft[cb] = el.checked;
+      }
+    });
 
-      localStorage.setItem('davkawt_register_draft', JSON.stringify(draft));
-    }, 500);
+    localStorage.setItem(DRAFT_KEY, JSON.stringify(draft));
+  };
+
+  const saveFormDraft = () => {
+    if (saveTimeoutRef.current) clearTimeout(saveTimeoutRef.current);
+    saveTimeoutRef.current = setTimeout(saveDraftSync, 300);
   };
 
   // Save draft whenever controlled states change
@@ -193,7 +194,7 @@ export function RegisterForm({ step, setStep }: RegisterFormProps) {
 
   // Load draft on mount
   useEffect(() => {
-    const saved = localStorage.getItem('davkawt_register_draft');
+    const saved = localStorage.getItem(DRAFT_KEY);
     if (!saved) return;
 
     try {
@@ -249,10 +250,9 @@ export function RegisterForm({ step, setStep }: RegisterFormProps) {
           }
         });
 
-        // After restoring inputs, validate and correct restored step index
-        const restoredStep = typeof draft.step === 'number' ? draft.step : 0;
-        const validStep = getFirstInvalidStep(restoredStep);
-        setStep(validStep);
+        if (typeof draft.step === 'number') {
+          setStep(Math.min(Math.max(draft.step, 0), STEPS.length - 1));
+        }
       }, 100);
     } catch (e) {
       console.error('[register] failed to restore draft:', e);
@@ -263,10 +263,15 @@ export function RegisterForm({ step, setStep }: RegisterFormProps) {
 
   // Clean up save draft timeout on unmount
   useEffect(() => {
+    const handlePageHide = () => saveDraftSync();
+    window.addEventListener('pagehide', handlePageHide);
+    window.addEventListener('beforeunload', handlePageHide);
     return () => {
       if (saveTimeoutRef.current) clearTimeout(saveTimeoutRef.current);
+      window.removeEventListener('pagehide', handlePageHide);
+      window.removeEventListener('beforeunload', handlePageHide);
     };
-  }, []);
+  });
 
   // Automatically calculate batch year for left_before_10th
   useEffect(() => {
@@ -545,6 +550,10 @@ export function RegisterForm({ step, setStep }: RegisterFormProps) {
       )}
 
       {/* Step 1 — Account */}
+      <p className="rounded-lg bg-slate-50 px-3 py-2 text-xs text-slate-500">
+        Your registration draft is saved in this browser while you type. For security, passwords and uploaded files are not saved.
+      </p>
+
       <div id="step-0" className={cn('space-y-4', step !== 0 && 'hidden')}>
         <Field label="Email" name="email" type="email" autoComplete="email" maxLength={VALIDATION_LIMITS.emailMax} required error={fieldErrors?.email} />
         <Field label="Password" name="password" type="password" autoComplete="new-password" maxLength={VALIDATION_LIMITS.passwordMax} required error={fieldErrors?.password} hint="Min 8 chars, 1 uppercase, 1 number" />
@@ -1098,3 +1107,4 @@ function Field({ label, name, hint, error, required, ...rest }: FieldProps) {
     </div>
   );
 }
+
