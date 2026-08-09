@@ -59,8 +59,6 @@ const ALUMNI_PREFIXES = [
   '/dashboard',
   '/directory',
   '/profile',
-  '/announcements',
-  '/events',
   '/forum',
   '/membership',
 ];
@@ -74,8 +72,7 @@ const adminPathArb = fc
 
 const alumniPathArb = fc
   .tuple(fc.constantFrom(...ALUMNI_PREFIXES), fc.array(segmentArb, { maxLength: 3 }))
-  .map(([prefix, segs]) => (segs.length ? `${prefix}/${segs.join('/')}` : prefix))
-  .filter((path) => !(path.startsWith('/events/') && path !== '/events/'));
+  .map(([prefix, segs]) => (segs.length ? `${prefix}/${segs.join('/')}` : prefix));
 
 const authPathArb = fc.constantFrom(...AUTH_ROUTES);
 
@@ -88,6 +85,10 @@ const publicPathArb = fc.constantFrom(
   '/contact',
   '/terms',
   '/faq',
+  '/events',
+  '/events/gala-dinner',
+  '/announcements',
+  '/announcements/core-committee',
   '/sponsors',
 );
 

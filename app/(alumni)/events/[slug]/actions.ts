@@ -27,11 +27,6 @@ export async function rsvpAction(
     return { error: 'Your registration must be approved before registering for events.' };
   }
 
-  const isPaidOrFaculty = profile.is_paid_member || profile.profile_type === 'faculty';
-  if (!isPaidOrFaculty) {
-    return { error: 'An active membership is required to register for events.' };
-  }
-
   const eventId = formData.get('event_id')?.toString();
   const slug = formData.get('slug')?.toString();
 

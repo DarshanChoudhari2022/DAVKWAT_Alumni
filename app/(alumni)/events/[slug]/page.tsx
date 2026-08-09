@@ -2,7 +2,7 @@
 import type { Metadata } from 'next';
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
-import { ArrowLeft, Calendar, MapPin, Users, Lock, Crown, AlertCircle } from 'lucide-react';
+import { ArrowLeft, Calendar, MapPin, Users, Lock, AlertCircle } from 'lucide-react';
 import { Card } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -11,7 +11,7 @@ import { formatDateTime, formatINR } from '@/lib/utils/format';
 import { RsvpForm } from './RsvpForm';
 import { ShareButtons } from './ShareButtons';
 import { APP_URL } from '@/lib/resend/client';
-import { buildManualPaymentWhatsappUrl, MANUAL_MEMBERSHIP_PAYMENT } from '@/lib/payments/manual-upi';
+import { MANUAL_MEMBERSHIP_PAYMENT } from '@/lib/payments/manual-upi';
 
 export async function generateMetadata({
   params,
@@ -105,26 +105,14 @@ export default async function EventDetailPage({
 
   const eventUrl = `${APP_URL}/events/${event.slug}`;
 
-  // Membership status determination
   const isPending = profile && profile.approval_status === 'pending';
   const isApproved = profile && profile.approval_status === 'approved';
-  const isPaidOrFaculty = profile && (profile.is_paid_member || profile.profile_type === 'faculty');
-  const needsPayment = isApproved && !isPaidOrFaculty;
 
   // Build WhatsApp text for pending approval speed-up
   const whatsappApprovalMsg = profile
     ? `Hello Admin, my name is ${profile.full_name} (Batch of ${profile.batch_year}). I have registered on the DAVKAWT portal. Please review my profile so I can RSVP for the event: ${event.title}.`
     : '';
   const whatsappApprovalUrl = `https://wa.me/${MANUAL_MEMBERSHIP_PAYMENT.whatsappNumber}?text=${encodeURIComponent(whatsappApprovalMsg)}`;
-
-  // Build WhatsApp text for manual payment proof
-  const whatsappPaymentUrl = profile
-    ? buildManualPaymentWhatsappUrl({
-        fullName: profile.full_name,
-        batchYear: String(profile.batch_year),
-        phone: profile.phone ?? undefined,
-      })
-    : '';
 
   return (
     <article className="mx-auto max-w-3xl px-4 py-10 sm:px-6 lg:px-8">
@@ -201,8 +189,8 @@ export default async function EventDetailPage({
 
       {!isPast && (
         <Card className="mt-6 p-6 sm:p-8 border-slate-200">
-          {/* STATE 1: Fully Active Member / Faculty -> Render RSVP Form */}
-          {userId && isApproved && isPaidOrFaculty && (
+          {/* STATE 1: Approved alumni/faculty profile -> Render RSVP Form */}
+          {userId && isApproved && (
             <div>
               <h2 className="font-display text-xl font-semibold">RSVP</h2>
               {event.registration_deadline && (
@@ -228,7 +216,7 @@ export default async function EventDetailPage({
                 <div>
                   <h3 className="font-display text-lg font-semibold">Join the Association to RSVP</h3>
                   <p className="text-sm text-slate-600 mt-1">
-                    This event is exclusive to members of the DAV Khagaul Alumni Association. Join to connect, networking, and participate.
+                    Sign in or register so the Trust can record your RSVP against your alumni profile.
                   </p>
                 </div>
               </div>
@@ -308,54 +296,6 @@ export default async function EventDetailPage({
             </div>
           )}
 
-          {/* STATE 5: Approved but Unpaid */}
-          {userId && needsPayment && (
-            <div className="space-y-4">
-              <div className="flex items-start gap-3">
-                <Crown className="mt-1 h-5 w-5 text-amber-500 shrink-0" />
-                <div>
-                  <h3 className="font-display text-lg font-semibold">Activate Membership to Register</h3>
-                  <p className="text-sm text-slate-600 mt-1">
-                    Your profile is approved! Choose a membership plan to activate your account and RSVP for events.
-                  </p>
-                </div>
-              </div>
-
-              <div className="grid gap-4 md:grid-cols-2 pt-2">
-                <div className="rounded-xl border border-slate-100 bg-slate-50/50 p-4 space-y-3 flex flex-col justify-between">
-                  <div>
-                    <h4 className="font-semibold text-sm text-slate-700">Option 1: Request Membership</h4>
-                    <p className="text-xs text-slate-500 mt-1">
-                      Record a membership request and share your payment proof with the admin team.
-                    </p>
-                  </div>
-                  <Button asChild className="w-full mt-2 bg-[#0F2557] hover:bg-[#1a3a7a]" size="sm">
-                    <Link href="/membership">Request Membership</Link>
-                  </Button>
-                </div>
-
-                <div className="rounded-xl border border-slate-100 bg-slate-50/50 p-4 space-y-3 flex flex-col justify-between">
-                  <div>
-                    <h4 className="font-semibold text-sm text-slate-700">Option 2: Manual UPI Transfer</h4>
-                    <p className="text-xs text-slate-500 mt-1">
-                      Transfer <span className="font-semibold">{formatINR(500)}</span> (Annual) or <span className="font-semibold">{formatINR(5000)}</span> (Lifetime) to:
-                    </p>
-                    <code className="block bg-slate-100 px-2 py-1 rounded text-xs mt-1.5 font-mono text-center font-semibold text-[#0F2557] break-all">
-                      {MANUAL_MEMBERSHIP_PAYMENT.upiId}
-                    </code>
-                    <p className="text-[10px] text-slate-400 mt-1 text-center">
-                      Payee: {MANUAL_MEMBERSHIP_PAYMENT.payeeName}
-                    </p>
-                  </div>
-                  <Button asChild variant="outline" className="w-full mt-2 border-emerald-200 bg-emerald-50 text-emerald-700 hover:bg-emerald-100" size="sm">
-                    <a href={whatsappPaymentUrl} target="_blank" rel="noopener noreferrer">
-                      WhatsApp Payment Proof
-                    </a>
-                  </Button>
-                </div>
-              </div>
-            </div>
-          )}
         </Card>
       )}
 
