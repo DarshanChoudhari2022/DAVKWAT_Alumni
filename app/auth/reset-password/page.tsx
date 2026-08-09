@@ -1,4 +1,5 @@
 import type { Metadata } from 'next';
+import { redirect } from 'next/navigation';
 import { Card } from '@/components/ui/card';
 import { ResetPasswordForm } from './ResetPasswordForm';
 
@@ -11,6 +12,10 @@ export default async function ResetPasswordPage({
 }) {
   const sp = await searchParams;
 
+  if (sp.code) {
+    redirect(`/auth/callback?code=${encodeURIComponent(sp.code)}&redirect=%2Fauth%2Freset-password`);
+  }
+
   return (
     <div className="mx-auto flex min-h-[60vh] max-w-md items-center px-4 py-16 sm:px-6">
       <Card className="w-full p-8">
@@ -18,7 +23,7 @@ export default async function ResetPasswordPage({
         <p className="mt-1 text-sm text-slate-500">
           Enter your new password below.
         </p>
-        <ResetPasswordForm recoveryCode={sp.code} />
+        <ResetPasswordForm />
       </Card>
     </div>
   );

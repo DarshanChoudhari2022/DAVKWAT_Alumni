@@ -9,6 +9,7 @@ import { requireAlumniAccess } from '@/lib/auth/alumni-access';
 import { getMembershipPlansForAlumni } from '@/lib/cache/admin-cache';
 import { formatDate, formatINR } from '@/lib/utils/format';
 import { PayButton } from './PayButton';
+import { isMembershipActive } from '@/lib/payments/membership';
 
 export const metadata: Metadata = { title: 'Membership' };
 
@@ -19,6 +20,11 @@ export default async function MembershipPage({
 }) {
   const { profile } = await requireAlumniAccess();
   const sp = await searchParams;
+  const hasActiveMembership = isMembershipActive(
+    profile.is_paid_member,
+    profile.membership_type,
+    profile.membership_expires_at
+  );
 
   const isExpiringSoon =
     profile.membership_expires_at != null &&
@@ -75,7 +81,7 @@ export default async function MembershipPage({
             </div>
           </div>
         </Card>
-      ) : profile.is_paid_member ? (
+      ) : hasActiveMembership ? (
         <Card className="mt-6 border-emerald-200 bg-emerald-50/50">
           <div className="flex items-start gap-4">
             <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-emerald-100 text-emerald-600">
@@ -112,7 +118,7 @@ export default async function MembershipPage({
       {profile.profile_type !== 'faculty' && (
         <Suspense fallback={<PlansSkeleton />}>
           <PlansRegion
-            isPaidMember={profile.is_paid_member}
+            isPaidMember={hasActiveMembership}
             isExpiringSoon={isExpiringSoon}
             profileType={profile.profile_type}
           />

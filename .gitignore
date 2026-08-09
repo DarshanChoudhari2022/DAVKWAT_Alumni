@@ -29,6 +29,8 @@ pnpm-debug.log*
 .idea/
 .vscode/
 coverage/
+playwright-report/
+test-results/
 tsconfig.tsbuildinfo
 .vercel/
 

@@ -15,7 +15,7 @@ export async function POST(req: NextRequest) {
     const supabase = adminAccess.database;
 
     const body = await req.json();
-    const { title, content, is_pinned, is_published, slug, cover_image_url, scheduled_for } = body;
+    const { title, content, is_pinned, is_published, slug, cover_image_url, scheduled_for, rsvp_event_id } = body;
 
     if (!title?.trim() || !content?.trim() || !slug) {
       return NextResponse.json({ error: 'Title, content, and slug are required.' }, { status: 400 });
@@ -45,6 +45,7 @@ export async function POST(req: NextRequest) {
         author_id: adminAccess.actorProfileId,
         cover_image_url: cover_image_url ?? null,
         scheduled_for: scheduledForValue,
+        rsvp_event_id: typeof rsvp_event_id === 'string' && rsvp_event_id ? rsvp_event_id : null,
         published_at: publishedAt,
         created_at: now,
         updated_at: now,

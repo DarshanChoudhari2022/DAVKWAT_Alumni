@@ -33,6 +33,8 @@ export async function PATCH(
     if (body.cover_image_url === null) allowed.cover_image_url = null;
     if (typeof body.scheduled_for === 'string') allowed.scheduled_for = body.scheduled_for;
     if (body.scheduled_for === null) allowed.scheduled_for = null;
+    if (typeof body.rsvp_event_id === 'string') allowed.rsvp_event_id = body.rsvp_event_id;
+    if (body.rsvp_event_id === null) allowed.rsvp_event_id = null;
 
     const nextScheduledFor =
       typeof allowed.scheduled_for === 'string' ? allowed.scheduled_for : body.scheduled_for ?? null;

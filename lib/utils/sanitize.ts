@@ -83,3 +83,63 @@ export function stripHtml(dirty: string): string {
     .replace(/\s+/g, ' ')
     .trim();
 }
+
+function escapeHtml(value: string) {
+  return value
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#39;');
+}
+
+export function formatAnnouncementHtml(content: string): string {
+  const sanitized = sanitizeHtml(content.trim());
+  if (/<(?:p|h[1-4]|ul|ol|li|blockquote|pre)\b/i.test(sanitized)) {
+    return sanitized;
+  }
+
+  let text = stripHtml(content);
+  const isMeetingMinutes = /minutes of meeting|agenda\s*&\s*key discussion/i.test(text);
+  if (!isMeetingMinutes) {
+    return `<p>${escapeHtml(text)}</p>`;
+  }
+
+  text = text
+    .replace(/\s+(?=(?:Meeting|Key Focus|Action Points?|Responsibility|Timeline|Key Decisions)\s*:)/gi, '\n\n')
+    .replace(/\s+(?=Agenda\s*&\s*Key Discussion Points\b)/gi, '\n\n')
+    .replace(/\s+(?=\d+\.\s+[A-Z])/g, '\n\n')
+    .replace(/\s*\*\s+/g, '\n* ')
+    .replace(/\s+—{2,}\s+/g, '\n\n');
+
+  const lines = text.split(/\n+/).map((line) => line.trim()).filter(Boolean);
+  const html: string[] = [];
+  let listOpen = false;
+
+  for (const line of lines) {
+    if (line.startsWith('* ')) {
+      if (!listOpen) {
+        html.push('<ul>');
+        listOpen = true;
+      }
+      html.push(`<li>${escapeHtml(line.slice(2))}</li>`);
+      continue;
+    }
+    if (listOpen) {
+      html.push('</ul>');
+      listOpen = false;
+    }
+
+    const escaped = escapeHtml(line);
+    if (/^Minutes of Meeting/i.test(line)) {
+      html.push(`<h2>${escaped}</h2>`);
+    } else if (/^\d+\.\s+/.test(line) || /^(?:Agenda|Key Decisions)\b/i.test(line)) {
+      html.push(`<h3>${escaped}</h3>`);
+    } else {
+      html.push(`<p>${escaped.replace(/^([A-Za-z &/]+:)/, '<strong>$1</strong>')}</p>`);
+    }
+  }
+  if (listOpen) html.push('</ul>');
+
+  return sanitizeHtml(html.join(''));
+}

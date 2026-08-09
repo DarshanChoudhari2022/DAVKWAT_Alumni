@@ -1,4 +1,4 @@
-import * as XLSX from 'xlsx';
+import ExcelJS from 'exceljs';
 
 export function arrayToCSV(data: Record<string, unknown>[], columns: { key: string; label: string }[]): string {
   const header = columns.map((c) => c.label).join(',');
@@ -17,17 +17,26 @@ export function arrayToCSV(data: Record<string, unknown>[], columns: { key: stri
   return [header, ...rows].join('\n');
 }
 
-export function arrayToXLSX(data: Record<string, unknown>[], columns: { key: string; label: string }[]): Buffer {
-  const ws = XLSX.utils.json_to_sheet(
-    data.map((row) => {
-      const mapped: Record<string, unknown> = {};
-      for (const c of columns) {
-        mapped[c.label] = row[c.key] ?? '';
-      }
-      return mapped;
-    })
-  );
-  const wb = XLSX.utils.book_new();
-  XLSX.utils.book_append_sheet(wb, ws, 'Export');
-  return XLSX.write(wb, { type: 'buffer', bookType: 'xlsx' }) as Buffer;
+export async function arrayToXLSX(
+  data: Record<string, unknown>[],
+  columns: { key: string; label: string }[]
+): Promise<Buffer> {
+  const workbook = new ExcelJS.Workbook();
+  const worksheet = workbook.addWorksheet('Export');
+  worksheet.columns = columns.map((column) => ({
+    header: column.label,
+    key: column.key,
+    width: Math.max(12, Math.min(40, column.label.length + 4)),
+  }));
+
+  for (const row of data) {
+    worksheet.addRow(
+      Object.fromEntries(columns.map((column) => [column.key, row[column.key] ?? '']))
+    );
+  }
+
+  worksheet.getRow(1).font = { bold: true };
+  worksheet.views = [{ state: 'frozen', ySplit: 1 }];
+  const buffer = await workbook.xlsx.writeBuffer();
+  return Buffer.from(buffer);
 }

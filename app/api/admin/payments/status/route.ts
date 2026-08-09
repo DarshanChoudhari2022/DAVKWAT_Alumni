@@ -1,9 +1,23 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { after } from 'next/server';
 import { requireAdminApiAccess } from '@/lib/auth/admin-api';
 import { writeAuditLog } from '@/lib/audit';
 import { invalidateAfterAction } from '@/lib/cache/invalidate';
-import { getMembershipExpiryDate } from '@/lib/payments/membership';
 import { manualPaymentStatusSchema } from '@/lib/validations/admin';
+
+interface PaymentReviewResult {
+  payment_id: string;
+  alumni_id: string;
+  status: 'pending' | 'success' | 'failed' | 'refunded';
+  membership_type: 'annual' | 'lifetime' | null;
+  membership_expires_at: string | null;
+}
+
+function isPaymentReviewResult(value: unknown): value is PaymentReviewResult {
+  if (!value || typeof value !== 'object') return false;
+  const result = value as Record<string, unknown>;
+  return typeof result.payment_id === 'string' && typeof result.alumni_id === 'string';
+}
 
 export async function POST(req: NextRequest) {
   const { adminAccess, error: authError } = await requireAdminApiAccess();
@@ -19,77 +33,40 @@ export async function POST(req: NextRequest) {
   }
 
   const supabase = adminAccess.database;
-  const now = new Date().toISOString();
+  // The database function locks and updates both records in one transaction.
+  // A successful payment can no longer be committed without its membership.
+  const { data: reviewData, error: reviewError } = await supabase.rpc(
+    'review_manual_payment',
+    {
+      p_payment_id: parsed.data.paymentId,
+      p_status: parsed.data.status,
+      p_reviewed_by: adminAccess.actorProfileId,
+    }
+  );
 
-  const { data: payment, error: paymentError } = await supabase
-    .from('payments')
-    .select('id, alumni_id, amount, plan_id')
-    .eq('id', parsed.data.paymentId)
-    .maybeSingle();
-
-  if (paymentError) {
-    return NextResponse.json({ error: paymentError.message }, { status: 500 });
+  if (reviewError) {
+    const status = reviewError.code === 'P0002' ? 404 : reviewError.code === '42501' ? 403 : 500;
+    const message = status === 404 ? 'Payment not found.' : status === 403 ? 'Forbidden' : reviewError.message;
+    return NextResponse.json({ error: message }, { status });
   }
 
-  if (!payment) {
-    return NextResponse.json({ error: 'Payment not found.' }, { status: 404 });
+  if (!isPaymentReviewResult(reviewData)) {
+    return NextResponse.json({ error: 'Payment review returned an invalid result.' }, { status: 500 });
   }
 
-  const { error: updateError } = await supabase
-    .from('payments')
-    .update({
-      status: parsed.data.status,
-      updated_at: now,
-      gateway_response: {
-        reviewed_by: adminAccess.actorProfileId,
-        reviewed_at: now,
-        review_source: 'admin_manual_review',
+  after(async () => {
+    await writeAuditLog({
+      actor_id: adminAccess.actorProfileId,
+      action: 'manual_payment_status_update',
+      target_type: 'payment',
+      target_id: reviewData.payment_id,
+      metadata: {
+        status: parsed.data.status,
+        alumni_id: reviewData.alumni_id,
+        membership_type: reviewData.membership_type,
+        membership_expires_at: reviewData.membership_expires_at,
       },
-    })
-    .eq('id', payment.id);
-
-  if (updateError) {
-    return NextResponse.json({ error: updateError.message }, { status: 500 });
-  }
-
-  if (parsed.data.status === 'success') {
-    let membershipType: 'annual' | 'lifetime' = Number(payment.amount) >= 5000 ? 'lifetime' : 'annual';
-    let durationMonths: number | null = membershipType === 'annual' ? 12 : null;
-
-    if (payment.plan_id) {
-      const { data: plan } = await supabase
-        .from('membership_plans')
-        .select('membership_type, duration_months')
-        .eq('id', payment.plan_id)
-        .maybeSingle();
-
-      if (plan?.membership_type === 'lifetime' || plan?.membership_type === 'annual') {
-        membershipType = plan.membership_type;
-        durationMonths = plan.duration_months;
-      }
-    }
-
-    const { error: profileError } = await supabase
-      .from('profiles')
-      .update({
-        is_paid_member: true,
-        membership_type: membershipType,
-        membership_expires_at: getMembershipExpiryDate(membershipType, durationMonths),
-        updated_at: now,
-      })
-      .eq('id', payment.alumni_id);
-
-    if (profileError) {
-      return NextResponse.json({ error: profileError.message }, { status: 500 });
-    }
-  }
-
-  await writeAuditLog({
-    actor_id: adminAccess.actorProfileId,
-    action: 'manual_payment_status_update',
-    target_type: 'payment',
-    target_id: payment.id,
-    metadata: { status: parsed.data.status, alumni_id: payment.alumni_id },
+    });
   });
 
   invalidateAfterAction('payment_status');

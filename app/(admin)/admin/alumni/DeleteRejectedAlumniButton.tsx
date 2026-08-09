@@ -1,6 +1,6 @@
 'use client';
 
-import { useTransition } from 'react';
+import { useState, useTransition } from 'react';
 import { useRouter } from 'next/navigation';
 import { Trash2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -14,6 +14,7 @@ export function DeleteRejectedAlumniButton({
   iconOnly?: boolean;
 }) {
   const [isPending, startTransition] = useTransition();
+  const [isDeleted, setIsDeleted] = useState(false);
   const router = useRouter();
 
   function handleDelete() {
@@ -33,8 +34,13 @@ export function DeleteRejectedAlumniButton({
         window.alert(data.error ?? 'Could not delete this alumni record.');
         return;
       }
+      setIsDeleted(true);
       router.refresh();
     });
+  }
+
+  if (isDeleted) {
+    return <span className="text-sm font-medium text-emerald-700" role="status">Deleted</span>;
   }
 
   return (

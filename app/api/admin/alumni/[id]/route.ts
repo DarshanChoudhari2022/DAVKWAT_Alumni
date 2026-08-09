@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { after } from 'next/server';
 import { requireAdminApiAccess } from '@/lib/auth/admin-api';
 import { writeAuditLog } from '@/lib/audit';
 import { invalidateAfterAction } from '@/lib/cache/invalidate';
@@ -189,19 +190,20 @@ export async function DELETE(
     return NextResponse.json({ error: deleteError.message }, { status: 500 });
   }
 
-  const authDeleteWarning = await deleteAuthUserBestEffort(admin, id);
-
-  await writeAuditLog({
-    actor_id: adminAccess.actorProfileId,
-    action: 'admin_delete_alumni',
-    target_type: 'profile',
-    target_id: id,
-    metadata: {
-      deleted_email: profile.email,
-      deleted_name: profile.full_name,
-      deleted_role: profile.role,
-      auth_delete_warning: authDeleteWarning,
-    },
+  after(async () => {
+    const authDeleteWarning = await deleteAuthUserBestEffort(admin, id);
+    await writeAuditLog({
+      actor_id: adminAccess.actorProfileId,
+      action: 'admin_delete_alumni',
+      target_type: 'profile',
+      target_id: id,
+      metadata: {
+        deleted_email: profile.email,
+        deleted_name: profile.full_name,
+        deleted_role: profile.role,
+        auth_delete_warning: authDeleteWarning,
+      },
+    });
   });
 
   invalidateAfterAction('alumni_edit');

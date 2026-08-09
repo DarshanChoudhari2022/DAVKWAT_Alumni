@@ -13,11 +13,18 @@ export default async function EditAnnouncementPage({
 }) {
   const { id } = await params;
   const { database: supabase } = await requireAdminAccess();
-  const { data } = await supabase
-    .from('announcements')
-    .select('id, title, content, is_pinned, is_published, cover_image_url, scheduled_for')
-    .eq('id', id)
-    .single();
+  const [{ data }, { data: events }] = await Promise.all([
+    supabase
+      .from('announcements')
+      .select('id, title, content, is_pinned, is_published, cover_image_url, scheduled_for, rsvp_event_id')
+      .eq('id', id)
+      .single(),
+    supabase
+      .from('events')
+      .select('id, title, starts_at')
+      .order('starts_at', { ascending: false })
+      .limit(100),
+  ]);
 
   if (!data) notFound();
 
@@ -30,6 +37,7 @@ export default async function EditAnnouncementPage({
       </div>
       <div className="mt-6">
         <AnnouncementForm
+          events={events ?? []}
           initial={{
             id: data.id,
             title: data.title,
@@ -38,6 +46,7 @@ export default async function EditAnnouncementPage({
             is_published: data.is_published,
             cover_image_url: data.cover_image_url,
             scheduled_for: data.scheduled_for,
+            rsvp_event_id: data.rsvp_event_id,
           }}
         />
       </div>

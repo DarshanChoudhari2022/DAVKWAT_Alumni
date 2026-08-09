@@ -30,7 +30,7 @@ export default async function EventRsvpsPage({
 
   const { data: rsvps } = await supabase
     .from('event_rsvps')
-    .select('id, registered_at, profiles(id, full_name, email, batch_year, current_city, avatar_url)')
+    .select('id, registered_at, guest_name, guest_email, guest_phone, guest_batch_year, guest_city, profiles(id, full_name, email, phone, batch_year, current_city, avatar_url)')
     .eq('event_id', id)
     .order('registered_at', { ascending: false })
     .order('id', { ascending: false });
@@ -64,18 +64,27 @@ export default async function EventRsvpsPage({
 
       <div className="mt-6 grid gap-3 sm:hidden">
         {(rsvps ?? []).map((r) => {
-          const p =
+          const member =
             r.profiles && !Array.isArray(r.profiles)
               ? (r.profiles as {
                   id: string;
                   full_name: string;
                   email: string;
+                  phone: string | null;
                   batch_year: number;
                   current_city: string | null;
                   avatar_url: string | null;
                 })
               : null;
-          if (!p) return null;
+          const p = member ?? {
+            id: r.id,
+            full_name: r.guest_name ?? 'Guest',
+            email: r.guest_email ?? '',
+            phone: r.guest_phone,
+            batch_year: r.guest_batch_year,
+            current_city: r.guest_city,
+            avatar_url: null,
+          };
           return (
             <Card key={r.id} className="p-4">
               <div className="flex items-start gap-3">
@@ -88,6 +97,7 @@ export default async function EventRsvpsPage({
               <div className="mt-4 space-y-2 border-t border-slate-100 pt-3">
                 <MobileInfoRow label="Batch">{p.batch_year}</MobileInfoRow>
                 <MobileInfoRow label="City">{p.current_city ?? '-'}</MobileInfoRow>
+                <MobileInfoRow label="Type">{member ? 'Member' : 'Guest'}</MobileInfoRow>
                 <MobileInfoRow label="Registered">{formatDate(r.registered_at)}</MobileInfoRow>
               </div>
             </Card>
@@ -102,26 +112,36 @@ export default async function EventRsvpsPage({
         <table className="w-full min-w-[680px] text-sm">
           <thead>
             <tr className="border-b border-slate-200 text-left text-xs uppercase tracking-wide text-slate-500">
-              <th className="pb-2 pr-3">Alumni</th>
+              <th className="px-4 py-3">Attendee</th>
               <th className="pb-2 pr-3">Batch</th>
               <th className="pb-2 pr-3">City</th>
+              <th className="pb-2 pr-3">Type</th>
               <th className="pb-2">Registered</th>
             </tr>
           </thead>
           <tbody>
             {(rsvps ?? []).map((r) => {
-              const p =
+              const member =
                 r.profiles && !Array.isArray(r.profiles)
                   ? (r.profiles as {
                       id: string;
                       full_name: string;
                       email: string;
+                      phone: string | null;
                       batch_year: number;
                       current_city: string | null;
                       avatar_url: string | null;
                     })
                   : null;
-              if (!p) return null;
+              const p = member ?? {
+                id: r.id,
+                full_name: r.guest_name ?? 'Guest',
+                email: r.guest_email ?? '',
+                phone: r.guest_phone,
+                batch_year: r.guest_batch_year,
+                current_city: r.guest_city,
+                avatar_url: null,
+              };
               return (
                 <tr key={r.id} className="border-b border-slate-100">
                   <td className="py-3 pr-3">
@@ -135,6 +155,7 @@ export default async function EventRsvpsPage({
                   </td>
                   <td className="py-3 pr-3">{p.batch_year}</td>
                   <td className="py-3 pr-3">{p.current_city ?? '-'}</td>
+                  <td className="py-3 pr-3">{member ? 'Member' : 'Guest'}</td>
                   <td className="py-3">{formatDate(r.registered_at)}</td>
                 </tr>
               );

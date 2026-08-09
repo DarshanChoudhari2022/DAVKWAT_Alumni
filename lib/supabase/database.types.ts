@@ -121,6 +121,7 @@ export interface Database {
           slug: string;
           content: string;
           cover_image_url: string | null;
+          rsvp_event_id: string | null;
           author_id: string;
           is_pinned: boolean;
           is_published: boolean;
@@ -135,6 +136,7 @@ export interface Database {
           slug: string;
           content: string;
           cover_image_url?: string | null;
+          rsvp_event_id?: string | null;
           author_id: string;
           is_pinned?: boolean;
           is_published?: boolean;
@@ -200,13 +202,23 @@ export interface Database {
         Row: {
           id: string;
           event_id: string;
-          alumni_id: string;
+          alumni_id: string | null;
+          guest_name: string | null;
+          guest_email: string | null;
+          guest_phone: string | null;
+          guest_batch_year: number | null;
+          guest_city: string | null;
           registered_at: string;
         };
         Insert: {
           id?: string;
           event_id: string;
-          alumni_id: string;
+          alumni_id?: string | null;
+          guest_name?: string | null;
+          guest_email?: string | null;
+          guest_phone?: string | null;
+          guest_batch_year?: number | null;
+          guest_city?: string | null;
           registered_at?: string;
         };
         Update: Record<string, unknown>;
@@ -445,9 +457,29 @@ export interface Database {
     };
     Views: Record<string, never>;
     Functions: {
+      get_admin_report_charts: { Args: { p_since: string }; Returns: Json };
       get_public_alumni_count: { Args: Record<string, never>; Returns: number };
       is_admin: { Args: Record<string, never>; Returns: boolean };
       is_approved_alumni: { Args: Record<string, never>; Returns: boolean };
+      review_manual_payment: {
+        Args: {
+          p_payment_id: string;
+          p_status: 'pending' | 'success' | 'failed' | 'refunded';
+          p_reviewed_by?: string | null;
+        };
+        Returns: Json;
+      };
+      submit_guest_rsvp: {
+        Args: {
+          p_event_id: string;
+          p_name: string;
+          p_email: string;
+          p_phone: string;
+          p_batch_year?: number | null;
+          p_city?: string | null;
+        };
+        Returns: Json;
+      };
     };
     Enums: {
       user_role: 'guest' | 'pending' | 'alumni' | 'admin' | 'super_admin';

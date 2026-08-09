@@ -7,6 +7,7 @@ import { Card } from '@/components/ui/card';
 import { readApiResponse } from '@/lib/utils/api-client';
 
 interface AnnouncementFormProps {
+  events?: Array<{ id: string; title: string; starts_at: string }>;
   initial?: {
     id: string;
     title: string;
@@ -15,10 +16,11 @@ interface AnnouncementFormProps {
     is_published: boolean;
     cover_image_url?: string | null;
     scheduled_for?: string | null;
+    rsvp_event_id?: string | null;
   };
 }
 
-export function AnnouncementForm({ initial }: AnnouncementFormProps) {
+export function AnnouncementForm({ initial, events = [] }: AnnouncementFormProps) {
   const [title, setTitle] = useState(initial?.title ?? '');
   const [content, setContent] = useState(initial?.content ?? '');
   const [coverImageUrl, setCoverImageUrl] = useState(initial?.cover_image_url ?? '');
@@ -27,6 +29,7 @@ export function AnnouncementForm({ initial }: AnnouncementFormProps) {
   );
   const [isPinned, setIsPinned] = useState(initial?.is_pinned ?? false);
   const [isPublished, setIsPublished] = useState(initial?.is_published ?? false);
+  const [rsvpEventId, setRsvpEventId] = useState(initial?.rsvp_event_id ?? '');
   const [error, setError] = useState<string | null>(null);
   const [isPending, startTransition] = useTransition();
   const router = useRouter();
@@ -57,6 +60,7 @@ export function AnnouncementForm({ initial }: AnnouncementFormProps) {
         content: content.trim(),
         cover_image_url: coverImageUrl.trim() || null,
         scheduled_for: scheduledFor ? new Date(scheduledFor).toISOString() : null,
+        rsvp_event_id: rsvpEventId || null,
         is_pinned: isPinned,
         is_published: isPublished,
         slug: isEdit ? undefined : slug,
@@ -171,6 +175,28 @@ export function AnnouncementForm({ initial }: AnnouncementFormProps) {
               Mark as published
             </label>
           </div>
+        </div>
+
+        <div>
+          <label htmlFor="rsvp_event_id" className="mb-1 block text-sm font-medium text-slate-700">
+            RSVP event
+          </label>
+          <select
+            id="rsvp_event_id"
+            value={rsvpEventId}
+            onChange={(event) => setRsvpEventId(event.target.value)}
+            className="h-10 w-full rounded-lg border border-slate-200 bg-white px-3 text-sm"
+          >
+            <option value="">No RSVP form</option>
+            {events.map((event) => (
+              <option key={event.id} value={event.id}>
+                {event.title} - {new Date(event.starts_at).toLocaleDateString('en-IN')}
+              </option>
+            ))}
+          </select>
+          <p className="mt-1 text-xs text-slate-500">
+            Link an event to show its RSVP form below this announcement.
+          </p>
         </div>
 
         <div className="flex flex-col sm:flex-row sm:justify-between gap-3">

@@ -5,7 +5,7 @@ import { Avatar } from '@/components/shared/Avatar';
 import { Skeleton } from '@/components/shared/Skeleton';
 import { SectionError } from '@/components/shared/SectionError';
 import { requireAlumniAccess } from '@/lib/auth/alumni-access';
-import { ProfileForm } from './ProfileForm';
+import { ProfileForm, type EditableProfile } from './ProfileForm';
 
 export const metadata: Metadata = { title: 'My Profile' };
 
@@ -58,7 +58,9 @@ async function ProfileFormRegion() {
     // Always query fresh under the user's RLS-scoped client (Req 3.6, 7.1, 7.3)
     const { data: fullProfile } = await database
       .from('profiles')
-      .select('*')
+      .select(
+        'full_name, batch_year, course, roll_number, phone, current_city, current_state, current_country, date_of_birth, gender, occupation, company, job_title, industry, linkedin_url, bio, hide_email, hide_phone'
+      )
       .eq('id', userId)
       .single();
 
@@ -73,7 +75,7 @@ async function ProfileFormRegion() {
           These details appear on your alumni directory listing. Use the privacy toggles to hide
           your contact info from other alumni.
         </p>
-        <ProfileForm profile={fullProfile} />
+        <ProfileForm profile={fullProfile as EditableProfile} />
       </Card>
     );
   } catch {

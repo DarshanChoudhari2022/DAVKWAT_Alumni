@@ -6,6 +6,7 @@ import { Card } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Avatar } from '@/components/shared/Avatar';
 import { createClient } from '@/lib/supabase/server';
+import { isMembershipActive } from '@/lib/payments/membership';
 
 export const metadata: Metadata = { title: 'Alumni Profile' };
 
@@ -19,7 +20,9 @@ export default async function AlumniProfilePage({
 
   const { data: profile } = await supabase
     .from('profiles')
-    .select('*')
+    .select(
+      'id, full_name, avatar_url, batch_year, course, is_paid_member, membership_type, membership_expires_at, bio, occupation, job_title, company, current_city, current_state, current_country, hide_email, email, hide_phone, phone, linkedin_url'
+    )
     .eq('id', id)
     .eq('approval_status', 'approved')
     .single();
@@ -59,7 +62,11 @@ export default async function AlumniProfilePage({
             <div className="mt-2 flex flex-wrap gap-1.5">
               <Badge variant="primary">Batch {profile.batch_year}</Badge>
               <Badge variant="default">{profile.course}</Badge>
-              {profile.is_paid_member && <Badge variant="success">Paid Member</Badge>}
+              {isMembershipActive(
+                profile.is_paid_member,
+                profile.membership_type,
+                profile.membership_expires_at
+              ) && <Badge variant="success">Paid Member</Badge>}
             </div>
           </div>
         </div>

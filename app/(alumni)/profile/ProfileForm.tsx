@@ -10,7 +10,28 @@ import { updateProfileAction, type ProfileState } from './actions';
 import type { Database } from '@/lib/supabase/database.types';
 import { INPUT_PATTERNS, VALIDATION_LIMITS, todayIsoDate } from '@/lib/validations/constraints';
 
-type Profile = Database['public']['Tables']['profiles']['Row'];
+type ProfileRow = Database['public']['Tables']['profiles']['Row'];
+export type EditableProfile = Pick<
+  ProfileRow,
+  | 'full_name'
+  | 'batch_year'
+  | 'course'
+  | 'roll_number'
+  | 'phone'
+  | 'current_city'
+  | 'current_state'
+  | 'current_country'
+  | 'date_of_birth'
+  | 'gender'
+  | 'occupation'
+  | 'company'
+  | 'job_title'
+  | 'industry'
+  | 'linkedin_url'
+  | 'bio'
+  | 'hide_email'
+  | 'hide_phone'
+>;
 
 const initial: ProfileState = {};
 const CURRENT_YEAR = new Date().getFullYear();
@@ -25,7 +46,7 @@ function SaveButton() {
   );
 }
 
-export function ProfileForm({ profile }: { profile: Profile }) {
+export function ProfileForm({ profile }: { profile: EditableProfile }) {
   const [state, action] = useActionState(updateProfileAction, initial);
   const maxBirthDate = todayIsoDate();
 

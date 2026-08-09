@@ -91,8 +91,8 @@ export default async function EventsPage({
 async function EventsListRegion({ filter, page }: { filter: string; page: number }) {
   try {
     const offset = (page - 1) * PAGE_SIZE;
-    // Middleware already verifies the session and approval status before this
-    // protected route renders. RLS remains the final data-access guard.
+    // Events are public. RLS limits anonymous visitors to published rows while
+    // mutations remain authenticated and authorized in their server actions.
     const supabase = await createClient();
     const now = new Date().toISOString();
 

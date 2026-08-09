@@ -1,9 +1,9 @@
 'use client';
 
 import { useState, useTransition } from 'react';
-import { useRouter } from 'next/navigation';
 import { Button } from '@/components/ui/button';
 import { readApiResponse } from '@/lib/utils/api-client';
+import { publishPaymentStatus } from './PaymentStatusBadge';
 
 export function ManualPaymentStatusActions({
   paymentId,
@@ -14,11 +14,11 @@ export function ManualPaymentStatusActions({
 }) {
   const [status, setStatus] = useState(currentStatus);
   const [isPending, startTransition] = useTransition();
-  const router = useRouter();
 
   function updateStatus(nextStatus: 'pending' | 'success' | 'failed') {
     const previousStatus = status;
     setStatus(nextStatus);
+    publishPaymentStatus(paymentId, nextStatus);
     startTransition(async () => {
       const response = await fetch('/api/admin/payments/status', {
         method: 'POST',
@@ -28,10 +28,10 @@ export function ManualPaymentStatusActions({
       const data = await readApiResponse<{ error?: string }>(response);
       if (!response.ok) {
         setStatus(previousStatus);
+        publishPaymentStatus(paymentId, previousStatus);
         window.alert(data.error ?? 'Could not update payment status.');
         return;
       }
-      router.refresh();
     });
   }
 

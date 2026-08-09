@@ -10,7 +10,7 @@ import { requireAdminAccess } from '@/lib/auth/admin-access';
 import { getApprovedProfilesCount, getPaidMembersCount } from '@/lib/cache/admin-cache';
 import { getSuccessfulRevenue } from '@/lib/db/estimated-count';
 import { formatINR } from '@/lib/utils/format';
-import { ReportsCharts } from './ReportsCharts';
+import { LazyReportsCharts } from './LazyReportsCharts';
 
 export const metadata: Metadata = { title: 'Reports & Exports - Admin' };
 
@@ -19,6 +19,24 @@ interface PopularThread {
   title: string;
   reply_count: number;
   created_at: string;
+}
+
+interface ReportChartData {
+  batchData: { year: string; count: number }[];
+  stateData: { state: string; count: number }[];
+  registrationData: { month: string; count: number }[];
+  paymentData: { month: string; amount: number }[];
+}
+
+function isReportChartData(value: unknown): value is ReportChartData {
+  if (!value || typeof value !== 'object') return false;
+  const data = value as Partial<ReportChartData>;
+  return (
+    Array.isArray(data.batchData) &&
+    Array.isArray(data.stateData) &&
+    Array.isArray(data.registrationData) &&
+    Array.isArray(data.paymentData)
+  );
 }
 
 /**
@@ -177,6 +195,20 @@ async function ReportsChartsSection() {
     chartSince.setMonth(chartSince.getMonth() - 12);
     const chartSinceIso = chartSince.toISOString();
 
+    const { data: aggregateData, error: aggregateError } = await supabase.rpc(
+      'get_admin_report_charts',
+      { p_since: chartSinceIso }
+    );
+
+    const parsedAggregateData: unknown = aggregateData;
+    if (!aggregateError && isReportChartData(parsedAggregateData)) {
+      return <LazyReportsCharts {...parsedAggregateData} />;
+    }
+
+    if (aggregateError) {
+      console.warn('[admin/reports] aggregate RPC unavailable; using row-query fallback');
+    }
+
     const [alumniByBatch, alumniByState, registrationsByMonth, paymentsByMonth] = await Promise.all([
       supabase
         .from('profiles')
@@ -245,7 +277,7 @@ async function ReportsChartsSection() {
       .slice(-12);
 
     return (
-      <ReportsCharts
+      <LazyReportsCharts
         batchData={batchChartData}
         stateData={stateChartData}
         registrationData={registrationChartData}

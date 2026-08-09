@@ -8,6 +8,8 @@ const ALUMNI_COLUMNS = [
   { key: 'email', label: 'Email' },
   { key: 'phone', label: 'Phone' },
   { key: 'batch_year', label: 'Batch Year' },
+  { key: 'city', label: 'City' },
+  { key: 'attendee_type', label: 'Type' },
   { key: 'course', label: 'Course' },
   { key: 'current_city', label: 'City' },
   { key: 'current_state', label: 'State' },
@@ -129,16 +131,18 @@ export async function GET(req: NextRequest) {
 
     const { data: rows } = await supabase
       .from('event_rsvps')
-      .select('registered_at, profiles!inner(full_name, email, phone, batch_year)')
+      .select('registered_at, guest_name, guest_email, guest_phone, guest_batch_year, guest_city, profiles(full_name, email, phone, batch_year, current_city)')
       .eq('event_id', eventId);
 
     data = (rows ?? []).map((r: Record<string, unknown>) => {
       const profile = r.profiles as { full_name: string; email: string; phone: string; batch_year: number } | null;
       return {
-        full_name: profile?.full_name ?? '',
-        email: profile?.email ?? '',
-        phone: profile?.phone ?? '',
-        batch_year: profile?.batch_year ?? '',
+        full_name: profile?.full_name ?? r.guest_name ?? '',
+        email: profile?.email ?? r.guest_email ?? '',
+        phone: profile?.phone ?? r.guest_phone ?? '',
+        batch_year: profile?.batch_year ?? r.guest_batch_year ?? '',
+        city: (profile as { current_city?: string | null } | null)?.current_city ?? r.guest_city ?? '',
+        attendee_type: profile ? 'Member' : 'Guest',
         registered_at: r.registered_at,
       };
     });
@@ -148,7 +152,7 @@ export async function GET(req: NextRequest) {
   }
 
   if (format === 'xlsx') {
-    const buffer = arrayToXLSX(data, columns);
+    const buffer = await arrayToXLSX(data, columns);
     return new NextResponse(new Uint8Array(buffer), {
       headers: {
         'Content-Type': 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',

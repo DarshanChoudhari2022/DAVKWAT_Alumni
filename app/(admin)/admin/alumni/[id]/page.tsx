@@ -8,6 +8,7 @@ import { Avatar } from '@/components/shared/Avatar';
 import { requireAdminAccess } from '@/lib/auth/admin-access';
 import { formatDate } from '@/lib/utils/format';
 import { getSchoolProofUrl } from '@/lib/profiles/proof-url';
+import { isMembershipActive } from '@/lib/payments/membership';
 import { AlumniDetailActions } from './AlumniDetailActions';
 import { AdminProfileEditForm } from './AdminProfileEditForm';
 
@@ -26,7 +27,9 @@ export default async function AdminAlumniDetailPage({
   const [alumniResult, paymentsResult] = await Promise.all([
     supabase
       .from('profiles')
-      .select('*')
+      .select(
+        'id, profile_type, full_name, display_name, avatar_url, batch_year, course, education_level, education_stream, passing_year_10th, taught_subject, taught_from_year, taught_to_year, roll_number, email, phone, alternate_phone, current_city, current_state, current_country, pincode, occupation, company, job_title, industry, linkedin_url, website_url, bio, achievements, hide_email, hide_phone, role, approval_status, approved_at, rejection_reason, membership_type, membership_expires_at, is_paid_member, created_at, last_seen_at, is_active, school_document_url'
+      )
       .eq('id', id)
       .single(),
     supabase
@@ -43,6 +46,11 @@ export default async function AdminAlumniDetailPage({
   const payments = paymentsResult.data;
   const latestPaymentProofUrl = payments?.find((payment) => payment.receipt_url)?.receipt_url ?? null;
   const schoolProofUrl = getSchoolProofUrl(alumni);
+  const hasActiveMembership = isMembershipActive(
+    alumni.is_paid_member,
+    alumni.membership_type,
+    alumni.membership_expires_at
+  );
 
   return (
     <div className="mx-auto max-w-4xl px-3 py-5 sm:px-6 sm:py-8 lg:px-8">
@@ -89,8 +97,8 @@ export default async function AdminAlumniDetailPage({
                 >
                   {alumni.approval_status}
                 </Badge>
-                <Badge variant={alumni.is_paid_member ? 'success' : 'default'}>
-                  {alumni.is_paid_member ? 'Paid Member' : 'Unpaid'}
+                <Badge variant={hasActiveMembership ? 'success' : 'default'}>
+                  {hasActiveMembership ? 'Paid Member' : 'Unpaid'}
                 </Badge>
                 <Badge variant="default">
                   {alumni.profile_type === 'faculty' ? 'Faculty' : 'Alumni'}

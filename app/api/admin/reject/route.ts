@@ -1,4 +1,5 @@
 import { NextResponse } from 'next/server';
+import { after } from 'next/server';
 import { requireAdminApiAccess } from '@/lib/auth/admin-api';
 import { writeAuditLog } from '@/lib/audit';
 import { createAdminClient } from '@/lib/supabase/admin';
@@ -46,40 +47,42 @@ export async function POST(req: Request) {
       );
     }
 
-    await writeAuditLog({
-      actor_id: adminAccess.actorProfileId,
-      action: 'alumni_rejected',
-      target_type: 'profile',
-      target_id: alumniId,
-      metadata: { reason: trimmedReason },
-    });
-
-    try {
-      const { getResend, FROM_EMAIL, ADMIN_EMAIL } = await import('@/lib/resend/client');
-      const RejectionEmail = (await import('@/emails/RejectionEmail')).default;
-
-      const resend = getResend();
-      await resend.emails.send({
-        from: FROM_EMAIL,
-        to: rejectedProfile.email,
-        subject: 'DAVKAWT Registration Update',
-        react: RejectionEmail({
-          name: rejectedProfile.full_name,
-          reason: trimmedReason,
-          contactEmail: ADMIN_EMAIL,
-        }),
-      });
-    } catch (emailErr) {
-      console.error('[reject] email send failed:', emailErr);
-    }
-
     // Invalidate cached pending-approvals badge + dashboard stats after the
     // committed reject write (design Section 4 invalidation table; Req 4.4, 9.1, 9.6).
     invalidateAfterAction('approve_reject');
+
+    after(async () => {
+      await Promise.all([
+        writeAuditLog({
+          actor_id: adminAccess.actorProfileId,
+          action: 'alumni_rejected',
+          target_type: 'profile',
+          target_id: alumniId,
+          metadata: { reason: trimmedReason },
+        }),
+        sendRejectionEmail(rejectedProfile.email, rejectedProfile.full_name, trimmedReason),
+      ]);
+    });
 
     return NextResponse.json({ success: true });
   } catch (err) {
     console.error('[reject] unexpected error:', err);
     return NextResponse.json({ error: 'Internal server error.' }, { status: 500 });
+  }
+}
+
+async function sendRejectionEmail(email: string, fullName: string, reason: string) {
+  try {
+    const { getResend, FROM_EMAIL, ADMIN_EMAIL } = await import('@/lib/resend/client');
+    const RejectionEmail = (await import('@/emails/RejectionEmail')).default;
+    const resend = getResend();
+    await resend.emails.send({
+      from: FROM_EMAIL,
+      to: email,
+      subject: 'DAVKAWT Registration Update',
+      react: RejectionEmail({ name: fullName, reason, contactEmail: ADMIN_EMAIL }),
+    });
+  } catch (emailErr) {
+    console.error('[reject] email send failed:', emailErr);
   }
 }

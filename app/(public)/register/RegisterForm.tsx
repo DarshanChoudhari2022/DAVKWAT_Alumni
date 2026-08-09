@@ -1,6 +1,7 @@
 'use client';
 
 import Image from 'next/image';
+import dynamic from 'next/dynamic';
 import type React from 'react';
 import { useActionState, useState, useRef, useEffect } from 'react';
 import { useFormStatus } from 'react-dom';
@@ -19,7 +20,6 @@ import {
 } from '@/lib/payments/manual-upi';
 import { VALIDATION_LIMITS } from '@/lib/validations/constraints';
 import { LEFT_BEFORE_CLASSES } from '@/lib/validations/registration';
-import { PhotoUploadWithCrop } from '@/components/shared/PhotoUploadWithCrop';
 import { DocumentUpload } from '@/components/shared/DocumentUpload';
 import { registerAction, checkEmailExists, type RegisterState } from './actions';
 
@@ -28,6 +28,14 @@ const CURRENT_YEAR = new Date().getFullYear();
 const BATCH_YEARS = Array.from({ length: CURRENT_YEAR - 1959 }, (_, i) => CURRENT_YEAR - i);
 const STEPS = ['Account', 'Academic', 'Personal', 'Professional', 'Payment & Documents'] as const;
 const DRAFT_KEY = 'davkawt_register_draft';
+
+const PhotoUploadWithCrop = dynamic(
+  () => import('@/components/shared/PhotoUploadWithCrop').then((module) => module.PhotoUploadWithCrop),
+  {
+    ssr: false,
+    loading: () => <div className="h-40 animate-pulse rounded-lg bg-slate-100" aria-hidden />,
+  }
+);
 
 const MONTHS = [
   'January', 'February', 'March', 'April', 'May', 'June',

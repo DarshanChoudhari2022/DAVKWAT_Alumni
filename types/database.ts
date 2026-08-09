@@ -58,6 +58,7 @@ export interface Announcement {
   is_published: boolean;
   published_at: string | null;
   scheduled_for: string | null;
+  rsvp_event_id: string | null;
   created_at: string;
   updated_at: string;
 }
@@ -118,7 +119,11 @@ export interface Database {
       profiles: { Row: Profile; Insert: Partial<Profile> & Pick<Profile, 'id' | 'full_name' | 'batch_year' | 'course' | 'email'>; Update: Partial<Profile> };
       announcements: { Row: Announcement; Insert: Partial<Announcement> & Pick<Announcement, 'title' | 'slug' | 'content' | 'author_id'>; Update: Partial<Announcement> };
       events: { Row: Event; Insert: Partial<Event> & Pick<Event, 'title' | 'slug' | 'starts_at' | 'created_by'>; Update: Partial<Event> };
-      event_rsvps: { Row: { id: string; event_id: string; alumni_id: string; registered_at: string }; Insert: { event_id: string; alumni_id: string }; Update: never };
+      event_rsvps: {
+        Row: { id: string; event_id: string; alumni_id: string | null; guest_name: string | null; guest_email: string | null; guest_phone: string | null; guest_batch_year: number | null; guest_city: string | null; registered_at: string };
+        Insert: { event_id: string; alumni_id?: string | null; guest_name?: string | null; guest_email?: string | null; guest_phone?: string | null; guest_batch_year?: number | null; guest_city?: string | null };
+        Update: never;
+      };
       forum_categories: { Row: { id: string; name: string; description: string | null; slug: string; display_order: number; is_active: boolean; created_by: string | null; created_at: string }; Insert: Partial<{ id: string; name: string; description: string | null; slug: string; display_order: number; is_active: boolean; created_by: string | null }>; Update: Partial<{ name: string; description: string | null; slug: string; display_order: number; is_active: boolean }> };
       forum_threads: { Row: { id: string; category_id: string; author_id: string; title: string; content: string; is_pinned: boolean; is_locked: boolean; reply_count: number; last_reply_at: string | null; created_at: string; updated_at: string }; Insert: { category_id: string; author_id: string; title: string; content: string }; Update: Partial<{ title: string; content: string; is_pinned: boolean; is_locked: boolean }> };
       forum_replies: { Row: { id: string; thread_id: string; author_id: string; content: string; is_deleted: boolean; created_at: string; updated_at: string }; Insert: { thread_id: string; author_id: string; content: string }; Update: Partial<{ content: string; is_deleted: boolean }> };
@@ -133,6 +138,7 @@ export interface Database {
       current_user_role: { Args: Record<string, never>; Returns: UserRole };
       is_admin: { Args: Record<string, never>; Returns: boolean };
       is_approved_alumni: { Args: Record<string, never>; Returns: boolean };
+      submit_guest_rsvp: { Args: { p_event_id: string; p_name: string; p_email: string; p_phone: string; p_batch_year?: number | null; p_city?: string | null }; Returns: Record<string, unknown> };
     };
     Enums: {
       user_role: UserRole;

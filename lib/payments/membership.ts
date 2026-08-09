@@ -3,17 +3,44 @@ import { APP_URL, FROM_EMAIL, getResend } from '@/lib/resend/client';
 
 export function getMembershipExpiryDate(
   membershipType: 'lifetime' | 'annual' | undefined,
-  durationMonths: number | null
+  durationMonths: number | null,
+  startsAt: string | Date = new Date()
 ) {
   if (membershipType === 'lifetime') {
     return null;
   }
 
-  if (durationMonths && Number.isFinite(durationMonths)) {
-    return new Date(Date.now() + durationMonths * 30 * 24 * 60 * 60 * 1000).toISOString();
-  }
+  const start = new Date(startsAt);
+  const safeStart = Number.isNaN(start.getTime()) ? new Date() : start;
+  const months = durationMonths && Number.isFinite(durationMonths) ? durationMonths : 12;
+  const originalDay = safeStart.getUTCDate();
+  const expiresAt = new Date(safeStart);
 
-  return new Date(Date.now() + 365 * 24 * 60 * 60 * 1000).toISOString();
+  // Calendar-month arithmetic preserves the payment day and correctly handles
+  // leap years/month ends (for example, 29 Feb -> 28 Feb the following year).
+  expiresAt.setUTCDate(1);
+  expiresAt.setUTCMonth(expiresAt.getUTCMonth() + months);
+  const lastDay = new Date(
+    Date.UTC(expiresAt.getUTCFullYear(), expiresAt.getUTCMonth() + 1, 0)
+  ).getUTCDate();
+  expiresAt.setUTCDate(Math.min(originalDay, lastDay));
+
+  return expiresAt.toISOString();
+}
+
+export function isMembershipActive(
+  isPaidMember: boolean,
+  membershipType: 'lifetime' | 'annual' | null | undefined,
+  expiresAt: string | null | undefined,
+  now: Date = new Date()
+) {
+  if (!isPaidMember) return false;
+  if (membershipType === 'lifetime') return true;
+  if (membershipType !== 'annual' || !expiresAt) return false;
+
+  const expiryDay = expiresAt.slice(0, 10);
+  const today = now.toISOString().slice(0, 10);
+  return expiryDay >= today;
 }
 
 interface SuccessfulPaymentInput {

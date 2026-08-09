@@ -3,7 +3,6 @@ import type { Metadata } from 'next';
 import Link from 'next/link';
 import { Download } from 'lucide-react';
 import { Card } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { MobileInfoRow } from '@/components/admin/MobileInfoRow';
 import { Pagination } from '@/components/shared/Pagination';
@@ -23,6 +22,7 @@ import { computePagination } from '@/lib/db/pagination';
 import { formatINR, formatDateTime } from '@/lib/utils/format';
 import { escapeIlikePattern, normalizeSearchTerm } from '@/lib/utils/search';
 import { ManualPaymentStatusActions } from './ManualPaymentStatusActions';
+import { PaymentStatusBadge } from './PaymentStatusBadge';
 
 export const metadata: Metadata = { title: 'Payments — Admin' };
 
@@ -264,19 +264,7 @@ async function PaymentsList({ sp, page }: { sp: SearchParams; page: number }) {
                       <p className="truncate text-xs text-slate-500">{profile?.email ?? ''}</p>
                     </Link>
                   </div>
-                  <Badge
-                    variant={
-                      p.status === 'success'
-                        ? 'success'
-                        : p.status === 'failed'
-                          ? 'error'
-                          : p.status === 'refunded'
-                            ? 'default'
-                            : 'warning'
-                    }
-                  >
-                    {p.status}
-                  </Badge>
+                  <PaymentStatusBadge paymentId={p.id} initialStatus={p.status} />
                 </div>
                 <div className="mt-4 space-y-2 border-t border-slate-100 pt-3">
                   <MobileInfoRow label="Txn">
@@ -338,19 +326,7 @@ async function PaymentsList({ sp, page }: { sp: SearchParams; page: number }) {
                     </td>
                     <td className="px-4 py-3 font-medium">{formatINR(Number(p.amount))}</td>
                     <td className="px-4 py-3">
-                      <Badge
-                        variant={
-                          p.status === 'success'
-                            ? 'success'
-                            : p.status === 'failed'
-                              ? 'error'
-                              : p.status === 'refunded'
-                                ? 'default'
-                                : 'warning'
-                        }
-                      >
-                        {p.status}
-                      </Badge>
+                      <PaymentStatusBadge paymentId={p.id} initialStatus={p.status} />
                     </td>
                     <td className="px-4 py-3 capitalize">{p.payment_mode ?? '—'}</td>
                     <td className="px-4 py-3">

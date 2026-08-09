@@ -11,6 +11,7 @@ import { requireAlumniAccess } from '@/lib/auth/alumni-access';
 import { logoutAction } from '@/app/(public)/login/actions';
 import { formatDate, formatINR } from '@/lib/utils/format';
 import { SignOutButton } from '@/components/shared/SignOutButton';
+import { isMembershipActive } from '@/lib/payments/membership';
 
 export const metadata: Metadata = { title: 'Dashboard' };
 
@@ -70,7 +71,11 @@ export default async function DashboardPage() {
           userId={userId}
           membershipType={profile.membership_type}
           membershipExpiresAt={profile.membership_expires_at}
-          isPaidMember={profile.is_paid_member}
+          isPaidMember={isMembershipActive(
+            profile.is_paid_member,
+            profile.membership_type,
+            profile.membership_expires_at
+          )}
           profileType={profile.profile_type}
         />
       </Suspense>

@@ -2,16 +2,15 @@
 import type { Metadata } from 'next';
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
-import { ArrowLeft, Calendar, MapPin, Users, Lock, AlertCircle } from 'lucide-react';
+import { ArrowLeft, Calendar, MapPin, Users } from 'lucide-react';
 import { Card } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { Button } from '@/components/ui/button';
 import { createClient } from '@/lib/supabase/server';
-import { formatDateTime, formatINR } from '@/lib/utils/format';
+import { formatDateTime } from '@/lib/utils/format';
 import { RsvpForm } from './RsvpForm';
+import { GuestRsvpForm } from '../GuestRsvpForm';
 import { ShareButtons } from './ShareButtons';
 import { APP_URL } from '@/lib/resend/client';
-import { MANUAL_MEMBERSHIP_PAYMENT } from '@/lib/payments/manual-upi';
 
 export async function generateMetadata({
   params,
@@ -104,14 +103,7 @@ export default async function EventDetailPage({
 
   const eventUrl = `${APP_URL}/events/${event.slug}`;
 
-  const isPending = profile && profile.approval_status === 'pending';
   const isApproved = profile && profile.approval_status === 'approved';
-
-  // Build WhatsApp text for pending approval speed-up
-  const whatsappApprovalMsg = profile
-    ? `Hello Admin, my name is ${profile.full_name} (Batch of ${profile.batch_year}). I have registered on the DAVKAWT portal. Please review my profile so I can RSVP for the event: ${event.title}.`
-    : '';
-  const whatsappApprovalUrl = `https://wa.me/${MANUAL_MEMBERSHIP_PAYMENT.whatsappNumber}?text=${encodeURIComponent(whatsappApprovalMsg)}`;
 
   return (
     <article className="mx-auto max-w-3xl px-4 py-10 sm:px-6 lg:px-8">
@@ -207,91 +199,22 @@ export default async function EventDetailPage({
             </div>
           )}
 
-          {/* STATE 2: Not Logged In */}
-          {!userId && (
-            <div className="space-y-4">
-              <div className="flex items-start gap-3">
-                <Lock className="mt-1 h-5 w-5 text-amber-500 shrink-0" />
-                <div>
-                  <h3 className="font-display text-lg font-semibold">Join the Association to RSVP</h3>
-                  <p className="text-sm text-slate-600 mt-1">
-                    Sign in or register so the Trust can record your RSVP against your alumni profile.
-                  </p>
-                </div>
-              </div>
-
-              <div className="rounded-xl border border-slate-100 bg-slate-50/50 p-4 text-sm space-y-2">
-                <div className="font-semibold text-slate-700">Membership Plans:</div>
-                <div className="flex justify-between border-b border-slate-100 pb-1.5">
-                  <span>Annual Membership</span>
-                  <span className="font-semibold text-[#0F2557]">{formatINR(500)} / year</span>
-                </div>
-                <div className="flex justify-between">
-                  <span>Lifetime Membership</span>
-                  <span className="font-semibold text-[#0F2557]">{formatINR(5000)} (one-time)</span>
-                </div>
-              </div>
-
-              <div className="flex flex-col sm:flex-row gap-3 pt-2">
-                <Button asChild className="w-full sm:w-auto bg-[#0F2557] hover:bg-[#1a3a7a]" size="lg">
-                  <Link href="/register">Register as a Member</Link>
-                </Button>
-                <Button asChild variant="outline" className="w-full sm:w-auto" size="lg">
-                  <Link href={`/login?redirect=/events/${event.slug}`}>Sign In</Link>
-                </Button>
-              </div>
-
-              <div className="text-xs text-slate-500 pt-2 flex items-center gap-1">
-                <span>Have questions?</span>
-                <a
-                  href={`https://wa.me/${MANUAL_MEMBERSHIP_PAYMENT.whatsappNumber}?text=Hi,%20I%20am%20interested%20in%20joining%20DAVKAWT%20and%20registering%20for%20the%20event:%20${encodeURIComponent(event.title)}`}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="text-[#0F2557] underline hover:text-[#1a3a7a]"
-                >
-                  Contact Admin on WhatsApp
-                </a>
-              </div>
-            </div>
-          )}
-
-          {/* STATE 3: Incomplete Profile */}
-          {userId && !profile && (
-            <div className="space-y-4">
-              <div className="flex items-start gap-3">
-                <AlertCircle className="mt-1 h-5 w-5 text-amber-500 shrink-0" />
-                <div>
-                  <h3 className="font-display text-lg font-semibold">Complete Your Registration</h3>
-                  <p className="text-sm text-slate-600 mt-1">
-                    Please complete your alumni registration details to register for events.
-                  </p>
-                </div>
-              </div>
-              <Button asChild className="w-full sm:w-auto bg-[#0F2557] hover:bg-[#1a3a7a]" size="lg">
-                <Link href="/register/complete">Complete Registration</Link>
-              </Button>
-            </div>
-          )}
-
-          {/* STATE 4: Pending Approval */}
-          {userId && isPending && (
-            <div className="space-y-4">
-              <div className="flex items-start gap-3">
-                <AlertCircle className="mt-1 h-5 w-5 text-blue-500 shrink-0" />
-                <div>
-                  <h3 className="font-display text-lg font-semibold text-blue-900">Registration Pending Approval</h3>
-                  <p className="text-sm text-slate-600 mt-1">
-                    Your profile is currently under review by the administration. Once approved, you can complete payment and RSVP.
-                  </p>
-                </div>
-              </div>
-              <div className="pt-2">
-                <Button asChild variant="outline" className="w-full sm:w-auto border-blue-200 bg-blue-50 text-blue-700 hover:bg-blue-100" size="lg">
-                  <a href={whatsappApprovalUrl} target="_blank" rel="noopener noreferrer">
-                    Message Admin on WhatsApp to speed up approval
-                  </a>
-                </Button>
-              </div>
+          {/* Visitors and unapproved accounts can RSVP without becoming members. */}
+          {(!userId || !isApproved) && (
+            <div>
+              <h2 className="font-display text-xl font-semibold">RSVP for this event</h2>
+              <p className="mt-1 text-sm text-slate-600">
+                Fill in your details below. Existing members may sign in to attach the RSVP to their profile.
+              </p>
+              <GuestRsvpForm eventId={event.id} sourcePath={`/events/${event.slug}`} />
+              {!userId && (
+                <p className="mt-4 text-sm text-slate-500">
+                  Already a member?{' '}
+                  <Link className="font-medium text-[#0F2557] underline" href={`/login?redirect=/events/${event.slug}`}>
+                    Sign in
+                  </Link>
+                </p>
+              )}
             </div>
           )}
 

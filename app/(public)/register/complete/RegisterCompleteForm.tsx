@@ -1,6 +1,7 @@
 'use client';
 
 import type React from 'react';
+import dynamic from 'next/dynamic';
 import { useActionState, useRef, useState, useEffect } from 'react';
 import { useFormStatus } from 'react-dom';
 import { toast } from 'sonner';
@@ -11,13 +12,20 @@ import { FieldError } from '@/components/shared/FieldError';
 import { cn } from '@/lib/utils/cn';
 import { VALIDATION_LIMITS } from '@/lib/validations/constraints';
 import { LEFT_BEFORE_CLASSES } from '@/lib/validations/registration';
-import { PhotoUploadWithCrop } from '@/components/shared/PhotoUploadWithCrop';
 import { completeRegistrationAction, type CompleteState } from './actions';
 
 const initialState: CompleteState = {};
 const CURRENT_YEAR = new Date().getFullYear();
 const BATCH_YEARS = Array.from({ length: CURRENT_YEAR - 1959 }, (_, i) => CURRENT_YEAR - i);
 const STEPS = ['Academic & Verification', 'Personal Details', 'Professional Profile'] as const;
+
+const PhotoUploadWithCrop = dynamic(
+  () => import('@/components/shared/PhotoUploadWithCrop').then((module) => module.PhotoUploadWithCrop),
+  {
+    ssr: false,
+    loading: () => <div className="h-40 animate-pulse rounded-lg bg-slate-100" aria-hidden />,
+  }
+);
 
 const MONTHS = [
   'January', 'February', 'March', 'April', 'May', 'June',

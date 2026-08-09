@@ -17,6 +17,7 @@ export function ApprovalActions({ alumniId, alumniName, canDelete = false }: App
   const [showReject, setShowReject] = useState(false);
   const [reason, setReason] = useState('');
   const [error, setError] = useState<string | null>(null);
+  const [completedAction, setCompletedAction] = useState<'approved' | 'rejected' | null>(null);
   const [isPending, startTransition] = useTransition();
   const router = useRouter();
 
@@ -32,6 +33,7 @@ export function ApprovalActions({ alumniId, alumniName, canDelete = false }: App
       if (!res.ok) {
         setError(data.error ?? 'Failed to approve.');
       } else {
+        setCompletedAction('approved');
         router.refresh();
       }
     });
@@ -53,11 +55,20 @@ export function ApprovalActions({ alumniId, alumniName, canDelete = false }: App
       if (!res.ok) {
         setError(data.error ?? 'Failed to reject.');
       } else {
+        setCompletedAction('rejected');
         setShowReject(false);
         setReason('');
         router.refresh();
       }
     });
+  }
+
+  if (completedAction) {
+    return (
+      <p className="text-sm font-medium text-emerald-700" role="status">
+        {completedAction === 'approved' ? 'Approved' : 'Rejected'}
+      </p>
+    );
   }
 
   if (showReject) {

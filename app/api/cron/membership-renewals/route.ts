@@ -18,13 +18,6 @@ export async function GET(request: Request) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   }
 
-  if (!process.env.RESEND_API_KEY) {
-    return NextResponse.json(
-      { error: 'Membership renewal reminders are ready, but RESEND_API_KEY is not configured yet.' },
-      { status: 503 }
-    );
-  }
-
   try {
     const admin = createAdminClient();
     const now = new Date();
@@ -32,6 +25,27 @@ export async function GET(request: Request) {
     const thirtyDaysIso = new Date(now.getTime() + 30 * 24 * 60 * 60 * 1000)
       .toISOString()
       .slice(0, 10);
+
+    // Expiration is independent of email delivery. Keep the stored projection
+    // accurate even when the email provider is unavailable.
+    const { data: expiredProfiles, error: expirationError } = await admin
+      .from('profiles')
+      .update({ is_paid_member: false, updated_at: now.toISOString() })
+      .eq('membership_type', 'annual')
+      .eq('is_paid_member', true)
+      .lt('membership_expires_at', todayIso)
+      .select('id');
+
+    if (expirationError) throw expirationError;
+
+    if (!process.env.RESEND_API_KEY) {
+      return NextResponse.json({
+        success: true,
+        expired: expiredProfiles?.length ?? 0,
+        sent: 0,
+        remindersSkipped: 'RESEND_API_KEY is not configured.',
+      });
+    }
 
     const [{ data: profiles }, { data: alreadySent }] = await Promise.all([
       admin
@@ -94,7 +108,7 @@ export async function GET(request: Request) {
       sent += 1;
     }
 
-    return NextResponse.json({ success: true, sent });
+    return NextResponse.json({ success: true, expired: expiredProfiles?.length ?? 0, sent });
   } catch (error) {
     console.error('[cron/membership-renewals]', error);
     return NextResponse.json({ error: 'Failed to process membership renewal reminders.' }, { status: 500 });

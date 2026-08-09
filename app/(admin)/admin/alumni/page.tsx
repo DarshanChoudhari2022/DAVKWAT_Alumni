@@ -14,6 +14,7 @@ import { requireAdminAccess } from '@/lib/auth/admin-access';
 import { formatCount } from '@/lib/db/count-format';
 import { computePagination } from '@/lib/db/pagination';
 import { formatDate } from '@/lib/utils/format';
+import { isMembershipActive } from '@/lib/payments/membership';
 import { escapeIlikePattern, normalizeSearchTerm } from '@/lib/utils/search';
 import { DeleteRejectedAlumniButton } from './DeleteRejectedAlumniButton';
 
@@ -224,8 +225,10 @@ async function AlumniListRegion({ sp, page }: { sp: SearchParams; page: number }
                       >
                         {a.approval_status}
                       </Badge>
-                      <Badge variant={a.is_paid_member ? 'success' : 'default'}>
-                        {a.is_paid_member ? 'Paid' : 'Unpaid'}
+                      <Badge
+                        variant={isMembershipActive(a.is_paid_member, a.membership_type, a.membership_expires_at) ? 'success' : 'default'}
+                      >
+                        {isMembershipActive(a.is_paid_member, a.membership_type, a.membership_expires_at) ? 'Paid' : 'Unpaid'}
                       </Badge>
                     </div>
                   </div>
@@ -288,8 +291,12 @@ async function AlumniListRegion({ sp, page }: { sp: SearchParams; page: number }
                   </td>
                   <td className="px-4 py-3">
                     <div className="space-y-1">
-                      <Badge variant={a.is_paid_member ? 'success' : 'default'}>
-                        {a.membership_type === 'lifetime'
+                      <Badge
+                        variant={isMembershipActive(a.is_paid_member, a.membership_type, a.membership_expires_at) ? 'success' : 'default'}
+                      >
+                        {!isMembershipActive(a.is_paid_member, a.membership_type, a.membership_expires_at)
+                          ? 'Unpaid'
+                          : a.membership_type === 'lifetime'
                           ? 'Lifetime'
                           : a.membership_type === 'annual'
                             ? 'Annual'
