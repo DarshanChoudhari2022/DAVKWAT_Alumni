@@ -98,7 +98,7 @@ async function AnnouncementsListRegion({ sp, page }: { sp: SearchParams; page: n
       .from('announcements')
       .select(
         'id, title, slug, is_pinned, is_published, published_at, scheduled_for, created_at, author_id, profiles(full_name)',
-        { count: 'exact' }
+        { count: 'estimated' }
       );
 
     if (sp.status === 'published') {
@@ -117,7 +117,7 @@ async function AnnouncementsListRegion({ sp, page }: { sp: SearchParams; page: n
     const listResult = await listPromise;
     if (listResult.error) throw listResult.error;
     const data = listResult.data ?? [];
-    const countResult = { count: listResult.count ?? data.length, isEstimated: false };
+    const countResult = { count: listResult.count ?? data.length, isEstimated: true };
 
     // Estimate only drives totalPages; reachability is preserved even when the
     // estimate is low (Req 5.2).

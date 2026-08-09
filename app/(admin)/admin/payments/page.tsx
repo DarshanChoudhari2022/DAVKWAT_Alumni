@@ -207,7 +207,7 @@ async function PaymentsList({ sp, page }: { sp: SearchParams; page: number }) {
       .from('payments')
       .select(
         'id, txnid, amount, currency, status, payment_mode, bank_ref_num, receipt_url, created_at, alumni_id, profiles!inner(full_name, email)',
-        { count: 'exact' }
+        { count: 'estimated' }
       );
     if (sp.status && sp.status !== 'all') {
       listQuery = listQuery.eq('status', sp.status as PaymentStatus);
@@ -238,7 +238,7 @@ async function PaymentsList({ sp, page }: { sp: SearchParams; page: number }) {
     }
 
     const payments = (listResult.data ?? []) as unknown as PaymentRow[];
-    const countResult = { count: listResult.count ?? payments.length, isEstimated: false };
+    const countResult = { count: listResult.count ?? payments.length, isEstimated: true };
     const { totalPages } = computePagination({
       rowsReturned: payments.length,
       pageSize: PAGE_SIZE,

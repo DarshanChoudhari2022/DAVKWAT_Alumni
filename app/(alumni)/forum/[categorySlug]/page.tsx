@@ -54,7 +54,7 @@ export default async function CategoryPage({
     .from('forum_threads')
     .select(
       'id, title, is_pinned, is_locked, reply_count, last_reply_at, created_at, author_id, profiles!forum_threads_author_id_fkey(full_name, avatar_url)',
-      { count: 'exact' }
+      { count: 'estimated' }
     )
     .eq('category_id', category.id)
     .order('is_pinned', { ascending: false })

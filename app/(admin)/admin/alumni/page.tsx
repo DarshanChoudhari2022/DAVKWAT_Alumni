@@ -145,7 +145,7 @@ async function AlumniListRegion({ sp, page }: { sp: SearchParams; page: number }
       .from('profiles')
       .select(
         'id, full_name, email, batch_year, course, current_city, role, approval_status, is_paid_member, membership_type, membership_expires_at, is_active, created_at, avatar_url',
-        { count: 'exact' }
+        { count: 'estimated' }
       );
 
     // AND-able filters run through indexed columns (Req 6.1, 6.2) and also feed
@@ -188,7 +188,7 @@ async function AlumniListRegion({ sp, page }: { sp: SearchParams; page: number }
     const listResult = await listPromise;
     if (listResult.error) throw listResult.error;
     const alumni = listResult.data ?? [];
-    const countResult = { count: listResult.count ?? alumni.length, isEstimated: false };
+    const countResult = { count: listResult.count ?? alumni.length, isEstimated: true };
 
     // Estimate only drives totalPages; reachability is preserved even when the
     // estimate is low (Req 5.2).

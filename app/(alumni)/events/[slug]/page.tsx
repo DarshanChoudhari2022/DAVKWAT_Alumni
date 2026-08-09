@@ -33,12 +33,8 @@ export async function generateMetadata({
 interface UserProfile {
   id: string;
   full_name: string;
-  email: string;
   phone: string | null;
-  role: string;
   approval_status: string;
-  is_paid_member: boolean;
-  profile_type: string;
   batch_year: number;
 }
 
@@ -50,48 +46,51 @@ export default async function EventDetailPage({
   const { slug } = await params;
   const supabase = await createClient();
 
-  // Route is public, so check session directly
-  const { data: { user } } = await supabase.auth.getUser();
-  const userId = user?.id ?? null;
-
-  // Retrieve user's profile and membership status if logged in
-  let profile: UserProfile | null = null;
-  if (userId) {
-    const { data } = await supabase
-      .from('profiles')
-      .select('id, full_name, email, phone, role, approval_status, is_paid_member, profile_type, batch_year')
-      .eq('id', userId)
-      .maybeSingle();
-    profile = data;
-  }
-
-  const { data: event } = await supabase
-    .from('events')
-    .select(
-      'id, title, slug, description, event_type, venue, online_link, banner_image_url, starts_at, ends_at, registration_deadline, max_attendees, is_published'
-    )
-    .eq('slug', slug)
-    .eq('is_published', true)
-    .single();
+  // Public route: event data and the optional session lookup are independent,
+  // so run them together instead of serializing the page on two round trips.
+  const [eventResult, userResult] = await Promise.all([
+    supabase
+      .from('events')
+      .select(
+        'id, title, slug, description, event_type, venue, online_link, banner_image_url, starts_at, ends_at, registration_deadline, max_attendees, is_published'
+      )
+      .eq('slug', slug)
+      .eq('is_published', true)
+      .single(),
+    supabase.auth.getUser(),
+  ]);
+  const event = eventResult.data;
 
   if (!event) notFound();
 
-  // If user is logged in, check if they RSVP'd
-  let myRsvp = null;
-  if (userId) {
-    const { data } = await supabase
-      .from('event_rsvps')
-      .select('id')
-      .eq('event_id', event.id)
-      .eq('alumni_id', userId)
-      .maybeSingle();
-    myRsvp = data;
-  }
+  const userId = userResult.data.user?.id ?? null;
+  const [profileResult, myRsvpResult, goingCountResult] = await Promise.all([
+    userId
+      ? supabase
+          .from('profiles')
+          .select('id, full_name, phone, approval_status, batch_year')
+          .eq('id', userId)
+          .maybeSingle()
+      : Promise.resolve({ data: null }),
+    userId
+      ? supabase
+          .from('event_rsvps')
+          .select('id')
+          .eq('event_id', event.id)
+          .eq('alumni_id', userId)
+          .maybeSingle()
+      : Promise.resolve({ data: null }),
+    event.max_attendees != null
+      ? supabase
+          .from('event_rsvps')
+          .select('id', { count: 'exact', head: true })
+          .eq('event_id', event.id)
+      : Promise.resolve({ count: null }),
+  ]);
 
-  const { count: goingCount } = await supabase
-    .from('event_rsvps')
-    .select('id', { count: 'exact', head: true })
-    .eq('event_id', event.id);
+  const profile = profileResult.data as UserProfile | null;
+  const myRsvp = myRsvpResult.data;
+  const goingCount = goingCountResult.count;
 
   const isPast = new Date(event.starts_at).getTime() < Date.now();
   const isRegistrationClosed =

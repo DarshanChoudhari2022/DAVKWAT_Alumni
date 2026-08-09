@@ -113,7 +113,7 @@ async function ApprovalsListRegion({ sp, page }: { sp: SearchParams; page: numbe
       .from('profiles')
       .select(
         'id, full_name, email, profile_type, batch_year, course, current_city, phone, created_at, avatar_url, school_document_url, website_url, taught_subject, taught_from_year, taught_to_year',
-        { count: 'exact' }
+        { count: 'estimated' }
       )
       .eq('approval_status', 'pending')
       .eq('profile_type', activeType);
@@ -160,7 +160,7 @@ async function ApprovalsListRegion({ sp, page }: { sp: SearchParams; page: numbe
     const { error } = listResult;
     const countResult = {
       count: listResult.count ?? pendingProfiles.length,
-      isEstimated: false,
+      isEstimated: true,
     };
 
     // Estimate only drives totalPages; reachability is preserved even when the

@@ -81,7 +81,7 @@ async function AnnouncementsListRegion({
       .from('announcements')
       .select(
         'id, title, slug, content, is_pinned, published_at, scheduled_for, cover_image_url',
-        { count: 'exact' }
+        { count: 'estimated' }
       )
       .eq('is_published', true)
       .or(`scheduled_for.is.null,scheduled_for.lte.${now}`)
@@ -94,7 +94,7 @@ async function AnnouncementsListRegion({
     if (listResult.error) throw listResult.error;
 
     const data = listResult.data ?? [];
-    const countResult = { count: listResult.count ?? data.length, isEstimated: false };
+    const countResult = { count: listResult.count ?? data.length, isEstimated: true };
 
     // Pagination reachability under estimated counts (Req 4.2)
     const { totalPages } = computePagination({

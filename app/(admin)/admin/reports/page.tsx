@@ -125,7 +125,7 @@ async function ReportsSummaryStats() {
       getApprovedProfilesCount(),
       getPaidMembersCount(),
       getSuccessfulRevenue(supabase),
-      supabase.from('profiles').select('id', { count: 'exact', head: true }).gte('last_seen_at', activeSince),
+      supabase.from('profiles').select('id', { count: 'estimated', head: true }).gte('last_seen_at', activeSince),
     ]);
 
     if (activeRes.error) {

@@ -101,7 +101,7 @@ async function EventsListRegion({ filter, page }: { filter: string; page: number
       .from('events')
       .select(
         'id, title, slug, starts_at, ends_at, venue, event_type, banner_image_url',
-        { count: 'exact' }
+        { count: 'estimated' }
       )
       .eq('is_published', true);
 
@@ -133,7 +133,7 @@ async function EventsListRegion({ filter, page }: { filter: string; page: number
     const events = listResult.data ?? [];
     const countResult = {
       count: listResult.count ?? events.length,
-      isEstimated: false,
+      isEstimated: true,
     };
 
     // Compute reachable pagination from the exact count.

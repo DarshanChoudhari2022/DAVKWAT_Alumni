@@ -61,7 +61,7 @@ export default async function ThreadPage({
     .from('forum_replies')
     .select(
       'id, content, is_deleted, created_at, author_id, profiles!forum_replies_author_id_fkey(full_name, avatar_url, batch_year)',
-      { count: 'exact' }
+      { count: 'estimated' }
     )
     .eq('thread_id', threadId)
     .order('created_at', { ascending: true })

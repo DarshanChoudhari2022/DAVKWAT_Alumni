@@ -95,7 +95,7 @@ async function EventsListRegion({ filter, page }: { filter: string; page: number
       .from('events')
       .select(
         'id, title, slug, starts_at, ends_at, venue, event_type, is_published, max_attendees',
-        { count: 'exact' }
+        { count: 'estimated' }
       );
 
     if (filter === 'upcoming') listQuery = listQuery.gte('starts_at', now);
@@ -110,7 +110,7 @@ async function EventsListRegion({ filter, page }: { filter: string; page: number
     const listResult = await listPromise;
     if (listResult.error) throw listResult.error;
     const events = listResult.data ?? [];
-    const countResult = { count: listResult.count ?? events.length, isEstimated: false };
+    const countResult = { count: listResult.count ?? events.length, isEstimated: true };
 
     // RSVP counts depend on the returned event ids, so they run after the list
     // query resolves (secondary query preserved from the original page).
