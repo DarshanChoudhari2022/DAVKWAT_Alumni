@@ -352,23 +352,17 @@ export async function registerAction(
     };
   }
 
-  // ---------- 1b. Check proof of schooling file first ----------
+  // ---------- 1b. Check optional proof of schooling file first ----------
   const schoolDocFile = formData.get('school_document') as File | null;
-  if (!schoolDocFile || schoolDocFile.size === 0) {
-    return {
-      fieldErrors: {
-        school_document: 'Proof of schooling is required',
-      },
-    };
-  }
-  if (schoolDocFile.size > 10 * 1024 * 1024) {
+  const hasSchoolDocFile = Boolean(schoolDocFile && schoolDocFile.size > 0);
+  if (hasSchoolDocFile && schoolDocFile!.size > 10 * 1024 * 1024) {
     return {
       fieldErrors: {
         school_document: 'School document must be under 10 MB',
       },
     };
   }
-  if (!isValidImage(schoolDocFile)) {
+  if (hasSchoolDocFile && !isValidImage(schoolDocFile!)) {
     return {
       fieldErrors: {
         school_document: 'Only JPG, PNG or WebP images are allowed',
@@ -508,9 +502,9 @@ export async function registerAction(
     return { error: `Failed to upload profile photo: ${uploadMsg}. Please try again.` };
   }
 
-  // ---------- 4b. Upload proof of schooling (compulsory) ----------
+  // ---------- 4b. Upload proof of schooling (optional) ----------
   let schoolDocUrl: string | null = null;
-  if (schoolDocFile && schoolDocFile.size > 0) {
+  if (hasSchoolDocFile && schoolDocFile) {
     try {
       schoolDocUrl = await uploadSchoolDocument(userId, schoolDocFile);
       console.log(`[register] proof of schooling uploaded: ${schoolDocUrl}`);

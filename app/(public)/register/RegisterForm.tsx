@@ -121,7 +121,6 @@ export function RegisterForm({ step, setStep }: RegisterFormProps) {
   const [selectedAmount, setSelectedAmount] = useState<500 | 5000>(500);
   const [checkingEmail, setCheckingEmail] = useState(false);
   const [hasPhoto, setHasPhoto] = useState(false);
-  const [hasSchoolDoc, setHasSchoolDoc] = useState(false);
   const [hasPaymentProof, setHasPaymentProof] = useState(false);
 
   const [dobDay, setDobDay] = useState('');
@@ -378,11 +377,6 @@ export function RegisterForm({ step, setStep }: RegisterFormProps) {
       if (pw && cp && pw !== cp) {
         errors['confirmPassword'] = 'Passwords do not match';
       }
-    }
-
-    // Custom validation for proof of schooling on Step 1 (Academic)
-    if (s === 1 && !hasSchoolDoc) {
-      errors['school_document'] = 'Proof of schooling is required';
     }
 
     // Custom validation for profile photo on Step 2 (Personal)
@@ -736,16 +730,14 @@ export function RegisterForm({ step, setStep }: RegisterFormProps) {
           </div>
         )}
         <Field label="Roll Number (optional)" name="roll_number" maxLength={VALIDATION_LIMITS.rollNumberMax} />
-        {/* Proof of Schooling Upload (Compulsory) */}
+        {/* Proof of Schooling Upload (Optional) */}
         <div className="mt-4 rounded-2xl border border-blue-200 bg-gradient-to-br from-blue-50 to-indigo-50 p-5">
           <DocumentUpload
             name="school_document"
-            label="Proof of Schooling (Passing Certificate, School Report Card, School Leaving Certificate, ID card etc)"
-            required
+            label="Proof of Schooling (optional - Passing Certificate, School Report Card, School Leaving Certificate, ID card etc)"
             error={fieldErrors?.school_document}
             maxRawSize={10 * 1024 * 1024}
             targetCompressedSize={350 * 1024}
-            onChange={(f) => setHasSchoolDoc(!!f)}
           />
         </div>
       </div>
@@ -1044,7 +1036,8 @@ export function RegisterForm({ step, setStep }: RegisterFormProps) {
         </div>
 
         <p className="text-xs leading-relaxed text-slate-600 rounded-lg bg-slate-50 p-3">
-          Payment and proof of schooling is checked manually by the Trust team. Registration approval
+          Payment proof is checked manually by the Trust team. If you upload proof of schooling, it will also be reviewed.
+          Registration approval
           is completed after alumni and payment verification.
         </p>
       </div>

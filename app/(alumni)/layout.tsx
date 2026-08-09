@@ -22,14 +22,12 @@ function needsProfileCompletion(profile: {
   phone: string | null;
   current_city: string | null;
   current_state: string | null;
-  school_document_url: string | null;
 }) {
   return (
     !profile.avatar_url ||
     !profile.phone ||
     !profile.current_city ||
-    !profile.current_state ||
-    !profile.school_document_url
+    !profile.current_state
   );
 }
 
