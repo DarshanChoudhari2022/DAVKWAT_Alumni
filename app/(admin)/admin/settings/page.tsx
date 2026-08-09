@@ -1,6 +1,5 @@
 import { Suspense } from 'react';
 import type { Metadata } from 'next';
-import { redirect } from 'next/navigation';
 import { requireAdminAccess } from '@/lib/auth/admin-access';
 import { Card } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -26,72 +25,73 @@ export default async function AdminSettingsPage() {
   // streaming regions below reuse it without re-verifying (Req 1.1/1.2).
   const adminAccess = await requireAdminAccess();
   const isSuperAdmin = adminAccess.role === 'super_admin';
-  if (!isSuperAdmin) {
-    redirect('/admin');
-  }
 
   return (
     <div className="mx-auto max-w-4xl px-3 py-5 sm:px-6 sm:py-8 lg:px-8">
       {/* Shell: heading + description render synchronously (Req 3.1, 3.5). */}
       <h1 className="font-display text-2xl font-semibold tracking-tight sm:text-3xl">Settings</h1>
-      <p className="mt-1 text-sm text-slate-500">Manage membership plans and site configuration.</p>
-
-      <section className="mt-8">
-        <h2 className="font-display text-xl font-semibold">Basic Site Settings</h2>
-        <Card className="mt-4">
-          <p className="text-sm text-slate-500">
-            Update the trust identity, public contact details, and social links used across the portal.
-          </p>
-          {/* Site Settings region: cached Reference_Data streams in its own boundary. */}
-          <Suspense fallback={<SiteSettingsFormSkeleton />}>
-            <SiteSettingsRegion />
-          </Suspense>
-        </Card>
-      </section>
-
-      <section className="mt-8">
-        <div className="flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
-          <h2 className="font-display text-xl font-semibold">Membership Plans</h2>
-        </div>
-
-        {/* Membership Plans region: cached full-detail Reference_Data streams here. */}
-        <Suspense fallback={<MembershipPlansSkeleton />}>
-          <MembershipPlansRegion />
-        </Suspense>
-
-        <Card className="mt-6">
-          <h3 className="font-display font-semibold">Add New Plan</h3>
-          <MembershipPlanForm />
-        </Card>
-      </section>
-
-      <section className="mt-10">
-        <h2 className="font-display text-xl font-semibold">Email and Payment Readiness</h2>
-        <Card className="mt-4">
-          <p className="text-sm text-slate-600">
-            The portal already includes approval emails, rejection emails, event reminders, payment receipts,
-            membership renewal reminders, and segmented announcement emails.
-          </p>
-          <ul className="mt-4 space-y-2 text-sm text-slate-500">
-            <li><code>RESEND_API_KEY</code> and <code>RESEND_FROM_EMAIL</code> enable outbound emails.</li>
-            <li><code>EASEBUZZ_KEY</code> and <code>EASEBUZZ_SALT</code> enable online payment redirects.</li>
-            <li><code>CRON_SECRET</code> secures the reminder cron endpoints.</li>
-          </ul>
-        </Card>
-      </section>
+      <p className="mt-1 text-sm text-slate-500">
+        Manage admin access{isSuperAdmin ? ', membership plans, and site configuration.' : '.'}
+      </p>
 
       {isSuperAdmin && (
-        <section className="mt-10">
-          <h2 className="font-display text-xl font-semibold">Admin Users</h2>
-          <p className="mt-1 text-sm text-slate-500">
-            Assign admin and super admin access from one controlled section.
-          </p>
-          {/* Admin Users region streams in its own boundary (Req 3.3). */}
-          <Suspense fallback={<ListSkeleton rows={3} cols={3} />}>
-            <AdminUsersList />
-          </Suspense>
-        </section>
+        <>
+          <section className="mt-8">
+            <h2 className="font-display text-xl font-semibold">Basic Site Settings</h2>
+            <Card className="mt-4">
+              <p className="text-sm text-slate-500">
+                Update the trust identity, public contact details, and social links used across the portal.
+              </p>
+              {/* Site Settings region: cached Reference_Data streams in its own boundary. */}
+              <Suspense fallback={<SiteSettingsFormSkeleton />}>
+                <SiteSettingsRegion />
+              </Suspense>
+            </Card>
+          </section>
+
+          <section className="mt-8">
+            <div className="flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
+              <h2 className="font-display text-xl font-semibold">Membership Plans</h2>
+            </div>
+
+            {/* Membership Plans region: cached full-detail Reference_Data streams here. */}
+            <Suspense fallback={<MembershipPlansSkeleton />}>
+              <MembershipPlansRegion />
+            </Suspense>
+
+            <Card className="mt-6">
+              <h3 className="font-display font-semibold">Add New Plan</h3>
+              <MembershipPlanForm />
+            </Card>
+          </section>
+
+          <section className="mt-10">
+            <h2 className="font-display text-xl font-semibold">Email and Payment Readiness</h2>
+            <Card className="mt-4">
+              <p className="text-sm text-slate-600">
+                The portal already includes approval emails, rejection emails, event reminders, payment receipts,
+                membership renewal reminders, and segmented announcement emails.
+              </p>
+              <ul className="mt-4 space-y-2 text-sm text-slate-500">
+                <li><code>RESEND_API_KEY</code> and <code>RESEND_FROM_EMAIL</code> enable outbound emails.</li>
+                <li><code>EASEBUZZ_KEY</code> and <code>EASEBUZZ_SALT</code> enable online payment redirects.</li>
+                <li><code>CRON_SECRET</code> secures the reminder cron endpoints.</li>
+              </ul>
+            </Card>
+          </section>
+        </>
       )}
+
+      <section className="mt-10">
+        <h2 className="font-display text-xl font-semibold">Admin Users</h2>
+        <p className="mt-1 text-sm text-slate-500">
+          Assign Admin and Super Admin access from one controlled section.
+        </p>
+        {/* Admin Users region streams in its own boundary (Req 3.3). */}
+        <Suspense fallback={<ListSkeleton rows={3} cols={3} />}>
+          <AdminUsersList />
+        </Suspense>
+      </section>
     </div>
   );
 }
@@ -223,7 +223,7 @@ async function AdminUsersList() {
       <Card className="mt-4">
         <h3 className="font-display font-semibold">Assign Admin Role</h3>
         <p className="mt-1 text-sm text-slate-500">
-          Super admins can promote members to Admin or Super Admin, or remove admin access.
+          Admins can promote approved members to Admin or Super Admin, or remove admin access.
         </p>
         <AdminRoleManager candidates={candidates ?? []} />
       </Card>

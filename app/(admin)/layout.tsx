@@ -28,14 +28,12 @@ const ADMIN_NAV = [
   { href: '/admin/forum', label: 'Forum', icon: MessageSquare },
   { href: '/admin/payments', label: 'Payments', icon: CreditCard },
   { href: '/admin/reports', label: 'Reports', icon: BarChart3 },
-  { href: '/admin/settings', label: 'Settings', icon: Settings, superAdminOnly: true },
+  { href: '/admin/settings', label: 'Settings', icon: Settings },
 ];
 
 export default async function AdminLayout({ children }: { children: React.ReactNode }) {
   const adminAccess = await requireAdminAccess();
-  const visibleNav = ADMIN_NAV.filter(
-    (item) => !item.superAdminOnly || adminAccess.role === 'super_admin'
-  );
+  const visibleNav = ADMIN_NAV;
 
   return (
     <div className="flex min-h-dvh min-w-0">
@@ -77,7 +75,6 @@ export default async function AdminLayout({ children }: { children: React.ReactN
         {/* Mobile header with slide-out drawer navigation */}
         <AdminMobileNav
           displayName={adminAccess.displayName}
-          isSuperAdmin={adminAccess.role === 'super_admin'}
           pendingCount={0}
           logoutAction={adminLogoutAction}
         />

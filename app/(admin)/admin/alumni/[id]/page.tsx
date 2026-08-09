@@ -105,7 +105,7 @@ export default async function AdminAlumniDetailPage({
           <AlumniDetailActions
             alumniId={alumni.id}
             canDelete={adminAccess.role === 'super_admin'}
-            canAssignAdminRoles={adminAccess.role === 'super_admin'}
+            canAssignAdminRoles={adminAccess.role === 'admin' || adminAccess.role === 'super_admin'}
             currentRole={alumni.role}
             isActive={alumni.is_active}
           />

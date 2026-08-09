@@ -31,12 +31,11 @@ const ADMIN_NAV = [
   { href: '/admin/forum', label: 'Forum', icon: MessageSquare },
   { href: '/admin/payments', label: 'Payments', icon: CreditCard },
   { href: '/admin/reports', label: 'Reports', icon: BarChart3 },
-  { href: '/admin/settings', label: 'Settings', icon: Settings, superAdminOnly: true },
+  { href: '/admin/settings', label: 'Settings', icon: Settings },
 ];
 
 interface AdminMobileNavProps {
   displayName: string;
-  isSuperAdmin: boolean;
   pendingCount: number;
   logoutAction: () => void | Promise<void>;
 }
@@ -48,13 +47,12 @@ function isActive(pathname: string, href: string, exact?: boolean) {
 
 export function AdminMobileNav({
   displayName,
-  isSuperAdmin,
   pendingCount,
   logoutAction,
 }: AdminMobileNavProps) {
   const pathname = usePathname();
   const [open, setOpen] = useState(false);
-  const visibleNav = ADMIN_NAV.filter((item) => !item.superAdminOnly || isSuperAdmin);
+  const visibleNav = ADMIN_NAV;
 
   // Close the drawer whenever the route changes.
   useEffect(() => {

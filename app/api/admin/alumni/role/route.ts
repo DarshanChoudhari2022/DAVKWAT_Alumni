@@ -21,7 +21,7 @@ export async function POST(req: NextRequest) {
 
   if (!canAssignRole({ actorRole: adminAccess.role, requestedRole: role })) {
     return NextResponse.json(
-      { error: 'Only super admins can assign admin roles.' },
+      { error: 'You do not have permission to assign this role.' },
       { status: 403 }
     );
   }
