@@ -1,7 +1,7 @@
 import { createServerClient, type CookieOptions } from '@supabase/ssr';
 import { NextResponse, type NextRequest } from 'next/server';
 import type { Database } from './database.types';
-import { REGISTRATION_ENABLED } from '@/lib/registration-status';
+import { REGISTRATION_PAYMENT_ENABLED } from '@/lib/registration-status';
 import {
   isAdminRole,
   isAdminRoute,
@@ -30,8 +30,8 @@ export async function updateSession(request: NextRequest): Promise<NextResponse>
 
   let response = NextResponse.next({ request });
   const pathname = request.nextUrl.pathname;
-  // Let the registration pages return 404 before any auth redirects or backend calls.
-  if (!REGISTRATION_ENABLED && (pathname === '/register' || pathname.startsWith('/register/'))) {
+  // Registration remains public; the disabled payment route returns its own 404.
+  if (!REGISTRATION_PAYMENT_ENABLED && (pathname === '/register' || pathname === '/register/payment')) {
     return response;
   }
   const requestedPath = `${pathname}${request.nextUrl.search}`;

@@ -7,7 +7,6 @@ import { facultyRegistrationSchema } from '@/lib/validations/registration';
 import { APP_URL } from '@/lib/resend/client';
 import { uploadSchoolDocument } from '../actions';
 import { isValidImage } from '@/lib/utils/image-validation';
-import { requireRegistrationEnabled } from '@/lib/registration-guard';
 
 
 export interface FacultyRegisterState {
@@ -43,7 +42,6 @@ export async function facultyRegisterAction(
   _prev: FacultyRegisterState,
   formData: FormData
 ): Promise<FacultyRegisterState> {
-  requireRegistrationEnabled();
   let redirectPath: string | null = null;
   try {
     const raw: Record<string, unknown> = Object.fromEntries(formData.entries());

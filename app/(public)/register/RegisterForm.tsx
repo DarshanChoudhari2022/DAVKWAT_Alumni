@@ -2,6 +2,8 @@
 
 import Image from 'next/image';
 import dynamic from 'next/dynamic';
+import { useRouter } from 'next/navigation';
+import { REGISTRATION_PAYMENT_ENABLED } from '@/lib/registration-status';
 import type React from 'react';
 import { useActionState, useState, useRef, useEffect } from 'react';
 import { useFormStatus } from 'react-dom';
@@ -96,6 +98,7 @@ export interface RegisterFormProps {
 }
 
 export function RegisterForm({ step, setStep }: RegisterFormProps) {
+  const router = useRouter();
   const [state, formAction] = useActionState(registerAction, initialState);
   const [educationLevel, setEducationLevel] = useState('');
   const [clientErrors, setClientErrors] = useState<Record<string, string>>({});
@@ -182,7 +185,9 @@ export function RegisterForm({ step, setStep }: RegisterFormProps) {
       const draft = JSON.parse(saved);
       if (!draft) return;
 
-      if (typeof draft.step === 'number') setStep(draft.step);
+      if (typeof draft.step === 'number') {
+        setStep(Math.max(0, Math.min(draft.step, REGISTRATION_PAYMENT_ENABLED ? 4 : 3)));
+      }
       if (draft.educationLevel) setEducationLevel(draft.educationLevel);
       if (draft.leftClass) setLeftClass(draft.leftClass);
       if (draft.leavingYear) setLeavingYear(draft.leavingYear);
@@ -232,7 +237,7 @@ export function RegisterForm({ step, setStep }: RegisterFormProps) {
         });
 
         if (typeof draft.step === 'number') {
-          setStep(Math.min(Math.max(draft.step, 0), STEPS.length - 1));
+          setStep(Math.min(Math.max(draft.step, 0), REGISTRATION_PAYMENT_ENABLED ? 4 : 3));
         }
       }, 100);
     } catch (e) {
@@ -429,6 +434,12 @@ export function RegisterForm({ step, setStep }: RegisterFormProps) {
         }
         setCheckingEmail(false);
       }
+    }
+
+    if (step === 3 && !REGISTRATION_PAYMENT_ENABLED) {
+      saveDraftSync();
+      router.push('/register/payment');
+      return;
     }
 
     setStep((s) => {
@@ -879,6 +890,7 @@ export function RegisterForm({ step, setStep }: RegisterFormProps) {
       </div>
 
       {/* Step 5 — Payment & Documents */}
+      {REGISTRATION_PAYMENT_ENABLED && (
       <div id="step-4" className={cn('space-y-5', step !== 4 && 'hidden')}>
 
         {/* Membership Amount Selection */}
@@ -1021,6 +1033,7 @@ export function RegisterForm({ step, setStep }: RegisterFormProps) {
         </p>
       </div>
 
+      )}
       {/* Nav */}
       <div className="flex justify-between pt-4">
         <Button type="button" variant="outline" onClick={back} disabled={step === 0}>

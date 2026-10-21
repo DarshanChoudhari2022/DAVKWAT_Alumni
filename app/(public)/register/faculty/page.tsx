@@ -2,12 +2,10 @@ import type { Metadata } from 'next';
 import Link from 'next/link';
 import { Card } from '@/components/ui/card';
 import { FacultyRegisterForm } from './FacultyRegisterForm';
-import { requireRegistrationEnabled } from '@/lib/registration-guard';
 
 export const metadata: Metadata = { title: 'Faculty Registration' };
 
 export default function FacultyRegisterPage() {
-  requireRegistrationEnabled();
   return (
     <div className="mx-auto max-w-2xl px-4 py-12 sm:px-6">
       <div className="text-center">

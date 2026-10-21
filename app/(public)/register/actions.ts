@@ -6,7 +6,7 @@ import { createAdminClient } from '@/lib/supabase/admin';
 import { fullRegistrationSchema } from '@/lib/validations/registration';
 import { APP_URL } from '@/lib/resend/client';
 import { getCleanMimeType, isValidImage } from '@/lib/utils/image-validation';
-import { requireRegistrationEnabled } from '@/lib/registration-guard';
+import { requireRegistrationPaymentEnabled } from '@/lib/registration-guard';
 
 const fullSchema = fullRegistrationSchema;
 type ProfileType = 'alumni' | 'faculty';
@@ -132,7 +132,6 @@ async function uploadProfilePhoto(userId: string, photoFile: File): Promise<stri
  * Creates the bucket if it does not exist.
  */
 export async function uploadSchoolDocument(userId: string, docFile: File): Promise<string> {
-  requireRegistrationEnabled();
   const admin = createAdminClient();
   const bucketName = 'school-documents';
 
@@ -328,7 +327,7 @@ export async function registerAction(
   _prev: RegisterState,
   formData: FormData
 ): Promise<RegisterState> {
-  requireRegistrationEnabled();
+  requireRegistrationPaymentEnabled();
   let redirectPath: string | null = null;
   try {
   // ---------- 1. Check profile photo file first ----------
@@ -627,7 +626,6 @@ export async function registerAction(
  * Check if an email is already registered in the profiles table.
  */
 export async function checkEmailExists(email: string): Promise<boolean> {
-  requireRegistrationEnabled();
   const admin = createAdminClient();
   const { data, error } = await admin
     .from('profiles')

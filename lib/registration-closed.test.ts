@@ -10,28 +10,32 @@ vi.mock('@/lib/supabase/server', () => ({ createClient: clients.createClient }))
 vi.mock('@/lib/supabase/admin', () => ({ createAdminClient: clients.createAdminClient }));
 
 import RegisterPage from '@/app/(public)/register/page';
-import CompletePage from '@/app/(public)/register/complete/page';
 import FacultyPage from '@/app/(public)/register/faculty/page';
-import { registerAction, checkEmailExists, uploadSchoolDocument } from '@/app/(public)/register/actions';
-import { completeRegistrationAction } from '@/app/(public)/register/complete/actions';
-import { facultyRegisterAction } from '@/app/(public)/register/faculty/actions';
+import PaymentPage from '@/app/(public)/register/payment/page';
+import { registerAction, checkEmailExists } from '@/app/(public)/register/actions';
 
-describe('registration is closed pending the payment gateway', () => {
-  it('shows 404 instead of the registration forms', async () => {
-    expect(() => RegisterPage()).toThrow('404');
-    expect(() => FacultyPage()).toThrow('404');
-    await expect(CompletePage()).rejects.toThrow('404');
+describe('only the final registration payment step is closed', () => {
+  it('opens registration forms and returns 404 only for the payment page', () => {
+    expect(() => RegisterPage()).not.toThrow();
+    expect(() => FacultyPage()).not.toThrow();
+    expect(() => PaymentPage()).toThrow('404');
     expect(clients.createClient).not.toHaveBeenCalled();
     expect(clients.createAdminClient).not.toHaveBeenCalled();
   });
 
-  it('blocks direct submissions and uploads before any backend access', async () => {
-    for (const action of [registerAction, completeRegistrationAction, facultyRegisterAction]) {
-      await expect(action({}, new FormData())).rejects.toThrow('404');
-    }
-    await expect(checkEmailExists('alumni@example.com')).rejects.toThrow('404');
-    await expect(uploadSchoolDocument('user-id', new File(['data'], 'document.pdf'))).rejects.toThrow('404');
+  it('blocks final paid registration submissions before any backend access', async () => {
+    await expect(registerAction({}, new FormData())).rejects.toThrow('404');
     expect(clients.createClient).not.toHaveBeenCalled();
     expect(clients.createAdminClient).not.toHaveBeenCalled();
+  });
+
+  it('allows the account step to check whether an email already exists', async () => {
+    const maybeSingle = vi.fn().mockResolvedValue({ data: null, error: null });
+    const eq = vi.fn().mockReturnValue({ maybeSingle });
+    const select = vi.fn().mockReturnValue({ eq });
+    const from = vi.fn().mockReturnValue({ select });
+    clients.createAdminClient.mockReturnValue({ from });
+    await expect(checkEmailExists('alumni@example.com')).resolves.toBe(false);
+    expect(from).toHaveBeenCalledWith('profiles');
   });
 });
