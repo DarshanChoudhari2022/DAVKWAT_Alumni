@@ -10,6 +10,7 @@ import {
 } from '@/lib/validations/registration';
 import { APP_URL } from '@/lib/resend/client';
 import { getCleanMimeType, isValidImage } from '@/lib/utils/image-validation';
+import { requireRegistrationEnabled } from '@/lib/registration-guard';
 
 const completeSchema = alumniAcademicSchema.and(personalSchema).and(professionalSchema);
 type ProfileType = 'alumni' | 'faculty';
@@ -128,6 +129,7 @@ export async function completeRegistrationAction(
   _prev: CompleteState,
   formData: FormData
 ): Promise<CompleteState> {
+  requireRegistrationEnabled();
   let redirectPath: string | null = null;
   try {
     // ---------- 1. Check Auth Session ----------

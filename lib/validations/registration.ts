@@ -1,7 +1,7 @@
 import { z } from 'zod';
 import {
   optionalDateOfBirth,
-  optionalInternationalPhone,
+  optionalRegistrationMobile,
   optionalProfileUrl,
   optionalText,
   requiredName,
@@ -160,7 +160,7 @@ export const alumniAcademicSchema = z
 export const academicSchema = alumniAcademicSchema;
 
 export const personalSchema = z.object({
-  phone: optionalInternationalPhone,
+  phone: optionalRegistrationMobile,
   current_city: optionalText(VALIDATION_LIMITS.placeMax),
   current_state: optionalText(VALIDATION_LIMITS.placeMax),
   current_country: optionalText(VALIDATION_LIMITS.placeMax).default('India'),
@@ -183,7 +183,7 @@ export const professionalSchema = z.object({
 export const facultyDetailsSchema = z
   .object({
     full_name: requiredName,
-    phone: optionalInternationalPhone,
+    phone: optionalRegistrationMobile,
     current_city: optionalText(VALIDATION_LIMITS.placeMax),
     current_state: optionalText(VALIDATION_LIMITS.placeMax),
     current_country: optionalText(VALIDATION_LIMITS.placeMax).default('India'),

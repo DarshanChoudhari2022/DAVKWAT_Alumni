@@ -4,10 +4,12 @@ import { createClient } from '@/lib/supabase/server';
 import { createAdminClient } from '@/lib/supabase/admin';
 import { Card } from '@/components/ui/card';
 import { RegisterCompleteForm } from './RegisterCompleteForm';
+import { requireRegistrationEnabled } from '@/lib/registration-guard';
 
 export const metadata: Metadata = { title: 'Complete Registration - DAVKAWT' };
 
 export default async function RegisterCompletePage() {
+  requireRegistrationEnabled();
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
 

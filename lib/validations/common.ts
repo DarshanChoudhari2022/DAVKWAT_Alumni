@@ -1,5 +1,6 @@
 import { z } from 'zod';
 import { INPUT_PATTERNS, VALIDATION_LIMITS, VALIDATION_MESSAGES, todayIsoDate } from './constraints';
+import { COUNTRY_CODES } from '@/lib/phone-country-codes';
 
 export function normalizeWhitespace(value: string) {
   return value.trim().replace(/\s+/g, ' ');
@@ -39,6 +40,20 @@ export const optionalInternationalPhone = z
   .string()
   .trim()
   .regex(/^\+?[0-9]{7,15}$/, VALIDATION_MESSAGES.internationalPhone)
+  .optional()
+  .or(z.literal(''));
+
+// Registration stores the selected calling code followed by a 10-digit number.
+// Match only supported codes so extra digits cannot be mistaken for a country code.
+export const optionalRegistrationMobile = z
+  .string()
+  .trim()
+  .refine((value) => {
+    if (/^[0-9]{10}$/.test(value)) return true;
+    return COUNTRY_CODES.some(({ code }) =>
+      value.startsWith(code) && /^[0-9]{10}$/.test(value.slice(code.length))
+    );
+  }, VALIDATION_MESSAGES.mobileNumber)
   .optional()
   .or(z.literal(''));
 

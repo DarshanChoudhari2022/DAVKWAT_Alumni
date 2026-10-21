@@ -7,6 +7,8 @@ import { useFormStatus } from 'react-dom';
 import { toast } from 'sonner';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+import { MobileNumberInput } from '@/components/shared/MobileNumberInput';
+import { COUNTRY_CODES } from '@/lib/phone-country-codes';
 import { Label } from '@/components/ui/label';
 import { FieldError } from '@/components/shared/FieldError';
 import { cn } from '@/lib/utils/cn';
@@ -34,34 +36,6 @@ const MONTHS = [
 const DAYS = Array.from({ length: 31 }, (_, i) => i + 1);
 const BIRTH_YEARS = Array.from({ length: CURRENT_YEAR - 1919 }, (_, i) => CURRENT_YEAR - i);
 
-/** Country codes for the phone dropdown — US/UK at top, then common codes */
-const COUNTRY_CODES = [
-  { code: '+91', label: '🇮🇳 India (+91)' },
-  { code: '+1', label: '🇺🇸 US (+1)' },
-  { code: '+44', label: '🇬🇧 UK (+44)' },
-  { code: '+61', label: '🇦🇺 Australia (+61)' },
-  { code: '+971', label: '🇦🇪 UAE (+971)' },
-  { code: '+65', label: '🇸🇬 Singapore (+65)' },
-  { code: '+49', label: '🇩🇪 Germany (+49)' },
-  { code: '+81', label: '🇯🇵 Japan (+81)' },
-  { code: '+86', label: '🇨🇳 China (+86)' },
-  { code: '+33', label: '🇫🇷 France (+33)' },
-  { code: '+966', label: '🇸🇦 Saudi Arabia (+966)' },
-  { code: '+974', label: '🇶🇦 Qatar (+974)' },
-  { code: '+968', label: '🇴🇲 Oman (+968)' },
-  { code: '+977', label: '🇳🇵 Nepal (+977)' },
-  { code: '+880', label: '🇧🇩 Bangladesh (+880)' },
-  { code: '+94', label: '🇱🇰 Sri Lanka (+94)' },
-  { code: '+60', label: '🇲🇾 Malaysia (+60)' },
-  { code: '+27', label: '🇿🇦 South Africa (+27)' },
-  { code: '+82', label: '🇰🇷 South Korea (+82)' },
-  { code: '+39', label: '🇮🇹 Italy (+39)' },
-  { code: '+7', label: '🇷🇺 Russia (+7)' },
-  { code: '+55', label: '🇧🇷 Brazil (+55)' },
-  { code: '+52', label: '🇲🇽 Mexico (+52)' },
-  { code: '+234', label: '🇳🇬 Nigeria (+234)' },
-  { code: '+254', label: '🇰🇪 Kenya (+254)' },
-] as const;
 
 function SubmitButton() {
   const { pending } = useFormStatus();
@@ -402,12 +376,9 @@ export function RegisterCompleteForm({ initialData }: RegisterCompleteFormProps)
                 <option key={cc.code} value={cc.code}>{cc.label}</option>
               ))}
             </select>
-            <Input
+            <MobileNumberInput
               id="phone_number"
               name="phone_number"
-              type="tel"
-              inputMode="numeric"
-              maxLength={15}
               placeholder="9876543210"
               className="flex-1"
             />

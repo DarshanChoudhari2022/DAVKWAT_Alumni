@@ -23,11 +23,13 @@ export const VALIDATION_LIMITS = {
 } as const;
 
 export const INPUT_PATTERNS = {
+  mobileNumber: '[0-9]{10}',
   indianMobile: '[6-9][0-9]{9}',
   internationalPhone: '\\+?[0-9]{7,15}',
 } as const;
 
 export const VALIDATION_MESSAGES = {
+  mobileNumber: 'Enter exactly 10 digits, excluding the country code',
   indianMobile: 'Enter a valid 10-digit Indian mobile number starting with 6, 7, 8, or 9',
   internationalPhone: 'Enter a valid phone number (7-15 digits, optionally starting with +)',
   futureDate: 'Date of birth cannot be in the future',
