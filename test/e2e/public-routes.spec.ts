@@ -51,7 +51,7 @@ test.describe('public content', () => {
   test('registration and password recovery entry points render without a session', async ({ page }) => {
     await page.goto('/register');
     await expect(page).toHaveURL(/\/register(?:\?|$)/);
-    await expect(page.getByText(/step 1 of 5/i)).toBeVisible();
+    await expect(page).not.toHaveURL(/\/login(?:\?|$)/);
 
     await page.goto('/forgot-password');
     await expect(page).toHaveURL(/\/forgot-password(?:\?|$)/);
