@@ -1,4 +1,5 @@
 import type { Metadata } from 'next';
+import Link from 'next/link';
 import { redirect } from 'next/navigation';
 import { Clock } from 'lucide-react';
 import { Card } from '@/components/ui/card';
@@ -20,7 +21,7 @@ export default async function PendingApprovalPage() {
   const { data: profile, error } = await supabase
     .from('profiles')
     .select(
-      'full_name, batch_year, course, email, role, approval_status, rejection_reason, created_at'
+      'full_name, batch_year, course, email, role, approval_status, rejection_reason, created_at, is_paid_member, profile_type'
     )
     .eq('id', user.id)
     .maybeSingle();
@@ -111,10 +112,13 @@ export default async function PendingApprovalPage() {
           </div>
         )}
 
+        {!isRejected && !profile.is_paid_member && profile.profile_type !== 'faculty' && (
+          <p className="mt-6"><Link href="/register/payment" className="font-semibold text-[#0F2557] underline">Complete or retry membership payment</Link></p>
+        )}
         {!isRejected && (
           <p className="mt-6 text-sm text-slate-600">
             We typically review registrations within 2-3 working days. You&apos;ll receive an email
-            once approved, along with the next membership fee instructions if applicable. If you
+            once approved. Your payment is verified separately through Easebuzz. If you
             have questions, write to{' '}
             <a href="mailto:davkawt.admin@gmail.com" className="text-[#0F2557] underline">
               davkawt.admin@gmail.com

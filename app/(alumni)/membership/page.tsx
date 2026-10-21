@@ -36,8 +36,7 @@ export default async function MembershipPage({
       <header>
         <h1 className="font-display text-3xl font-semibold tracking-tight">Membership</h1>
         <p className="mt-1 text-sm text-slate-500">
-          Review the current alumni membership fee plans and continue to payment when the gateway
-          credentials are configured.
+          Choose yearly or lifetime membership and pay securely with Easebuzz.
         </p>
       </header>
 
@@ -99,7 +98,7 @@ export default async function MembershipPage({
               {isExpiringSoon && (
                 <div className="mt-2 flex items-center gap-1.5 text-sm text-amber-700">
                   <AlertCircle className="h-4 w-4" />
-                  Your membership expires soon. You can submit a renewal request below.
+                  Your membership expires soon. You can renew below.
                 </div>
               )}
             </div>
@@ -207,7 +206,7 @@ async function PaymentHistoryRegion({
                       rel="noopener noreferrer"
                       className="inline-flex items-center justify-center gap-1.5 rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm font-medium text-[#0F2557] hover:bg-slate-50"
                     >
-                      View proof
+                      View receipt
                       <ExternalLink className="h-4 w-4" />
                     </a>
                   )}
@@ -269,11 +268,10 @@ async function PlansRegion({
                 </div>
                 <div>
                   <h2 className="font-display text-lg font-semibold text-blue-900">
-                    Membership request received
+                    Payment awaiting completion
                   </h2>
                   <p className="mt-0.5 text-sm text-blue-800">
-                    Your preferred membership plan has been recorded. If the payment gateway is not yet
-                    configured, an administrator will review it and share the next steps separately.
+                    You have an unfinished payment. Choose a plan below to retry securely with Easebuzz.
                   </p>
                 </div>
               </div>
@@ -286,10 +284,10 @@ async function PlansRegion({
                 </div>
                 <div>
                   <h2 className="font-display text-lg font-semibold text-amber-800">
-                    Manual membership payment review
+                    Activate your membership
                   </h2>
                   <p className="mt-0.5 text-sm text-amber-700">
-                    Select a plan below to record your membership request for admin verification.
+                    Select a plan below and continue to secure checkout.
                   </p>
                 </div>
               </div>
@@ -303,7 +301,7 @@ async function PlansRegion({
             <div className="flex flex-col gap-2">
               <h2 className="font-display text-xl font-semibold">Choose a Plan</h2>
               <p className="text-sm text-slate-500">
-                Payments are verified manually by the admin team using proof of payment.
+                Payments are verified automatically by Easebuzz. No payment screenshot is required.
               </p>
             </div>
             <div className="mt-4 grid gap-4 md:grid-cols-3">

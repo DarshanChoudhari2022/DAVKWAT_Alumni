@@ -1,13 +1,9 @@
 'use client';
 
-import Image from 'next/image';
 import dynamic from 'next/dynamic';
-import { useRouter } from 'next/navigation';
-import { REGISTRATION_PAYMENT_ENABLED } from '@/lib/registration-status';
 import type React from 'react';
 import { useActionState, useState, useRef, useEffect } from 'react';
 import { useFormStatus } from 'react-dom';
-import { Copy, Download, Check } from 'lucide-react';
 import { toast } from 'sonner';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -17,11 +13,6 @@ import { Label } from '@/components/ui/label';
 import { FieldError } from '@/components/shared/FieldError';
 import { PasswordInput } from '@/components/shared/PasswordInput';
 import { cn } from '@/lib/utils/cn';
-import {
-  buildManualPaymentWhatsappUrl,
-  buildUpiPaymentUrl,
-  MANUAL_MEMBERSHIP_PAYMENT,
-} from '@/lib/payments/manual-upi';
 import { VALIDATION_LIMITS } from '@/lib/validations/constraints';
 import { LEFT_BEFORE_CLASSES } from '@/lib/validations/registration';
 import { DocumentUpload } from '@/components/shared/DocumentUpload';
@@ -30,7 +21,7 @@ import { registerAction, checkEmailExists, type RegisterState } from './actions'
 const initialState: RegisterState = {};
 const CURRENT_YEAR = new Date().getFullYear();
 const BATCH_YEARS = Array.from({ length: CURRENT_YEAR - 1959 }, (_, i) => CURRENT_YEAR - i);
-const STEPS = ['Account', 'Academic', 'Personal', 'Professional', 'Payment & Documents'] as const;
+const STEPS = ['Account', 'Academic', 'Personal', 'Professional', 'Membership & Payment'] as const;
 const DRAFT_KEY = 'davkawt_register_draft';
 
 const PhotoUploadWithCrop = dynamic(
@@ -79,7 +70,6 @@ const FIELD_STEP_MAP: Record<string, number> = {
   hide_phone: 3,
   terms_accepted: 3,
   school_document: 1,
-  payment_proof: 4,
   selected_amount: 4,
 };
 
@@ -87,7 +77,7 @@ function SubmitButton() {
   const { pending } = useFormStatus();
   return (
     <Button type="submit" variant="accent" loading={pending}>
-      Submit registration
+      Continue to payment
     </Button>
   );
 }
@@ -98,7 +88,6 @@ export interface RegisterFormProps {
 }
 
 export function RegisterForm({ step, setStep }: RegisterFormProps) {
-  const router = useRouter();
   const [state, formAction] = useActionState(registerAction, initialState);
   const [educationLevel, setEducationLevel] = useState('');
   const [clientErrors, setClientErrors] = useState<Record<string, string>>({});
@@ -106,7 +95,6 @@ export function RegisterForm({ step, setStep }: RegisterFormProps) {
   const [selectedAmount, setSelectedAmount] = useState<500 | 5000>(500);
   const [checkingEmail, setCheckingEmail] = useState(false);
   const [hasPhoto, setHasPhoto] = useState(false);
-  const [hasPaymentProof, setHasPaymentProof] = useState(false);
 
   const [dobDay, setDobDay] = useState('');
   const [dobMonth, setDobMonth] = useState('');
@@ -186,7 +174,7 @@ export function RegisterForm({ step, setStep }: RegisterFormProps) {
       if (!draft) return;
 
       if (typeof draft.step === 'number') {
-        setStep(Math.max(0, Math.min(draft.step, REGISTRATION_PAYMENT_ENABLED ? 4 : 3)));
+        setStep(Math.max(0, Math.min(draft.step, 4)));
       }
       if (draft.educationLevel) setEducationLevel(draft.educationLevel);
       if (draft.leftClass) setLeftClass(draft.leftClass);
@@ -237,7 +225,7 @@ export function RegisterForm({ step, setStep }: RegisterFormProps) {
         });
 
         if (typeof draft.step === 'number') {
-          setStep(Math.min(Math.max(draft.step, 0), REGISTRATION_PAYMENT_ENABLED ? 4 : 3));
+          setStep(Math.min(Math.max(draft.step, 0), STEPS.length - 1));
         }
       }, 100);
     } catch (e) {
@@ -270,14 +258,6 @@ export function RegisterForm({ step, setStep }: RegisterFormProps) {
       }
     }
   }, [educationLevel, leftClass, leavingYear]);
-
-  const [copiedUpi, setCopiedUpi] = useState(false);
-  const handleCopyUpi = () => {
-    navigator.clipboard.writeText(MANUAL_MEMBERSHIP_PAYMENT.upiId);
-    setCopiedUpi(true);
-    toast.success('UPI ID copied to clipboard');
-    setTimeout(() => setCopiedUpi(false), 2000);
-  };
 
   const lastHandledStateRef = useRef<RegisterState>(initialState);
   const shouldScrollToFieldRef = useRef<string | null>(null);
@@ -379,11 +359,6 @@ export function RegisterForm({ step, setStep }: RegisterFormProps) {
       }
     }
 
-    // Custom validation for payment proof on Step 4 (Payment & Documents)
-    if (s === 4 && !hasPaymentProof) {
-      errors['payment_proof'] = 'Proof of payment is required';
-    }
-
     return errors;
   }
 
@@ -436,12 +411,6 @@ export function RegisterForm({ step, setStep }: RegisterFormProps) {
       }
     }
 
-    if (step === 3 && !REGISTRATION_PAYMENT_ENABLED) {
-      saveDraftSync();
-      router.push('/register/payment');
-      return;
-    }
-
     setStep((s) => {
       const nextStep = Math.min(s + 1, STEPS.length - 1);
       if (nextStep !== s) {
@@ -466,7 +435,7 @@ export function RegisterForm({ step, setStep }: RegisterFormProps) {
       return;
     }
 
-    // Validate Step 4 fields before sending to server
+    // Validate the membership choice before sending to the server
     if (!validateCurrentStep()) return;
     // Combine country code + phone number into a single "phone" field
     const phoneNumber = fd.get('phone_number') as string;
@@ -478,23 +447,6 @@ export function RegisterForm({ step, setStep }: RegisterFormProps) {
     fd.delete('phone_country_code');
     formAction(fd);
   }
-
-  function openPaymentWhatsapp() {
-    const formData = formRef.current ? new FormData(formRef.current) : null;
-    const getValue = (name: string) => String(formData?.get(name) ?? '').trim();
-
-    window.open(
-      buildManualPaymentWhatsappUrl({
-        fullName: getValue('full_name'),
-        batchYear: getValue('passing_year'),
-        phone: getValue('phone_number') ? `${getValue('phone_country_code')}${getValue('phone_number')}` : '',
-      }),
-      '_blank',
-      'noopener,noreferrer'
-    );
-  }
-
-
 
   // Merge server errors with client errors
   const fieldErrors = { ...clientErrors, ...state.fieldErrors };
@@ -765,6 +717,7 @@ export function RegisterForm({ step, setStep }: RegisterFormProps) {
             <MobileNumberInput
               id="phone_number"
               name="phone_number"
+              required
               placeholder="9876543210"
               className="flex-1"
             />
@@ -889,8 +842,7 @@ export function RegisterForm({ step, setStep }: RegisterFormProps) {
         <FieldError message={fieldErrors?.terms_accepted} />
       </div>
 
-      {/* Step 5 — Payment & Documents */}
-      {REGISTRATION_PAYMENT_ENABLED && (
+      {/* Step 5 — Membership and hosted payment */}
       <div id="step-4" className={cn('space-y-5', step !== 4 && 'hidden')}>
 
         {/* Membership Amount Selection */}
@@ -929,111 +881,21 @@ export function RegisterForm({ step, setStep }: RegisterFormProps) {
           <input type="hidden" name="selected_amount" value={selectedAmount} />
         </div>
 
-        {/* UPI QR Code — changes based on selected amount */}
-        <div className="rounded-2xl border border-amber-200 bg-amber-50 p-4">
-          <div className="flex flex-col gap-4 sm:flex-row sm:items-start">
-            <div className="mx-auto w-full max-w-[220px] shrink-0 sm:mx-0 flex flex-col items-center">
-              <div className="overflow-hidden rounded-xl border border-white bg-white p-2 shadow-sm w-full">
-                <Image
-                  src={selectedAmount === 500 ? MANUAL_MEMBERSHIP_PAYMENT.qrImage500 : MANUAL_MEMBERSHIP_PAYMENT.qrImage5000}
-                  alt={`UPI QR code for ₹${selectedAmount.toLocaleString('en-IN')}`}
-                  width={1002}
-                  height={1600}
-                  className="h-auto w-full rounded-lg"
-                />
-              </div>
-              <a
-                href={selectedAmount === 500 ? MANUAL_MEMBERSHIP_PAYMENT.qrImage500 : MANUAL_MEMBERSHIP_PAYMENT.qrImage5000}
-                download={`davkawt-upi-qr-${selectedAmount}.jpeg`}
-                className="mt-2.5 inline-flex w-full items-center justify-center gap-1.5 rounded-lg border border-slate-200 bg-white px-3 py-2 text-xs font-semibold text-slate-700 shadow-sm transition hover:bg-slate-50 hover:scale-[1.02] active:scale-[0.98]"
-              >
-                <Download className="h-3.5 w-3.5" />
-                Download QR Code
-              </a>
-            </div>
-            <div className="flex-1 space-y-3">
-              <div>
-                <p className="text-sm font-semibold text-slate-900">
-                  Pay ₹{selectedAmount.toLocaleString('en-IN')} by UPI
-                </p>
-                <p className="mt-1 text-sm text-slate-700">
-                  Scan this QR with any UPI app, or tap the button below on mobile.
-                  After payment, upload the screenshot below.
-                </p>
-              </div>
-              <div className="rounded-lg bg-white/80 p-3 text-sm text-slate-700">
-                <div className="flex items-center justify-between gap-2">
-                  <p className="truncate">
-                    <span className="font-medium text-slate-900">UPI ID:</span>{' '}
-                    <span className="font-mono bg-slate-100/50 px-1 py-0.5 rounded text-xs select-all text-slate-800">{MANUAL_MEMBERSHIP_PAYMENT.upiId}</span>
-                  </p>
-                  <button
-                    type="button"
-                    onClick={handleCopyUpi}
-                    className="inline-flex items-center gap-1 shrink-0 rounded border border-slate-200 bg-white px-2 py-0.5 text-xs font-semibold text-slate-700 transition hover:bg-slate-50 hover:scale-105 active:scale-95 shadow-sm"
-                  >
-                    {copiedUpi ? (
-                      <>
-                        <Check className="h-3 w-3 text-emerald-600" />
-                        <span className="text-emerald-600">Copied</span>
-                      </>
-                    ) : (
-                      <>
-                        <Copy className="h-3 w-3" />
-                        <span>Copy</span>
-                      </>
-                    )}
-                  </button>
-                </div>
-                <p className="mt-1.5">
-                  <span className="font-medium text-slate-900">Payee:</span>{' '}
-                  <span className="text-slate-800">{MANUAL_MEMBERSHIP_PAYMENT.payeeName}</span>
-                </p>
-              </div>
-              <div className="flex flex-col gap-2 sm:flex-row">
-                <Button
-                  asChild
-                  variant="accent"
-                  className="w-full sm:w-1/2 whitespace-normal h-auto py-2.5 text-center animate-pulse hover:animate-none hover:scale-105 active:scale-95 transition-all duration-300 shadow-md hover:shadow-lg hover:shadow-amber-500/20"
-                >
-                  <a href={buildUpiPaymentUrl(selectedAmount)} className="flex items-center justify-center min-h-[40px] w-full">
-                    Open UPI app (₹{selectedAmount.toLocaleString('en-IN')})
-                  </a>
-                </Button>
-                <Button
-                  type="button"
-                  variant="outline"
-                  onClick={openPaymentWhatsapp}
-                  className="w-full sm:w-1/2 whitespace-normal h-auto py-2.5 text-center min-h-[40px] flex items-center justify-center"
-                >
-                  I have paid — WhatsApp proof
-                </Button>
-              </div>
-            </div>
-          </div>
+        <FieldError message={fieldErrors?.selected_amount} />
+        <div className="rounded-2xl border border-blue-200 bg-blue-50 p-5 text-sm text-slate-700">
+          <p className="font-semibold text-slate-900">Pay securely with Easebuzz</p>
+          <p className="mt-2">
+            Continue to the secure checkout to pay ₹{selectedAmount.toLocaleString('en-IN')}.
+            Your membership is activated after payment verification. Your alumni profile
+            is reviewed separately by the Trust.
+          </p>
+          <p className="mt-2">
+            Annual membership is valid for 12 months. Lifetime membership is a one-time payment.
+            No payment screenshot is needed.
+          </p>
         </div>
-
-        {/* Payment Proof Upload */}
-        <div className="rounded-2xl border border-emerald-200 bg-gradient-to-br from-emerald-50 to-green-50 p-5">
-          <DocumentUpload
-            name="payment_proof"
-            label="Proof of Payment"
-            required
-            error={fieldErrors?.payment_proof}
-            maxRawSize={10 * 1024 * 1024}
-            targetCompressedSize={350 * 1024}
-            onChange={(f) => setHasPaymentProof(!!f)}
-          />
-        </div>
-
-        <p className="text-xs leading-relaxed text-slate-600 rounded-lg bg-slate-50 p-3">
-          Payment proof is checked manually by the Trust team. If you upload proof of schooling, it will also be reviewed.
-          Registration approval
-          is completed after alumni and payment verification.
-        </p>
       </div>
 
-      )}
       {/* Nav */}
       <div className="flex justify-between pt-4">
         <Button type="button" variant="outline" onClick={back} disabled={step === 0}>

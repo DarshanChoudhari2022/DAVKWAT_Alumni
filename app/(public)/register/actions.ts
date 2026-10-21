@@ -6,7 +6,9 @@ import { createAdminClient } from '@/lib/supabase/admin';
 import { fullRegistrationSchema } from '@/lib/validations/registration';
 import { APP_URL } from '@/lib/resend/client';
 import { getCleanMimeType, isValidImage } from '@/lib/utils/image-validation';
-import { requireRegistrationPaymentEnabled } from '@/lib/registration-guard';
+import { getEasebuzzConfig } from '@/lib/easebuzz/config';
+import { startMembershipCheckout } from '@/lib/payments/checkout';
+import { membershipForAmount } from '@/lib/payments/plans';
 
 const fullSchema = fullRegistrationSchema;
 type ProfileType = 'alumni' | 'faculty';
@@ -171,78 +173,6 @@ export async function uploadSchoolDocument(userId: string, docFile: File): Promi
 }
 
 /**
- * Upload payment proof screenshot to Supabase storage 'payment-proofs' bucket.
- * Creates the bucket if it does not exist.
- */
-async function uploadPaymentProof(userId: string, proofFile: File): Promise<string> {
-  const admin = createAdminClient();
-  const bucketName = 'payment-proofs';
-
-  try {
-    const { data: buckets } = await admin.storage.listBuckets();
-    if (!buckets?.find((b) => b.name === bucketName)) {
-      console.log(`[register/upload] creating bucket "${bucketName}"`);
-      await admin.storage.createBucket(bucketName, {
-        public: true,
-        allowedMimeTypes: ['image/jpeg', 'image/png', 'image/webp'],
-        fileSizeLimit: 5 * 1024 * 1024,
-      });
-    }
-  } catch (e) {
-    console.warn('[register/upload] payment-proofs bucket check/creation warning:', e);
-  }
-
-  const fileExt = proofFile.name.split('.').pop() || 'jpg';
-  const fileName = `${userId}-${Date.now()}.${fileExt}`;
-  const filePath = `proofs/${fileName}`;
-
-  const cleanMimeType = getCleanMimeType(proofFile);
-
-  const { error: uploadError } = await admin.storage
-    .from(bucketName)
-    .upload(filePath, proofFile, {
-      contentType: cleanMimeType,
-      upsert: true,
-    });
-
-  if (uploadError) {
-    throw new Error(`Failed to upload payment proof: ${uploadError.message}`);
-  }
-
-  const { data: { publicUrl } } = admin.storage.from(bucketName).getPublicUrl(filePath);
-  return publicUrl;
-}
-
-/**
- * Create a manual pending payment record.
- * Storing the screenshot URL in receipt_url to work with the existing schema.
- */
-async function createManualPayment(
-  userId: string,
-  amount: number,
-  proofUrl: string
-): Promise<string> {
-  const admin = createAdminClient();
-  const txnid = `TXN-MAN-${Date.now()}-${Math.floor(1000 + Math.random() * 9000)}`;
-
-  const { error } = await admin.from('payments').insert({
-    alumni_id: userId,
-    txnid,
-    amount,
-    currency: 'INR',
-    status: 'pending',
-    payment_mode: 'UPI_QR',
-    receipt_url: proofUrl,
-  });
-
-  if (error) {
-    throw new Error(`Failed to create payment record: ${error.message}`);
-  }
-
-  return txnid;
-}
-
-/**
  * Insert profile row via service-role Supabase client (bypasses RLS).
  * Retries once on transient failure.
  */
@@ -327,9 +257,12 @@ export async function registerAction(
   _prev: RegisterState,
   formData: FormData
 ): Promise<RegisterState> {
-  requireRegistrationPaymentEnabled();
   let redirectPath: string | null = null;
   try {
+  // Validate the server's price selection and configuration before creating an account.
+  const membershipType = membershipForAmount(formData.get('selected_amount'));
+  if (!membershipType) return { fieldErrors: { selected_amount: 'Choose the yearly or lifetime plan.' } };
+  getEasebuzzConfig();
   // ---------- 1. Check profile photo file first ----------
   const photoFile = formData.get('profile_photo') as File | null;
   if (!photoFile || photoFile.size === 0) {
@@ -372,30 +305,6 @@ export async function registerAction(
     };
   }
 
-  // ---------- 1c. Check proof of payment file first ----------
-  const paymentProofFile = formData.get('payment_proof') as File | null;
-  if (!paymentProofFile || paymentProofFile.size === 0) {
-    return {
-      fieldErrors: {
-        payment_proof: 'Proof of payment is required',
-      },
-    };
-  }
-  if (paymentProofFile.size > 10 * 1024 * 1024) {
-    return {
-      fieldErrors: {
-        payment_proof: 'Payment proof must be under 10 MB',
-      },
-    };
-  }
-  if (!isValidImage(paymentProofFile)) {
-    return {
-      fieldErrors: {
-        payment_proof: 'Only JPG, PNG or WebP images are allowed',
-      },
-    };
-  }
-
   // ---------- 2. Parse & validate fields ----------
   const raw: Record<string, unknown> = Object.fromEntries(formData.entries());
   if (raw.passing_year) raw.passing_year = Number(raw.passing_year);
@@ -423,6 +332,7 @@ export async function registerAction(
   }
 
   const data = parsed.data;
+  if (!data.phone) return { fieldErrors: { phone: 'Enter your 10-digit mobile number to continue to payment.' } };
   console.log(`[register] starting registration for ${data.email}`);
 
   // ---------- 3. Create auth user ----------
@@ -530,32 +440,17 @@ export async function registerAction(
     return { error: `Failed to create your profile: ${profileResult.error}. Please try again.` };
   }
 
-  // ---------- 5b. Upload proof of payment & create payment record ----------
-  const selectedAmount = Number(formData.get('selected_amount') || 500);
-  if (paymentProofFile && paymentProofFile.size > 0) {
-    try {
-      const proofUrl = await uploadPaymentProof(userId, paymentProofFile);
-      console.log(`[register] proof of payment uploaded: ${proofUrl}`);
-      const txnid = await createManualPayment(userId, selectedAmount, proofUrl);
-      console.log(`[register] manual payment created: ${txnid}`);
-
-      // Send WhatsApp-style proof link via the admin email too
-      try {
-        const { buildManualPaymentWhatsappUrl } = await import('@/lib/payments/manual-upi');
-        const whatsappUrl = buildManualPaymentWhatsappUrl({
-          fullName: data.full_name,
-          batchYear: String(data.batch_year),
-          amount: selectedAmount as 500 | 5000,
-          paymentProofUrl: proofUrl,
-        });
-        console.log(`[register] WhatsApp proof URL generated: ${whatsappUrl}`);
-      } catch {
-        // Non-critical
-      }
-    } catch (payErr: unknown) {
-      console.error('[register] proof of payment upload/record failed:', payErr);
-      // Non-fatal — registration still succeeded
-    }
+  // The account remains pending Trust approval. Only verified payment callbacks
+  // grant membership. If checkout fails, the payment page offers a signed-in retry.
+  let checkoutUrl: string | null = null;
+  try {
+    const checkout = await startMembershipCheckout({
+      userId, fullName: data.full_name, email: data.email, phone: data.phone,
+      membershipType, source: 'registration',
+    });
+    checkoutUrl = checkout.paymentUrl;
+  } catch {
+    console.error('[register] Checkout unavailable; account saved for payment retry.');
   }
 
   // ---------- 6. Send emails (non-blocking) ----------
@@ -600,16 +495,8 @@ export async function registerAction(
     // Registration still succeeded — emails are non-critical
   }
 
-  // ---------- 7. Redirect based on email confirmation status ----------
-  const emailConfirmed = currentUser.email_confirmed_at != null;
-
-  if (emailConfirmed) {
-    console.log('[register] email auto-confirmed, redirecting to pending-approval');
-    redirectPath = '/pending-approval?registered=true';
-  } else {
-    console.log('[register] email not confirmed, redirecting to verify-email');
-    redirectPath = '/verify-email?registered=true';
-  }
+  // Redirect after the action's catch so Next.js handles the navigation normally.
+  redirectPath = checkoutUrl ?? '/register/payment?error=checkout_unavailable';
   } catch (err: unknown) {
     console.error('[register] unexpected error:', err);
     const msg = err instanceof Error ? err.message : 'Unknown error';

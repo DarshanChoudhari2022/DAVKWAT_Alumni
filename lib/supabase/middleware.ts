@@ -1,7 +1,6 @@
 import { createServerClient, type CookieOptions } from '@supabase/ssr';
 import { NextResponse, type NextRequest } from 'next/server';
 import type { Database } from './database.types';
-import { REGISTRATION_PAYMENT_ENABLED } from '@/lib/registration-status';
 import {
   isAdminRole,
   isAdminRoute,
@@ -30,8 +29,8 @@ export async function updateSession(request: NextRequest): Promise<NextResponse>
 
   let response = NextResponse.next({ request });
   const pathname = request.nextUrl.pathname;
-  // Registration remains public; the disabled payment route returns its own 404.
-  if (!REGISTRATION_PAYMENT_ENABLED && (pathname === '/register' || pathname === '/register/payment')) {
+  // Registration and the payment return page must also work before email confirmation.
+  if (pathname === '/register' || pathname === '/register/payment') {
     return response;
   }
   const requestedPath = `${pathname}${request.nextUrl.search}`;

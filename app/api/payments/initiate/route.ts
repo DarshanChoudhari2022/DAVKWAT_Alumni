@@ -1,118 +1,49 @@
 import { NextResponse } from 'next/server';
-import { nanoid } from 'nanoid';
-import { writeAuditLog } from '@/lib/audit';
-import { createAdminClient } from '@/lib/supabase/admin';
 import { createClient } from '@/lib/supabase/server';
+import { createAdminClient } from '@/lib/supabase/admin';
+import { startMembershipCheckout } from '@/lib/payments/checkout';
+import { MEMBERSHIP_PRICES, type PaidMembershipType } from '@/lib/payments/plans';
 
 export async function POST(req: Request) {
   try {
     const supabase = await createClient();
     const { data: { user } } = await supabase.auth.getUser();
-
-    if (!user) {
-      return NextResponse.json({ error: 'Not authenticated.' }, { status: 401 });
-    }
-
-    const { planId } = (await req.json()) as { planId?: string };
-    if (!planId) {
-      return NextResponse.json({ error: 'Plan ID is required.' }, { status: 400 });
-    }
-
-    const [{ data: profile }, { data: plan }] = await Promise.all([
-      supabase
-        .from('profiles')
-        .select('id, full_name, approval_status, is_active, profile_type')
-        .eq('id', user.id)
-        .maybeSingle(),
-      supabase
-        .from('membership_plans')
-        .select('id, name, amount, membership_type, duration_months')
-        .eq('id', planId)
-        .eq('is_active', true)
-        .maybeSingle(),
-    ]);
-
-    if (!profile || profile.approval_status !== 'approved' || profile.is_active === false) {
-      return NextResponse.json(
-        { error: 'Only approved alumni can submit membership requests.' },
-        { status: 403 }
-      );
-    }
-
-    if (profile.profile_type === 'faculty') {
-      return NextResponse.json(
-        { error: 'Faculty members are not required to pay membership fees.' },
-        { status: 400 }
-      );
-    }
-
-    if (!plan) {
-      return NextResponse.json({ error: 'Plan not found or inactive.' }, { status: 404 });
-    }
-
+    if (!user) return NextResponse.json({ error: 'Please sign in to continue.' }, { status: 401 });
+    let body: { planId?: string; membershipType?: string };
+    try { body = await req.json(); }
+    catch { return NextResponse.json({ error: 'Invalid request.' }, { status: 400 }); }
     const admin = createAdminClient();
-    const { data: existingPending, error: pendingError } = await admin
-      .from('payments')
-      .select('id, txnid')
-      .eq('alumni_id', user.id)
-      .eq('plan_id', plan.id)
-      .eq('status', 'pending')
-      .order('created_at', { ascending: false })
-      .limit(1)
-      .maybeSingle();
-
-    if (pendingError) {
-      return NextResponse.json({ error: pendingError.message }, { status: 500 });
+    const { data: profile, error: profileError } = await admin.from('profiles')
+      .select('id, full_name, email, phone, approval_status, is_active, profile_type, membership_type, is_paid_member')
+      .eq('id', user.id).maybeSingle();
+    if (profileError) throw new Error('Profile lookup failed');
+    if (!profile || profile.is_active === false || profile.approval_status === 'rejected') {
+      return NextResponse.json({ error: 'Your account is not eligible for payment.' }, { status: 403 });
     }
-
-    if (existingPending) {
-      return NextResponse.json({
-        success: true,
-        txnid: existingPending.txnid,
-        message:
-          'This membership request is already pending with the admin team. Payment instructions will be shared separately.',
-      });
+    if (profile.profile_type === 'faculty') {
+      return NextResponse.json({ error: 'Faculty membership is complimentary.' }, { status: 400 });
     }
-
-    const txnid = `DAVKAWT-MANUAL-${Date.now()}-${nanoid(6).toUpperCase()}`;
-    const { error: insertError } = await admin.from('payments').insert({
-      alumni_id: user.id,
-      plan_id: plan.id,
-      txnid,
-      amount: plan.amount,
-      status: 'pending',
-      payment_mode: 'manual_review',
-      gateway_response: {
-        mode: 'manual_review',
-        note: 'Manual payment proof is reviewed by the admin team.',
-        membership_type: plan.membership_type,
-        duration_months: plan.duration_months,
-      },
-    });
-
-    if (insertError) {
-      return NextResponse.json({ error: insertError.message }, { status: 500 });
+    if (profile.is_paid_member && profile.membership_type === 'lifetime') {
+      return NextResponse.json({ error: 'You already have lifetime membership.' }, { status: 400 });
     }
-
-    await writeAuditLog({
-      actor_id: user.id,
-      action: 'membership_request_submitted',
-      target_type: 'payment',
-      metadata: {
-        txnid,
-        plan_id: plan.id,
-        plan_name: plan.name,
-        amount: plan.amount,
-      },
+    let membershipType = body.membershipType;
+    if (body.planId) {
+      const { data: plan, error: planError } = await admin.from('membership_plans')
+        .select('membership_type').eq('id', body.planId).eq('is_active', true).maybeSingle();
+      if (planError) throw new Error('Plan lookup failed');
+      membershipType = plan?.membership_type;
+    }
+    if (!membershipType || !Object.hasOwn(MEMBERSHIP_PRICES, membershipType)) {
+      return NextResponse.json({ error: 'Choose annual or lifetime membership.' }, { status: 400 });
+    }
+    if (!profile.phone) return NextResponse.json({ error: 'Add your mobile number to your profile first.' }, { status: 400 });
+    const result = await startMembershipCheckout({
+      userId: user.id, fullName: profile.full_name, email: profile.email, phone: profile.phone,
+      membershipType: membershipType as PaidMembershipType,
+      source: profile.approval_status === 'approved' ? 'membership' : 'registration',
     });
-
-    return NextResponse.json({
-      success: true,
-      txnid,
-      message: `${plan.name} request recorded. Please share your manual payment proof with the admin team for verification.`,
-    });
-  } catch (err) {
-    console.error('[payments/initiate] unexpected error:', err);
-    return NextResponse.json({ error: 'Internal server error.' }, { status: 500 });
+    return NextResponse.json({ redirectUrl: result.paymentUrl, txnid: result.txnid });
+  } catch {
+    return NextResponse.json({ error: 'Checkout could not be started. Please try again or contact the Trust.' }, { status: 503 });
   }
 }

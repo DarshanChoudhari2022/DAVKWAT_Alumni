@@ -457,6 +457,10 @@ export interface Database {
     };
     Views: Record<string, never>;
     Functions: {
+      finalize_easebuzz_payment: {
+        Args: { p_txnid: string; p_status: string; p_response: Json };
+        Returns: Json;
+      };
       get_admin_report_charts: { Args: { p_since: string }; Returns: Json };
       get_public_alumni_count: { Args: Record<string, never>; Returns: number };
       is_admin: { Args: Record<string, never>; Returns: boolean };

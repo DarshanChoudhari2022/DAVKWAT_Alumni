@@ -1,8 +1,6 @@
 import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
-const navigation = vi.hoisted(() => ({ push: vi.fn() }));
-vi.mock('next/navigation', () => ({ useRouter: () => navigation }));
 vi.mock('./actions', () => ({ registerAction: vi.fn(), checkEmailExists: vi.fn().mockResolvedValue(false) }));
 vi.mock('next/dynamic', () => ({
   default: () => function PhotoInput({ name, onChange }: { name: string; onChange: (file: File) => void }) {
@@ -15,14 +13,13 @@ vi.mock('next/dynamic', () => ({
 
 import { RegisterPageClient } from './RegisterPageClient';
 
-describe('registration payment restriction', () => {
+describe('registration gateway checkout', () => {
   beforeEach(() => {
     localStorage.clear();
-    navigation.push.mockClear();
     vi.spyOn(window, 'scrollTo').mockImplementation(() => {});
   });
 
-  it('opens the form, lets users fill the first four steps, then navigates to the payment 404', async () => {
+  it('opens all five steps and replaces QR payment with yearly and lifetime checkout', async () => {
     const { container } = render(<RegisterPageClient />);
     const change = (name: string, value: string) => {
       const input = container.querySelector(`[name="${name}"]`);
@@ -53,15 +50,21 @@ describe('registration payment restriction', () => {
     if (!terms) throw new Error('Missing terms checkbox');
     fireEvent.click(terms);
     fireEvent.click(screen.getByRole('button', { name: 'Next' }));
-    await waitFor(() => expect(navigation.push).toHaveBeenCalledWith('/register/payment'));
+    await screen.findByText('Step 5 of 5: Membership & Payment');
+    expect(screen.getByRole('button', { name: 'Continue to payment' })).toBeInTheDocument();
+    expect(screen.getByText('Pay securely with Easebuzz')).toBeInTheDocument();
+    const selected = container.querySelector('[name="selected_amount"]');
+    expect(selected).toHaveValue('500');
+    fireEvent.click(screen.getByRole('button', { name: /Lifetime/ }));
+    expect(selected).toHaveValue('5000');
     expect(screen.queryByText(/Scan this QR/)).not.toBeInTheDocument();
   });
 
-  it('restores old payment-step drafts to the professional step', async () => {
+  it('restores payment-step drafts to the new gateway step', async () => {
     localStorage.setItem('davkawt_register_draft', JSON.stringify({ step: 4 }));
     render(<RegisterPageClient />);
     await new Promise((resolve) => setTimeout(resolve, 150));
-    await waitFor(() => expect(screen.getByText('Step 4 of 5: Professional')).toBeInTheDocument());
+    await waitFor(() => expect(screen.getByText('Step 5 of 5: Membership & Payment')).toBeInTheDocument());
     expect(screen.queryByText(/Scan this QR/)).not.toBeInTheDocument();
   });
 });

@@ -1,21 +1,13 @@
-import crypto from 'crypto';
+import crypto from 'node:crypto';
+import { getEasebuzzConfig } from './config';
 
-const EASEBUZZ_KEY = process.env.EASEBUZZ_KEY!;
-const EASEBUZZ_SALT = process.env.EASEBUZZ_SALT!;
-const EASEBUZZ_ENV = process.env.EASEBUZZ_ENV ?? 'test';
-
-const BASE_URL =
-  EASEBUZZ_ENV === 'production'
-    ? 'https://pay.easebuzz.in'
-    : 'https://testpay.easebuzz.in';
-
-interface InitiateParams {
+export interface InitiateParams {
   txnid: string;
   amount: string;
   productinfo: string;
   firstname: string;
   email: string;
-  phone?: string;
+  phone: string;
   surl: string;
   furl: string;
   udf1?: string;
@@ -25,67 +17,28 @@ interface InitiateParams {
   udf5?: string;
 }
 
-function generateHash(params: InitiateParams): string {
-  const hashString = [
-    EASEBUZZ_KEY,
-    params.txnid,
-    params.amount,
-    params.productinfo,
-    params.firstname,
-    params.email,
-    params.udf1 ?? '',
-    params.udf2 ?? '',
-    params.udf3 ?? '',
-    params.udf4 ?? '',
-    params.udf5 ?? '',
-    '', '', '', '', '',
-    EASEBUZZ_SALT,
-  ].join('|');
-
-  return crypto.createHash('sha512').update(hashString).digest('hex');
-}
-
 export async function initiatePayment(params: InitiateParams): Promise<{
-  accessKey?: string;
-  paymentUrl?: string;
-  error?: string;
+  accessKey?: string; paymentUrl?: string; error?: string;
 }> {
-  const hash = generateHash(params);
-
-  const body = new URLSearchParams({
-    key: EASEBUZZ_KEY,
-    txnid: params.txnid,
-    amount: params.amount,
-    productinfo: params.productinfo,
-    firstname: params.firstname,
-    email: params.email,
-    phone: params.phone ?? '',
-    surl: params.surl,
-    furl: params.furl,
-    hash,
-    udf1: params.udf1 ?? '',
-    udf2: params.udf2 ?? '',
-    udf3: params.udf3 ?? '',
-    udf4: params.udf4 ?? '',
-    udf5: params.udf5 ?? '',
-  });
-
-  const res = await fetch(`${BASE_URL}/payment/initiateLink`, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-    body: body.toString(),
-  });
-
-  const data = await res.json();
-
-  if (data.status === 1 && data.data) {
-    return {
-      accessKey: data.data,
-      paymentUrl: `${BASE_URL}/pay/${data.data}`,
-    };
+  try {
+    const { key, salt, baseUrl } = getEasebuzzConfig();
+    const hashString = [key, params.txnid, params.amount, params.productinfo, params.firstname, params.email,
+      params.udf1 ?? '', params.udf2 ?? '', params.udf3 ?? '', params.udf4 ?? '', params.udf5 ?? '',
+      '', '', '', '', '', salt].join('|');
+    const hash = crypto.createHash('sha512').update(hashString).digest('hex');
+    const body = new URLSearchParams({ key, hash, ...params });
+    const res = await fetch(`${baseUrl}/payment/initiateLink`, {
+      method: 'POST', headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+      body: body.toString(), cache: 'no-store', signal: AbortSignal.timeout(20_000),
+    });
+    const data: { status?: number | string; data?: unknown } = await res.json();
+    if (res.ok && Number(data.status) === 1 && typeof data.data === 'string' && /^[a-f0-9]{64}$/i.test(data.data)) {
+      return { accessKey: data.data, paymentUrl: `${baseUrl}/pay/${data.data}` };
+    }
+    return { error: 'Easebuzz could not start checkout. Please try again or contact the Trust.' };
+  } catch (error) {
+    // Never return raw gateway payloads, hashes, or credentials to the browser.
+    return { error: error instanceof Error && error.message.includes('not configured')
+      ? error.message : 'Payment service is unavailable. Please try again shortly.' };
   }
-
-  return { error: data.error_desc ?? data.data ?? 'Payment initiation failed.' };
 }
-
-export { EASEBUZZ_KEY, EASEBUZZ_SALT, EASEBUZZ_ENV, BASE_URL };
