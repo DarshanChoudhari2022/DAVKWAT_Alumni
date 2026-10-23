@@ -34,6 +34,7 @@ export function ApprovalActions({ alumniId, alumniName, canDelete = false }: App
         setError(data.error ?? 'Failed to approve.');
       } else {
         setCompletedAction('approved');
+        window.dispatchEvent(new Event('admin:approvals-changed'));
         router.refresh();
       }
     });
@@ -58,6 +59,7 @@ export function ApprovalActions({ alumniId, alumniName, canDelete = false }: App
         setCompletedAction('rejected');
         setShowReject(false);
         setReason('');
+        window.dispatchEvent(new Event('admin:approvals-changed'));
         router.refresh();
       }
     });

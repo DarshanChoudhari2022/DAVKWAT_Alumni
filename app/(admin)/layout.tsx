@@ -1,5 +1,4 @@
 import Link from 'next/link';
-import { Suspense } from 'react';
 import {
   LayoutDashboard,
   UserCheck,
@@ -16,7 +15,7 @@ import { Badge } from '@/components/ui/badge';
 import { adminLogoutAction } from '@/app/(public)/admin-login/actions';
 import { requireAdminAccess } from '@/lib/auth/admin-access';
 import { SignOutButton } from '@/components/shared/SignOutButton';
-import { getPendingApprovalsCount } from '@/lib/cache/admin-cache';
+import { PendingApprovalsProvider, PendingApprovalsBadge } from './PendingApprovalsCount';
 import { AdminMobileNav } from './AdminMobileNav';
 
 const ADMIN_NAV = [
@@ -36,6 +35,7 @@ export default async function AdminLayout({ children }: { children: React.ReactN
   const visibleNav = ADMIN_NAV;
 
   return (
+    <PendingApprovalsProvider>
     <div className="flex min-h-dvh min-w-0">
       {/* Sidebar */}
       <aside className="hidden lg:h-screen lg:sticky lg:top-0 w-64 flex-col border-r border-slate-200 bg-white lg:flex">
@@ -54,9 +54,7 @@ export default async function AdminLayout({ children }: { children: React.ReactN
                   <item.icon className="h-4 w-4 text-slate-500" />
                   {item.label}
                   {item.badge && (
-                    <Suspense fallback={null}>
-                      <PendingApprovalsBadge />
-                    </Suspense>
+                    <PendingApprovalsBadge />
                   )}
                 </Link>
               </li>
@@ -75,7 +73,6 @@ export default async function AdminLayout({ children }: { children: React.ReactN
         {/* Mobile header with slide-out drawer navigation */}
         <AdminMobileNav
           displayName={adminAccess.displayName}
-          pendingCount={0}
           logoutAction={adminLogoutAction}
         />
 
@@ -84,16 +81,6 @@ export default async function AdminLayout({ children }: { children: React.ReactN
         </main>
       </div>
     </div>
-  );
-}
-
-async function PendingApprovalsBadge() {
-  const pendingCount = await getPendingApprovalsCount();
-  if (pendingCount <= 0) return null;
-
-  return (
-    <span className="ml-auto flex h-5 min-w-5 items-center justify-center rounded-full bg-rose-500 px-1.5 text-[10px] font-bold text-white">
-      {pendingCount}
-    </span>
+    </PendingApprovalsProvider>
   );
 }

@@ -21,6 +21,7 @@ import { Logo } from '@/components/shared/Logo';
 import { Badge } from '@/components/ui/badge';
 import { cn } from '@/lib/utils/cn';
 import { SignOutButton } from '@/components/shared/SignOutButton';
+import { PendingApprovalsBadge } from './PendingApprovalsCount';
 
 const ADMIN_NAV = [
   { href: '/admin', label: 'Dashboard', icon: LayoutDashboard, exact: true },
@@ -36,7 +37,6 @@ const ADMIN_NAV = [
 
 interface AdminMobileNavProps {
   displayName: string;
-  pendingCount: number;
   logoutAction: () => void | Promise<void>;
 }
 
@@ -47,7 +47,6 @@ function isActive(pathname: string, href: string, exact?: boolean) {
 
 export function AdminMobileNav({
   displayName,
-  pendingCount,
   logoutAction,
 }: AdminMobileNavProps) {
   const pathname = usePathname();
@@ -63,7 +62,7 @@ export function AdminMobileNav({
 
   return (
     <header className="sticky top-0 z-30 flex h-14 items-center justify-between border-b border-slate-200 bg-white/95 px-3 backdrop-blur sm:px-4 lg:hidden">
-      <div className="flex min-w-0 items-center gap-2">
+      <div className="flex min-w-0 flex-1 items-center gap-2">
         <Dialog.Root open={open} onOpenChange={setOpen}>
           <Dialog.Trigger asChild>
             <button
@@ -98,6 +97,7 @@ export function AdminMobileNav({
               </div>
 
               <Dialog.Title className="sr-only">Admin navigation menu</Dialog.Title>
+              <Dialog.Description className="sr-only">Navigate to approvals and other administration pages.</Dialog.Description>
 
               <nav className="flex-1 overflow-y-auto px-3 py-3" aria-label="Admin navigation">
                 <ul className="space-y-1">
@@ -117,16 +117,7 @@ export function AdminMobileNav({
                         >
                           <item.icon className={cn('h-4 w-4', active ? 'text-white' : 'text-slate-500')} />
                           <span className="flex-1">{item.label}</span>
-                          {item.badge && pendingCount > 0 && (
-                            <span
-                              className={cn(
-                                'flex h-5 min-w-5 items-center justify-center rounded-full px-1.5 text-[10px] font-bold',
-                                active ? 'bg-white text-[#0F2557]' : 'bg-rose-500 text-white'
-                              )}
-                            >
-                              {pendingCount}
-                            </span>
-                          )}
+                          {item.badge && <PendingApprovalsBadge />}
                         </Link>
                       </li>
                     );
@@ -149,7 +140,12 @@ export function AdminMobileNav({
         </span>
       </div>
 
-      <SignOutButton action={logoutAction} variant="ghost" size="sm">Sign out</SignOutButton>
+      <div className="flex shrink-0 items-center gap-2">
+        <Link href="/admin/approvals" className="inline-flex items-center gap-1.5 rounded-lg px-2 py-2 text-xs font-medium text-slate-700">
+          Approvals <PendingApprovalsBadge />
+        </Link>
+        <SignOutButton action={logoutAction} variant="ghost" size="sm">Sign out</SignOutButton>
+      </div>
     </header>
   );
 }
