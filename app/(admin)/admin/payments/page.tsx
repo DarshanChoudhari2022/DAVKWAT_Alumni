@@ -25,6 +25,7 @@ import { ManualPaymentStatusActions } from './ManualPaymentStatusActions';
 import { PaymentStatusBadge } from './PaymentStatusBadge';
 import { isEasebuzzPayment } from '@/lib/payments/provider';
 import type { Json } from '@/lib/supabase/database.types';
+import { GatewayPaymentStatus } from './GatewayPaymentStatus';
 
 export const metadata: Metadata = { title: 'Payments — Admin' };
 
@@ -52,6 +53,10 @@ interface PaymentRow {
   receipt_url: string | null;
   gateway_response: Json | null;
   easebuzz_payment_id: string | null;
+  verification_checked_at: string | null;
+  verification_error: string | null;
+  gateway_status: string | null;
+  failure_reason: string | null;
   created_at: string;
   alumni_id: string;
   profiles: { full_name: string; email: string };
@@ -211,7 +216,7 @@ async function PaymentsList({ sp, page }: { sp: SearchParams; page: number }) {
     let listQuery = supabase
       .from('payments')
       .select(
-        'id, txnid, amount, currency, status, payment_mode, bank_ref_num, receipt_url, gateway_response, easebuzz_payment_id, created_at, alumni_id, profiles!inner(full_name, email)',
+        '*, profiles!inner(full_name, email)',
         { count: 'estimated' }
       );
     if (sp.status && sp.status !== 'all') {
@@ -281,7 +286,7 @@ async function PaymentsList({ sp, page }: { sp: SearchParams; page: number }) {
                   <MobileInfoRow label="Mode"><span className="capitalize">{p.payment_mode ?? '-'}</span></MobileInfoRow>
                   <MobileInfoRow label="Date">{formatDateTime(p.created_at)}</MobileInfoRow>
                   <MobileInfoRow label="Confirmation">
-                    {isEasebuzzPayment(p) ? <span className="text-xs text-slate-500">Automatic via Easebuzz</span> : <ManualPaymentStatusActions paymentId={p.id} currentStatus={p.status} />}
+                    <PaymentConfirmation payment={p} />
                   </MobileInfoRow>
                   {p.easebuzz_payment_id && <MobileInfoRow label="Gateway ID">{p.easebuzz_payment_id}</MobileInfoRow>}
                   {p.bank_ref_num && <MobileInfoRow label="Bank ref">{p.bank_ref_num}</MobileInfoRow>}
@@ -348,7 +353,7 @@ async function PaymentsList({ sp, page }: { sp: SearchParams; page: number }) {
                       )}
                     </td>
                     <td className="px-4 py-3">
-                      {isEasebuzzPayment(p) ? <span className="text-xs text-slate-500">Automatic via Easebuzz</span> : <ManualPaymentStatusActions paymentId={p.id} currentStatus={p.status} />}
+                      <PaymentConfirmation payment={p} />
                     </td>
                     <td className="py-3 pl-4 pr-5">{formatDateTime(p.created_at)}</td>
                   </tr>
@@ -375,4 +380,11 @@ async function PaymentsList({ sp, page }: { sp: SearchParams; page: number }) {
   } catch {
     return <SectionError />;
   }
+}
+
+function PaymentConfirmation({ payment: p }: { payment: PaymentRow }) {
+  return isEasebuzzPayment(p)
+    ? <GatewayPaymentStatus txnid={p.txnid} status={p.status} createdAt={p.created_at} checkedAt={p.verification_checked_at}
+        error={p.verification_error} gatewayStatus={p.gateway_status} failureReason={p.failure_reason} />
+    : <ManualPaymentStatusActions paymentId={p.id} currentStatus={p.status} />;
 }

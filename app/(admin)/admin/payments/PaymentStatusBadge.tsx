@@ -27,6 +27,8 @@ export function PaymentStatusBadge({
 }) {
   const [status, setStatus] = useState(initialStatus);
 
+  useEffect(() => { setStatus(initialStatus); }, [initialStatus]);
+
   useEffect(() => {
     const handleStatus = (event: Event) => {
       const detail = (event as CustomEvent<PaymentStatusDetail>).detail;

@@ -363,6 +363,10 @@ export interface Database {
 
       payments: {
         Row: {
+          verification_checked_at: string | null;
+          verification_error: string | null;
+          gateway_status: string | null;
+          failure_reason: string | null;
           id: string;
           alumni_id: string;
           plan_id: string | null;
@@ -457,6 +461,10 @@ export interface Database {
     };
     Views: Record<string, never>;
     Functions: {
+      claim_easebuzz_verification: {
+        Args: { p_txnid: string; p_member_id?: string | null };
+        Returns: boolean;
+      };
       finalize_easebuzz_payment: {
         Args: { p_txnid: string; p_status: string; p_response: Json };
         Returns: Json;

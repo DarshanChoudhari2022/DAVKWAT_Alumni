@@ -7,6 +7,7 @@ vi.mock('@/lib/supabase/admin', () => ({ createAdminClient: mocks.createAdminCli
 vi.mock('@/lib/easebuzz/verify', () => ({ verifyPaymentHash: mocks.verify }));
 vi.mock('@/lib/cache/invalidate', () => ({ invalidateAfterAction: mocks.invalidate }));
 vi.mock('./membership', () => ({ sendPaymentReceiptEmail: mocks.receipt }));
+vi.mock('./verification-log', () => ({ recordVerification: vi.fn() }));
 import { processEasebuzzCallback } from './callback';
 
 const params = {

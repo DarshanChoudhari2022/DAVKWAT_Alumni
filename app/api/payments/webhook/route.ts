@@ -1,11 +1,10 @@
 import { NextResponse } from 'next/server';
 import { PaymentCallbackError, processEasebuzzCallback } from '@/lib/payments/callback';
+import { parseEasebuzzResponse } from '@/lib/easebuzz/parse-response';
 
 export async function POST(req: Request) {
   try {
-    const form = await req.formData();
-    const params: Record<string, string> = {};
-    form.forEach((value, key) => { if (typeof value === 'string') params[key] = value; });
+    const params = await parseEasebuzzResponse(req);
     const result = await processEasebuzzCallback(params);
     return NextResponse.json({ status: 'ok', duplicate: result.duplicate });
   } catch (error) {

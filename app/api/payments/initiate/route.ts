@@ -3,6 +3,8 @@ import { createClient } from '@/lib/supabase/server';
 import { createAdminClient } from '@/lib/supabase/admin';
 import { startMembershipCheckout } from '@/lib/payments/checkout';
 import { MEMBERSHIP_PRICES, type PaidMembershipType } from '@/lib/payments/plans';
+import { reconcilePayment } from '@/lib/payments/reconcile';
+import { getEasebuzzConfig } from '@/lib/easebuzz/config';
 
 export async function POST(req: Request) {
   try {
@@ -37,6 +39,19 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: 'Choose annual or lifetime membership.' }, { status: 400 });
     }
     if (!profile.phone) return NextResponse.json({ error: 'Add your mobile number to your profile first.' }, { status: 400 });
+    const { data: unresolved, error: unresolvedError } = await admin.from('payments').select('txnid')
+      .eq('alumni_id', user.id).eq('status', 'pending').eq('gateway_response->>provider', 'easebuzz')
+      .eq('gateway_response->>environment', getEasebuzzConfig().environment)
+      .order('created_at', { ascending: false }).limit(1).maybeSingle();
+    if (unresolvedError) throw unresolvedError;
+    if (unresolved) {
+      const check = await reconcilePayment(unresolved.txnid, 'member', user.id);
+      if (check.status !== 'failed' || ('verificationPending' in check && check.verificationPending)) {
+        return NextResponse.json({ error: check.status === 'success'
+          ? 'Your previous payment is confirmed. Refresh this page to see your membership.'
+          : 'Your previous payment is awaiting confirmation. If debited, do not pay again. Please check its status or contact the Trust.' }, { status: 409 });
+      }
+    }
     const result = await startMembershipCheckout({
       userId: user.id, fullName: profile.full_name, email: profile.email, phone: profile.phone,
       membershipType: membershipType as PaidMembershipType,

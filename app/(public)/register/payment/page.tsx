@@ -4,6 +4,7 @@ import { createAdminClient } from '@/lib/supabase/admin';
 import { PayButton } from '@/app/(alumni)/membership/PayButton';
 import { MEMBERSHIP_PRICES } from '@/lib/payments/plans';
 import { Card } from '@/components/ui/card';
+import { PaymentVerification } from '@/components/shared/PaymentVerification';
 
 export default async function RegistrationPaymentPage({ searchParams }: {
   searchParams: Promise<{ status?: string; error?: string }>;
@@ -27,8 +28,10 @@ export default async function RegistrationPaymentPage({ searchParams }: {
           <p role="status" className="text-emerald-700">Your membership payment is verified. Trust approval is handled separately.</p>
         ) : params.status === 'success' ? (
           <p role="status">Your payment response has been received. Sign in after verifying your email to check the confirmed membership status.</p>
-        ) : params.status === 'failed' || params.error ? (
-          <p role="alert">Payment was not completed. Your registration is saved. Sign in to retry securely below.</p>
+        ) : params.status === 'failed' ? (
+          <p role="status">This payment attempt needs a status check. If money was debited, check its verified status before paying again.</p>
+        ) : params.error ? (
+          <p role="status">Your payment could not be verified yet. This does not mean it failed. Sign in to check its status; if debited, do not pay again.</p>
         ) : (
           <p>Your registration is saved. Complete your membership payment securely with Easebuzz.</p>
         )}
@@ -38,6 +41,7 @@ export default async function RegistrationPaymentPage({ searchParams }: {
           <Link href="/pending-approval" className="underline">Check registration status</Link>
         </div>
       </Card>
+      {user && !paid && <PaymentVerification />}
       {canPay && (
         <div className="grid gap-4 sm:grid-cols-2">
           <Card className="space-y-4 p-6"><h2>Yearly membership · ₹500</h2>

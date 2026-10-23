@@ -10,6 +10,7 @@ import { getMembershipPlansForAlumni } from '@/lib/cache/admin-cache';
 import { formatDate, formatINR } from '@/lib/utils/format';
 import { PayButton } from './PayButton';
 import { isMembershipActive } from '@/lib/payments/membership';
+import { PaymentVerification } from '@/components/shared/PaymentVerification';
 
 export const metadata: Metadata = { title: 'Membership' };
 
@@ -41,15 +42,16 @@ export default async function MembershipPage({
       </header>
 
       {/* Shell: query-param feedback cards (synchronous) */}
-      {sp.status === 'success' && (
+      {sp.status === 'success' && hasActiveMembership && (
         <Card className="mt-6 border-emerald-200 bg-emerald-50/60 text-sm text-emerald-800">
           Your payment was successful and your membership status has been updated.
         </Card>
       )}
+      {!hasActiveMembership && profile.profile_type !== 'faculty' && <PaymentVerification />}
       {sp.status === 'failed' && (
         <Card className="mt-6 border-rose-200 bg-rose-50/60 text-sm text-rose-700">
-          Payment failed or was not completed. You can retry by choosing your membership plan
-          again below.
+          This payment attempt needs a status check. If money was debited, do not pay again
+          until the verified result is available below.
         </Card>
       )}
       {sp.error && (

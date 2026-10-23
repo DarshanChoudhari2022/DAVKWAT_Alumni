@@ -3,12 +3,36 @@ import { verifyPaymentHash } from '@/lib/easebuzz/verify';
 import { getEasebuzzConfig } from '@/lib/easebuzz/config';
 import { invalidateAfterAction } from '@/lib/cache/invalidate';
 import { sendPaymentReceiptEmail } from './membership';
+import { recordVerification, type VerificationSource } from './verification-log';
 
 export class PaymentCallbackError extends Error {
   constructor(message: string, public statusCode: number) { super(message); }
 }
 
-export async function processEasebuzzCallback(params: Record<string, string>) {
+export async function processEasebuzzCallback(params: Record<string, string>, source: VerificationSource = 'webhook') {
+  try {
+    const result = await finalizeCallback(params);
+    await recordVerification(params.txnid!, source, {
+      status: result.status,
+      failureReason: result.status === 'failed' ? (params.error_Message || 'Gateway reported payment failure').slice(0, 200) : '',
+    });
+    return result;
+  } catch (error) {
+    // Unauthenticated callbacks must never alter diagnostics on a real payment.
+    if (params.txnid && verifyPaymentHash(params)) {
+      await recordVerification(params.txnid, source, {
+        status: params.status,
+        error: error instanceof PaymentCallbackError ? error.message : 'payment_finalization_failed',
+      });
+    }
+    console.error('[payments/verification]', {
+      source, code: error instanceof PaymentCallbackError ? error.statusCode : 'finalization_failed',
+    });
+    throw error;
+  }
+}
+
+async function finalizeCallback(params: Record<string, string>) {
   if (!params.txnid || !params.status || !verifyPaymentHash(params)) {
     throw new PaymentCallbackError('Invalid payment signature.', 403);
   }
@@ -38,6 +62,7 @@ export async function processEasebuzzCallback(params: Record<string, string>) {
     p_txnid: params.txnid, p_status: status, p_response: params,
   });
   if (finalizeError || !result || typeof result !== 'object' || Array.isArray(result)) {
+    console.error('[payments/finalizer]', { txnid: params.txnid, code: finalizeError?.code ?? 'invalid_result' });
     throw new Error('Could not finalize the payment. Check the Easebuzz database migration.');
   }
   invalidateAfterAction('payment_status');
@@ -48,7 +73,7 @@ export async function processEasebuzzCallback(params: Record<string, string>) {
     });
   }
   return {
-    status: result.status === 'success' ? 'success' : result.status === 'failed' ? 'failed' : 'pending',
+    status: result.status === 'success' ? 'success' : result.status === 'failed' ? 'failed' : result.status === 'refunded' ? 'refunded' : 'pending',
     duplicate: result.duplicate === true,
     source: expected.udf5 === 'registration' ? 'registration' : 'membership',
   };

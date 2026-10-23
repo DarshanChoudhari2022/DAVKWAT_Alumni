@@ -9,6 +9,7 @@ import { getDefaultSignedInPath } from '@/lib/utils/auth-routing';
 import { logoutAction } from '../login/actions';
 import { formatDate } from '@/lib/utils/format';
 import { SignOutButton } from '@/components/shared/SignOutButton';
+import { PaymentVerification } from '@/components/shared/PaymentVerification';
 
 export const metadata: Metadata = { title: 'Pending Approval' };
 
@@ -74,6 +75,7 @@ export default async function PendingApprovalPage() {
           `,
         }}
       />
+      {!profile.is_paid_member && profile.profile_type !== 'faculty' && <PaymentVerification />}
       <Card className="p-8">
         <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
           <div className="flex items-start gap-3">
