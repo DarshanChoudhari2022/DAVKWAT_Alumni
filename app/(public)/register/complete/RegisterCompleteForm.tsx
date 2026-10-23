@@ -59,6 +59,7 @@ export function RegisterCompleteForm({ initialData }: RegisterCompleteFormProps)
   const [educationLevel, setEducationLevel] = useState('');
   const [clientErrors, setClientErrors] = useState<Record<string, string>>({});
   const formRef = useRef<HTMLFormElement>(null);
+  const profilePhotoRef = useRef<File | null>(null);
 
   const [dobDay, setDobDay] = useState('');
   const [dobMonth, setDobMonth] = useState('');
@@ -100,8 +101,7 @@ export function RegisterCompleteForm({ initialData }: RegisterCompleteFormProps)
 
     // Custom validation for profile photo on Step 1 (Personal Details)
     if (step === 1) {
-      const photoInput = stepDiv.querySelector<HTMLInputElement>('input[name="profile_photo"]');
-      if (photoInput && (!photoInput.files || photoInput.files.length === 0)) {
+      if (!profilePhotoRef.current) {
         errors['profile_photo'] = 'Profile photo is required';
       }
     }
@@ -136,6 +136,7 @@ export function RegisterCompleteForm({ initialData }: RegisterCompleteFormProps)
     }
     fd.delete('phone_number');
     fd.delete('phone_country_code');
+    if (profilePhotoRef.current) fd.set('profile_photo', profilePhotoRef.current);
     formAction(fd);
   }
 
@@ -357,7 +358,7 @@ export function RegisterCompleteForm({ initialData }: RegisterCompleteFormProps)
             Profile Photo <span className="text-rose-600">*</span>
           </Label>
           <div className="mt-1.5">
-            <PhotoUploadWithCrop name="profile_photo" required error={fieldErrors?.profile_photo} />
+            <PhotoUploadWithCrop name="profile_photo" required error={fieldErrors?.profile_photo} onChange={(file) => { profilePhotoRef.current = file; }} />
           </div>
         </div>
 

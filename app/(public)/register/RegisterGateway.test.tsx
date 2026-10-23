@@ -1,10 +1,11 @@
 import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
-vi.mock('./actions', () => ({ registerAction: vi.fn(), checkEmailExists: vi.fn().mockResolvedValue(false) }));
+vi.mock('./actions', () => ({ registerAction: vi.fn().mockResolvedValue({}), checkEmailExists: vi.fn().mockResolvedValue(false) }));
 vi.mock('next/dynamic', () => ({
-  default: () => function PhotoInput({ name, onChange }: { name: string; onChange: (file: File) => void }) {
-    return <input aria-label="Profile photo" name={name} type="file" onChange={(event) => {
+  default: () => function PhotoInput({ onChange }: { name: string; onChange: (file: File) => void }) {
+    // Deliberately no named file input: mobile callers must submit the callback File.
+    return <input aria-label="Profile photo" type="file" onChange={(event) => {
       const file = event.target.files?.[0];
       if (file) onChange(file);
     }} />;
@@ -12,6 +13,7 @@ vi.mock('next/dynamic', () => ({
 }));
 
 import { RegisterPageClient } from './RegisterPageClient';
+import { registerAction } from './actions';
 
 describe('registration gateway checkout', () => {
   beforeEach(() => {
@@ -58,6 +60,11 @@ describe('registration gateway checkout', () => {
     fireEvent.click(screen.getByRole('button', { name: /Lifetime/ }));
     expect(selected).toHaveValue('5000');
     expect(screen.queryByText(/Scan this QR/)).not.toBeInTheDocument();
+    fireEvent.submit(container.querySelector('form')!);
+    await waitFor(() => expect(registerAction).toHaveBeenCalled());
+    const submitted = vi.mocked(registerAction).mock.calls[0]![1];
+    expect(submitted.get('profile_photo')).toBeInstanceOf(File);
+    expect((submitted.get('profile_photo') as File).name).toBe('photo.jpg');
   });
 
   it('restores payment-step drafts to the new gateway step', async () => {

@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useRef, useEffect, useCallback } from 'react';
+import React, { useState, useRef, useEffect, useCallback, useId } from 'react';
 import ReactCrop, { type Crop, type PixelCrop, centerCrop, makeAspectCrop } from 'react-image-crop';
 import { Camera, Upload, Trash2, X } from 'lucide-react';
 import { toast } from 'sonner';
@@ -48,6 +48,10 @@ export function PhotoUploadWithCrop({
   const [cameraPermissionStatus, setCameraPermissionStatus] = useState<'prompt' | 'requesting' | 'granted' | 'denied'>('prompt');
   const [cameraDevices, setCameraDevices] = useState<MediaDeviceInfo[]>([]);
   const [activeDeviceId, setActiveDeviceId] = useState<string>('');
+  const [cameraError, setCameraError] = useState('');
+  const [isProcessing, setIsProcessing] = useState(false);
+  const [isImageReady, setIsImageReady] = useState(false);
+  const pickerId = useId();
 
   // Dialog State
   const [isDialogOpen, setIsDialogOpen] = useState(false);
@@ -56,9 +60,13 @@ export function PhotoUploadWithCrop({
   const videoRef = useRef<HTMLVideoElement>(null);
   const streamRef = useRef<MediaStream | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const nativeCameraInputRef = useRef<HTMLInputElement>(null);
   const hiddenFileInputRef = useRef<HTMLInputElement>(null);
   const dialogRef = useRef<HTMLDialogElement>(null);
   const selectedFileRef = useRef<File | null>(null);
+  const cameraRequestRef = useRef(0);
+  const photoRequestRef = useRef(0);
+  const previewUrlRef = useRef<string | null>(null);
 
   // Load camera devices
   const loadDevices = useCallback(async () => {
@@ -66,22 +74,17 @@ export function PhotoUploadWithCrop({
       const devices = await navigator.mediaDevices.enumerateDevices();
       const videoDevices = devices.filter((device) => device.kind === 'videoinput');
       setCameraDevices(videoDevices);
-      if (videoDevices.length > 0 && !activeDeviceId) {
-        const firstDevice = videoDevices[0];
-        if (firstDevice) {
-          setActiveDeviceId(firstDevice.deviceId);
-        }
-      }
     } catch (e) {
       console.warn('[camera] error listing devices:', e);
     }
-  }, [activeDeviceId]);
+  }, []);
 
   // Turn on camera (requests webcam access and sets status)
-  const startCamera = useCallback(async () => {
+  const startCamera = useCallback(async (deviceId?: string) => {
+    const requestId = ++cameraRequestRef.current;
     setIsCameraActive(true);
-    setPhotoPreview(null);
     setImgSrc('');
+    setCameraError('');
     setCameraPermissionStatus('requesting');
     
     // Reset file inputs
@@ -90,36 +93,55 @@ export function PhotoUploadWithCrop({
     try {
       if (streamRef.current) {
         streamRef.current.getTracks().forEach((track) => track.stop());
+        streamRef.current = null;
       }
 
+      if (!navigator.mediaDevices?.getUserMedia) {
+        throw new Error('Camera preview is unavailable in this browser. Open this page in Chrome or Safari, or use your phone camera below.');
+      }
       const constraints: MediaStreamConstraints = {
-        video: activeDeviceId
-          ? { deviceId: { exact: activeDeviceId }, width: { ideal: 640 }, height: { ideal: 640 } }
+        audio: false,
+        video: deviceId
+          ? { deviceId: { exact: deviceId }, width: { ideal: 640 }, height: { ideal: 640 } }
           : { facingMode: 'user', width: { ideal: 640 }, height: { ideal: 640 } },
       };
 
-      const stream = await navigator.mediaDevices.getUserMedia(constraints);
+      let stream: MediaStream;
+      try {
+        stream = await navigator.mediaDevices.getUserMedia(constraints);
+      } catch (err) {
+        // A previously selected camera can disappear after device/permission changes.
+        if (deviceId && err instanceof DOMException && ['NotFoundError', 'OverconstrainedError'].includes(err.name)) {
+          stream = await navigator.mediaDevices.getUserMedia({ audio: false, video: true });
+        } else throw err;
+      }
+      if (cameraRequestRef.current !== requestId) {
+        stream.getTracks().forEach((track) => track.stop());
+        return;
+      }
       streamRef.current = stream;
       setCameraPermissionStatus('granted');
-      
-      // Allow video element to mount if not already present
-      setTimeout(() => {
-        if (videoRef.current) {
-          videoRef.current.srcObject = stream;
-        }
-      }, 50);
 
       // Load devices for switching after permission is granted
       loadDevices();
     } catch (err) {
-      console.error('[camera] getUserMedia error:', err);
+      if (cameraRequestRef.current !== requestId) return;
+      const name = err instanceof DOMException ? err.name : '';
+      const message = ['NotAllowedError', 'SecurityError'].includes(name)
+        ? 'Camera permission is blocked. Allow Camera in your browser site settings, then try again. In WhatsApp or Instagram, open this page in Chrome or Safari.'
+        : name === 'NotFoundError'
+          ? 'No camera was found. Connect a camera or upload a photo.'
+          : ['NotReadableError', 'AbortError'].includes(name)
+            ? 'The camera is busy. Close other apps using it, then try again.'
+            : err instanceof Error ? err.message : 'Could not start the camera. Upload a photo or use your phone camera below.';
+      setCameraError(message);
       setCameraPermissionStatus('denied');
-      toast.error('Could not access camera. Please check permissions.');
     }
-  }, [activeDeviceId, loadDevices]);
+  }, [loadDevices]);
 
   // Turn off camera
   const stopCamera = useCallback(() => {
+    cameraRequestRef.current++;
     if (streamRef.current) {
       streamRef.current.getTracks().forEach((track) => track.stop());
       streamRef.current = null;
@@ -132,18 +154,25 @@ export function PhotoUploadWithCrop({
   const handleDeviceChange = async (e: React.ChangeEvent<HTMLSelectElement>) => {
     const newId = e.target.value;
     setActiveDeviceId(newId);
+    void startCamera(newId || undefined);
   };
 
-  // React to device change when camera is already active
+  // Attach once React has mounted the video; never restart when status changes.
   useEffect(() => {
-    if (isCameraActive && activeDeviceId && cameraPermissionStatus === 'granted') {
-      startCamera();
+    if (isCameraActive && cameraPermissionStatus === 'granted' && videoRef.current && streamRef.current) {
+      videoRef.current.srcObject = streamRef.current;
+      void videoRef.current.play().catch(() => {});
     }
-  }, [activeDeviceId, isCameraActive, cameraPermissionStatus, startCamera]);
+  }, [isCameraActive, cameraPermissionStatus]);
 
   // Cleanup camera stream
   useEffect(() => {
+    const cameraRequests = cameraRequestRef;
+    const photoRequests = photoRequestRef;
     return () => {
+      cameraRequests.current++;
+      photoRequests.current++;
+      if (previewUrlRef.current) URL.revokeObjectURL(previewUrlRef.current);
       if (streamRef.current) {
         streamRef.current.getTracks().forEach((track) => track.stop());
       }
@@ -155,7 +184,13 @@ export function PhotoUploadWithCrop({
     if (e.target.files && e.target.files.length > 0) {
       stopCamera();
       let file = e.target.files[0];
+      e.target.value = ''; // Selecting the same file again must fire change.
       if (!file) return;
+      const requestId = ++photoRequestRef.current;
+      setIsProcessing(false);
+      setCrop(undefined);
+      setCompletedCrop(null);
+      setIsImageReady(false);
       if (file.size > 10 * 1024 * 1024) {
         toast.error('File is too large. Max 10MB.');
         return;
@@ -167,6 +202,11 @@ export function PhotoUploadWithCrop({
         file.type.includes('heif') ||
         fileNameLower.endsWith('.heic') ||
         fileNameLower.endsWith('.heif');
+      if (!isHeic && !/^image\/(jpeg|jpg|png|webp)$/i.test(file.type) && !/\.(jpe?g|png|webp)$/i.test(file.name)) {
+        toast.error('Please choose a JPG, PNG, WebP or HEIC photo.');
+        return;
+      }
+      setIsProcessing(true);
 
       if (isHeic) {
         try {
@@ -184,16 +224,28 @@ export function PhotoUploadWithCrop({
               lastModified: new Date().getTime(),
             });
           }
-        } catch (err) {
-          console.warn('HEIC conversion failed for profile photo:', err);
+        } catch {
+          if (requestId === photoRequestRef.current) {
+            setIsProcessing(false);
+            toast.error('This HEIC photo could not be opened. Please choose a JPG, PNG or WebP photo.');
+          }
+          return;
         }
       }
 
+      if (requestId !== photoRequestRef.current) return;
       selectedFileRef.current = file;
       const reader = new FileReader();
       reader.addEventListener('load', () => {
+        if (requestId !== photoRequestRef.current) return;
+        setIsProcessing(false);
         setImgSrc(reader.result?.toString() || '');
         setIsDialogOpen(true);
+      });
+      reader.addEventListener('error', () => {
+        if (requestId !== photoRequestRef.current) return;
+        setIsProcessing(false);
+        toast.error('Could not read this photo. Please select it again or choose another image.');
       });
       reader.readAsDataURL(file);
     }
@@ -204,15 +256,24 @@ export function PhotoUploadWithCrop({
     const dialog = dialogRef.current;
     if (!dialog) return;
     if (isDialogOpen) {
-      if (!dialog.open) dialog.showModal();
+      if (!dialog.open) {
+        if (typeof dialog.showModal === 'function') dialog.showModal();
+        else dialog.setAttribute('open', '');
+      }
     } else {
-      if (dialog.open) dialog.close();
+      if (dialog.open) {
+        if (typeof dialog.close === 'function') dialog.close();
+        else dialog.removeAttribute('open');
+      }
     }
   }, [isDialogOpen]);
 
   // Trigger cropping modal closed
   const closeDialog = () => {
+    photoRequestRef.current++;
     setIsDialogOpen(false);
+    setImgSrc('');
+    setIsImageReady(false);
     // Reset file input so user can re-upload same file
     if (fileInputRef.current) fileInputRef.current.value = '';
   };
@@ -221,6 +282,13 @@ export function PhotoUploadWithCrop({
   const capturePhoto = () => {
     if (videoRef.current) {
       const video = videoRef.current;
+      if (!video.videoWidth || !video.videoHeight) {
+        toast.error('The camera is still starting. Please wait a moment and try again.');
+        return;
+      }
+      setCrop(undefined);
+      setCompletedCrop(null);
+      setIsImageReady(false);
       const canvas = document.createElement('canvas');
       
       // We want a square capture
@@ -255,6 +323,7 @@ export function PhotoUploadWithCrop({
   const onImageLoad = (e: React.SyntheticEvent<HTMLImageElement>) => {
     const { width, height } = e.currentTarget;
     if (width === 0 || height === 0) return;
+    setIsImageReady(true);
     const initialCrop = centerAspectCrop(width, height, 1);
     setCrop(initialCrop);
     
@@ -272,7 +341,8 @@ export function PhotoUploadWithCrop({
   // Save the cropped & compressed file to input
   const saveCroppedPhoto = async (useCrop: boolean) => {
     const image = imgRef.current;
-    if (!image) return;
+    if (!image || !image.naturalWidth || !image.width) return;
+    const requestId = photoRequestRef.current;
 
     let activeCrop = completedCrop;
     if (useCrop && (!activeCrop || activeCrop.width === 0 || activeCrop.height === 0)) {
@@ -339,6 +409,7 @@ export function PhotoUploadWithCrop({
     // Export as compressed JPEG blob
     canvas.toBlob(
       (blob) => {
+        if (requestId !== photoRequestRef.current) return;
         if (!blob) {
           toast.error('Failed to compress photo');
           return;
@@ -346,14 +417,21 @@ export function PhotoUploadWithCrop({
 
         const file = new File([blob], 'avatar.jpg', { type: 'image/jpeg' });
         
-        // Expose to hidden input using DataTransfer
+        // Populate native form input where supported. Parent form also keeps
+        // the File directly, for mobile browsers without writable FileLists.
         if (hiddenFileInputRef.current) {
-          const dt = new DataTransfer();
-          dt.items.add(file);
-          hiddenFileInputRef.current.files = dt.files;
+          try {
+            const dt = new DataTransfer();
+            dt.items.add(file);
+            hiddenFileInputRef.current.files = dt.files;
+          } catch {
+            // The selected File is passed to the registration action by onChange.
+          }
           
           // Re-trigger visual change
           const previewUrl = URL.createObjectURL(file);
+          if (previewUrlRef.current) URL.revokeObjectURL(previewUrlRef.current);
+          previewUrlRef.current = previewUrl;
           selectedFileRef.current = file; // Keep reference to prevent GC of the file and its object URL
           setPhotoPreview(previewUrl);
           setIsDialogOpen(false);
@@ -371,6 +449,9 @@ export function PhotoUploadWithCrop({
   };
 
   const removePhoto = () => {
+    photoRequestRef.current++;
+    if (previewUrlRef.current) URL.revokeObjectURL(previewUrlRef.current);
+    previewUrlRef.current = null;
     setPhotoPreview(null);
     setImgSrc('');
     selectedFileRef.current = null;
@@ -392,7 +473,7 @@ export function PhotoUploadWithCrop({
         type="file"
         id={name}
         name={name}
-        required={required}
+        aria-required={required}
         accept="image/jpeg,image/png,image/webp"
         className="sr-only"
       />
@@ -440,16 +521,22 @@ export function PhotoUploadWithCrop({
         <div className="flex flex-col gap-2 flex-1">
           <div className="flex flex-wrap gap-2">
             {/* Upload Button */}
-            <Button
-              type="button"
-              variant="outline"
-              size="sm"
-              className="flex items-center gap-1.5"
-              onClick={() => fileInputRef.current?.click()}
+            <label
+              htmlFor={pickerId}
+              className="relative inline-flex h-9 cursor-pointer items-center gap-1.5 rounded-lg border border-slate-200 bg-white px-3 text-sm font-medium hover:bg-slate-50 focus-within:ring-2 focus-within:ring-[#0F2557]"
             >
               <Upload className="h-4 w-4" />
               Upload file
-            </Button>
+              <input
+                ref={fileInputRef}
+                id={pickerId}
+                aria-label="Upload profile photo"
+                type="file"
+                accept="image/jpeg,image/png,image/webp,image/heic,image/heif,.jpg,.jpeg,.png,.webp,.heic,.heif"
+                onChange={onFileChange}
+                className="absolute inset-0 h-full w-full cursor-pointer opacity-0"
+              />
+            </label>
             
             {/* Camera Toggle Button */}
             <Button
@@ -459,7 +546,6 @@ export function PhotoUploadWithCrop({
               className="flex items-center gap-1.5"
               onClick={isCameraActive ? stopCamera : () => {
                 setIsCameraActive(true);
-                setPhotoPreview(null);
                 setImgSrc('');
                 setCameraPermissionStatus('prompt');
               }}
@@ -489,7 +575,7 @@ export function PhotoUploadWithCrop({
               <p className="text-slate-600 mb-2">
                 Click below to request camera permission, then choose &quot;Allow&quot; when prompted by your browser.
               </p>
-              <Button type="button" variant="primary" size="sm" onClick={startCamera}>
+              <Button type="button" variant="primary" size="sm" onClick={() => startCamera()}>
                 Enable Camera
               </Button>
             </div>
@@ -506,11 +592,15 @@ export function PhotoUploadWithCrop({
           {isCameraActive && cameraPermissionStatus === 'denied' && (
             <div className="rounded-lg border border-rose-200 bg-rose-50 p-3 text-xs">
               <p className="text-rose-700 mb-2 font-medium">
-                Camera access was denied or is blocked. Please check your browser settings or upload a file.
+                {cameraError}
               </p>
-              <Button type="button" variant="outline" size="sm" onClick={startCamera}>
+              <Button type="button" variant="outline" size="sm" onClick={() => startCamera()}>
                 Try Again
               </Button>
+              <label className="relative mt-2 inline-flex cursor-pointer rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm text-slate-900">
+                Use phone camera
+                <input ref={nativeCameraInputRef} aria-label="Use phone camera" type="file" accept="image/*" capture="user" onChange={onFileChange} className="absolute inset-0 h-full w-full cursor-pointer opacity-0" />
+              </label>
             </div>
           )}
 
@@ -523,6 +613,7 @@ export function PhotoUploadWithCrop({
                 value={activeDeviceId}
                 onChange={handleDeviceChange}
               >
+                <option value="">Default camera</option>
                 {cameraDevices.map((device) => (
                   <option key={device.deviceId} value={device.deviceId}>
                     {device.label || `Camera ${cameraDevices.indexOf(device) + 1}`}
@@ -550,22 +641,16 @@ export function PhotoUploadWithCrop({
           <p className="text-xs text-slate-500">
             JPG, PNG or WebP. Pre-compressed automatically to speed up your upload.
           </p>
+          {isProcessing && <p role="status" className="text-xs text-blue-700">Opening photo…</p>}
           {error && <p className="text-xs text-rose-600 font-medium">{error}</p>}
         </div>
       </div>
 
-      {/* Hidden file selector */}
-      <input
-        ref={fileInputRef}
-        type="file"
-        accept="image/jpeg,image/png,image/webp,image/heic,image/heif,.heic,.heif"
-        onChange={onFileChange}
-        className="hidden"
-      />
-
       {/* HTML5 Crop Modal Dialog */}
       <dialog
         ref={dialogRef}
+        onCancel={(event) => { event.preventDefault(); closeDialog(); }}
+        aria-label="Crop profile photo"
         className="fixed inset-0 z-50 m-auto w-full max-w-lg rounded-2xl border border-slate-200 bg-white p-0 shadow-2xl backdrop:bg-black/50"
       >
         <div className="flex items-center justify-between border-b border-slate-100 px-6 py-4">
@@ -596,6 +681,7 @@ export function PhotoUploadWithCrop({
                   alt="Crop preview"
                   src={imgSrc}
                   onLoad={onImageLoad}
+                  onError={() => { closeDialog(); toast.error('This image could not be opened. Please choose a JPG, PNG or WebP photo.'); }}
                   className="max-h-[320px] w-auto object-contain"
                 />
               </ReactCrop>
@@ -621,6 +707,7 @@ export function PhotoUploadWithCrop({
             variant="outline"
             size="sm"
             onClick={() => saveCroppedPhoto(false)}
+            disabled={!isImageReady}
             className="w-full sm:w-auto"
           >
             Use Original Photo
@@ -630,6 +717,7 @@ export function PhotoUploadWithCrop({
             variant="accent"
             size="sm"
             onClick={() => saveCroppedPhoto(true)}
+            disabled={!isImageReady}
             className="w-full sm:w-auto"
           >
             Apply Crop

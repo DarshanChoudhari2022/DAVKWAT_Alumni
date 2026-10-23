@@ -95,6 +95,7 @@ export function RegisterForm({ step, setStep }: RegisterFormProps) {
   const [selectedAmount, setSelectedAmount] = useState<500 | 5000>(500);
   const [checkingEmail, setCheckingEmail] = useState(false);
   const [hasPhoto, setHasPhoto] = useState(false);
+  const profilePhotoRef = useRef<File | null>(null);
 
   const [dobDay, setDobDay] = useState('');
   const [dobMonth, setDobMonth] = useState('');
@@ -445,6 +446,7 @@ export function RegisterForm({ step, setStep }: RegisterFormProps) {
     }
     fd.delete('phone_number');
     fd.delete('phone_country_code');
+    if (profilePhotoRef.current) fd.set('profile_photo', profilePhotoRef.current);
     formAction(fd);
   }
 
@@ -695,7 +697,10 @@ export function RegisterForm({ step, setStep }: RegisterFormProps) {
             Profile Photo <span className="text-rose-600">*</span>
           </Label>
           <div className="mt-1.5">
-            <PhotoUploadWithCrop name="profile_photo" required error={fieldErrors?.profile_photo} onChange={(f) => setHasPhoto(!!f)} />
+            <PhotoUploadWithCrop name="profile_photo" required error={fieldErrors?.profile_photo} onChange={(file) => {
+              profilePhotoRef.current = file;
+              setHasPhoto(!!file);
+            }} />
           </div>
         </div>
 
