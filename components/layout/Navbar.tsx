@@ -4,6 +4,7 @@ import Link from 'next/link';
 import { useEffect, useState } from 'react';
 import { usePathname } from 'next/navigation';
 import { cn } from '@/lib/utils/cn';
+import { homepageFont } from '@/lib/fonts';
 
 const NAV_LINKS = [
   { href: '/', label: 'Home' },
@@ -42,6 +43,7 @@ export function Navbar() {
     <header
       className={cn(
         'sticky top-0 z-40 border-b shadow-sm transition-colors duration-300',
+        isLandingPage && `${homepageFont.className} homepage-typography`,
         isTopDark
           ? 'border-white/10 bg-[#0a1130]'
           : 'border-slate-200 bg-white',

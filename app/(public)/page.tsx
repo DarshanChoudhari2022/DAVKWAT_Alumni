@@ -11,6 +11,7 @@ import { LiveUpdatesRefresh } from '@/components/landing/LiveUpdatesRefresh';
 import { ManageEngage } from '@/components/landing/ManageEngage';
 import { PrivacyData } from '@/components/landing/PrivacyData';
 import { FinalCTA } from '@/components/landing/FinalCTA';
+import { homepageFont } from '@/lib/fonts';
 
 export const revalidate = 60;
 
@@ -66,7 +67,7 @@ export default async function HomePage() {
   const { events, announcements, alumniCount } = await getLandingData();
 
   return (
-    <>
+    <div className={`${homepageFont.className} homepage-typography`}>
       <LiveUpdatesRefresh />
 
       <Hero alumniCount={alumniCount} />
@@ -84,6 +85,6 @@ export default async function HomePage() {
       <PrivacyData />
 
       <FinalCTA />
-    </>
+    </div>
   );
 }

@@ -82,6 +82,11 @@
   }
 }
 
+/* Homepage type is scoped so the member and admin portals retain their fonts. */
+.homepage-typography :is(h1, h2, h3, h4, .font-sans, .font-display) {
+  font-family: inherit;
+}
+
 /* Prose for rendered TipTap content */
 .prose-davkawt {
   color: var(--color-foreground);

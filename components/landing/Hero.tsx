@@ -40,14 +40,14 @@ export function Hero({ alumniCount: _alumniCount }: HeroProps) {
         <div className="grid items-center gap-12 lg:grid-cols-[1fr_0.9fr] lg:gap-14">
           <div className="max-w-2xl">
             <Reveal delay={80}>
-              <h1 className="mt-7 font-sans text-4xl font-black leading-[1.06] tracking-[-0.04em] sm:text-5xl lg:text-[58px]">
+              <h1 className="mt-7 font-sans text-4xl font-bold leading-[1.12] tracking-[-0.035em] sm:text-5xl lg:text-[clamp(2.25rem,3.7vw,3.5rem)]">
                 Reconnect with your
                 <span className="block text-gradient-blue">DAV Khagaul family.</span>
               </h1>
             </Reveal>
 
             <Reveal delay={160}>
-              <div className="mt-6 max-w-xl text-base leading-relaxed text-white/70 sm:text-[17px]">
+              <div className="mt-6 max-w-xl text-base leading-[1.8] text-white/75 sm:text-[17px]">
                 <p>
                   One trusted place to find your batchmates, receive official Trust
                   updates, attend reunions, and support the school that shaped you —
