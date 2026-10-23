@@ -30,6 +30,7 @@ const PAYMENT_COLUMNS = [
   { key: 'amount', label: 'Amount (INR)' },
   { key: 'status', label: 'Status' },
   { key: 'payment_mode', label: 'Payment Mode' },
+  { key: 'easebuzz_payment_id', label: 'Easebuzz Payment ID' },
   { key: 'bank_ref_num', label: 'Bank Ref' },
   { key: 'created_at', label: 'Date' },
 ];
@@ -92,7 +93,7 @@ export async function GET(req: NextRequest) {
 
     let query = supabase
       .from('payments')
-      .select('txnid, amount, status, payment_mode, bank_ref_num, created_at, profiles!inner(full_name, email)');
+      .select('txnid, amount, status, payment_mode, easebuzz_payment_id, bank_ref_num, created_at, profiles!inner(full_name, email)');
 
     const status = searchParams.get('status');
     if (status) query = query.eq('status', status as 'pending' | 'success' | 'failed' | 'refunded');

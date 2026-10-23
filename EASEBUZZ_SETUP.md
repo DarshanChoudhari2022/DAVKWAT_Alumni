@@ -1,4 +1,4 @@
-# Easebuzz test checkout deployment
+# Easebuzz checkout deployment
 
 Registration offers Annual (INR 500 for 12 months) and Lifetime (INR 5,000, one-time).
 The final step redirects to Easebuzz hosted checkout; QR codes and screenshot uploads are removed.
@@ -77,6 +77,27 @@ Remove-Item Env:EASEBUZZ_SANDBOX_SMOKE
 
 Replace both test credentials with the live merchant credentials and set
 `EASEBUZZ_ENV=production`, then redeploy. Leave `EASEBUZZ_ENV=test` for the current test credentials.
+
+Use the live key and matching salt from the merchant credentials PDF in the Vercel
+Production environment. Keep Preview/Development on their separate test credentials.
+Do not commit the PDF, its password, or the decrypted credentials. The commercials
+Excel contains gateway charges; these are not replacements for the membership prices.
+
+## Admin payment flow
+
+1. The member chooses INR 500 annual or INR 5,000 lifetime and pays on Easebuzz.
+2. The verified browser callback or server webhook records the payment status and
+   amount and activates membership atomically. Failed/pending payments do not activate it.
+3. Admin -> Payments shows status, amount, payment mode, Easebuzz payment ID and bank
+   reference. Gateway transactions show "Automatic via Easebuzz" instead of manual
+   Yes/No/Pending buttons. The admin status endpoint rejects gateway overrides.
+4. Only successful payments contribute to the revenue total. CSV exports include
+   the paid amount and Easebuzz payment ID. Amounts are the membership payment amount;
+   settlement amounts after gateway fees must be reconciled using Easebuzz reports.
+5. The Trust still approves or rejects the alumni application independently.
+
+Older manual payment records retain their review controls. No new database migration
+is required for this admin display change beyond the existing 0023 migration.
 
 References: [Easebuzz official hosted-checkout integration](https://github.com/easebuzz/paywitheasebuzz-php-lib)
 and [Vercel environment variables](https://vercel.com/docs/environment-variables).

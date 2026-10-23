@@ -4,6 +4,7 @@ import { requireAdminApiAccess } from '@/lib/auth/admin-api';
 import { writeAuditLog } from '@/lib/audit';
 import { invalidateAfterAction } from '@/lib/cache/invalidate';
 import { manualPaymentStatusSchema } from '@/lib/validations/admin';
+import { isEasebuzzPayment } from '@/lib/payments/provider';
 
 interface PaymentReviewResult {
   payment_id: string;
@@ -33,6 +34,19 @@ export async function POST(req: NextRequest) {
   }
 
   const supabase = adminAccess.database;
+  const { data: payment, error: paymentError } = await supabase.from('payments')
+    .select('gateway_response, easebuzz_payment_id, payment_mode')
+    .eq('id', parsed.data.paymentId).maybeSingle();
+  if (paymentError) {
+    return NextResponse.json({ error: 'Could not read payment.' }, { status: 500 });
+  }
+  if (!payment) return NextResponse.json({ error: 'Payment not found.' }, { status: 404 });
+  if (isEasebuzzPayment(payment)) {
+    return NextResponse.json(
+      { error: 'Easebuzz payments are confirmed automatically by the gateway and cannot be manually changed.' },
+      { status: 409 }
+    );
+  }
   // The database function locks and updates both records in one transaction.
   // A successful payment can no longer be committed without its membership.
   const { data: reviewData, error: reviewError } = await supabase.rpc(

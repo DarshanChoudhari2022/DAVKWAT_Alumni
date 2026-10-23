@@ -23,6 +23,8 @@ import { formatINR, formatDateTime } from '@/lib/utils/format';
 import { escapeIlikePattern, normalizeSearchTerm } from '@/lib/utils/search';
 import { ManualPaymentStatusActions } from './ManualPaymentStatusActions';
 import { PaymentStatusBadge } from './PaymentStatusBadge';
+import { isEasebuzzPayment } from '@/lib/payments/provider';
+import type { Json } from '@/lib/supabase/database.types';
 
 export const metadata: Metadata = { title: 'Payments — Admin' };
 
@@ -48,6 +50,8 @@ interface PaymentRow {
   payment_mode: string | null;
   bank_ref_num: string | null;
   receipt_url: string | null;
+  gateway_response: Json | null;
+  easebuzz_payment_id: string | null;
   created_at: string;
   alumni_id: string;
   profiles: { full_name: string; email: string };
@@ -71,6 +75,7 @@ export default async function AdminPaymentsPage({
       <header className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
         <div>
           <h1 className="font-display text-2xl font-semibold tracking-tight sm:text-3xl">Payments</h1>
+          <p className="mt-2 text-sm text-slate-500">Easebuzz confirms payments automatically. View the amount paid and transaction reference here. Alumni approval is separate.</p>
         </div>
         <Button asChild variant="outline" size="sm" className="w-full sm:w-auto">
           <a href={`/api/admin/export?type=payments&status=${sp.status ?? ''}&q=${sp.q ?? ''}`}>
@@ -206,7 +211,7 @@ async function PaymentsList({ sp, page }: { sp: SearchParams; page: number }) {
     let listQuery = supabase
       .from('payments')
       .select(
-        'id, txnid, amount, currency, status, payment_mode, bank_ref_num, receipt_url, created_at, alumni_id, profiles!inner(full_name, email)',
+        'id, txnid, amount, currency, status, payment_mode, bank_ref_num, receipt_url, gateway_response, easebuzz_payment_id, created_at, alumni_id, profiles!inner(full_name, email)',
         { count: 'estimated' }
       );
     if (sp.status && sp.status !== 'all') {
@@ -249,7 +254,7 @@ async function PaymentsList({ sp, page }: { sp: SearchParams; page: number }) {
     return (
       <>
         <p className="mt-6 text-sm text-slate-500">
-          {formatCount(countResult)} total transactions, including manual membership requests awaiting review.
+          {formatCount(countResult)} total transactions. Only successful payments count toward total revenue.
         </p>
 
         <div className="mt-6 grid gap-3 sm:hidden">
@@ -275,9 +280,11 @@ async function PaymentsList({ sp, page }: { sp: SearchParams; page: number }) {
                   <MobileInfoRow label="Amount">{formatINR(Number(p.amount))}</MobileInfoRow>
                   <MobileInfoRow label="Mode"><span className="capitalize">{p.payment_mode ?? '-'}</span></MobileInfoRow>
                   <MobileInfoRow label="Date">{formatDateTime(p.created_at)}</MobileInfoRow>
-                  <MobileInfoRow label="Review">
-                    <ManualPaymentStatusActions paymentId={p.id} currentStatus={p.status} />
+                  <MobileInfoRow label="Confirmation">
+                    {isEasebuzzPayment(p) ? <span className="text-xs text-slate-500">Automatic via Easebuzz</span> : <ManualPaymentStatusActions paymentId={p.id} currentStatus={p.status} />}
                   </MobileInfoRow>
+                  {p.easebuzz_payment_id && <MobileInfoRow label="Gateway ID">{p.easebuzz_payment_id}</MobileInfoRow>}
+                  {p.bank_ref_num && <MobileInfoRow label="Bank ref">{p.bank_ref_num}</MobileInfoRow>}
                   {p.receipt_url && (
                     <MobileInfoRow label="Proof">
                       <a href={p.receipt_url} target="_blank" rel="noopener noreferrer" className="text-[#0F2557] underline text-xs">
@@ -304,7 +311,7 @@ async function PaymentsList({ sp, page }: { sp: SearchParams; page: number }) {
                 <th className="px-4 py-3">Status</th>
                 <th className="px-4 py-3">Mode</th>
                 <th className="px-4 py-3">Proof</th>
-                <th className="px-4 py-3">Manual Review</th>
+                <th className="px-4 py-3">Confirmation</th>
                 <th className="py-3 pl-4 pr-5">Date</th>
               </tr>
             </thead>
@@ -317,6 +324,8 @@ async function PaymentsList({ sp, page }: { sp: SearchParams; page: number }) {
                       <code className="rounded bg-slate-100 px-1.5 py-0.5 font-mono text-xs">
                         {p.txnid}
                       </code>
+                      {p.easebuzz_payment_id && <p className="mt-1 text-xs text-slate-500">Easebuzz: {p.easebuzz_payment_id}</p>}
+                      {p.bank_ref_num && <p className="mt-1 text-xs text-slate-500">Bank: {p.bank_ref_num}</p>}
                     </td>
                     <td className="px-4 py-3">
                       <Link href={`/admin/alumni/${p.alumni_id}`} className="hover:text-[#0F2557]">
@@ -339,7 +348,7 @@ async function PaymentsList({ sp, page }: { sp: SearchParams; page: number }) {
                       )}
                     </td>
                     <td className="px-4 py-3">
-                      <ManualPaymentStatusActions paymentId={p.id} currentStatus={p.status} />
+                      {isEasebuzzPayment(p) ? <span className="text-xs text-slate-500">Automatic via Easebuzz</span> : <ManualPaymentStatusActions paymentId={p.id} currentStatus={p.status} />}
                     </td>
                     <td className="py-3 pl-4 pr-5">{formatDateTime(p.created_at)}</td>
                   </tr>
